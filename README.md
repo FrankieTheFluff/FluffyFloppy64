@@ -8,6 +8,8 @@ Commodore 64 (C64) floppy disk images (D64, G64, D71, D81, PRG)
 
 FREEWARE / OpenSource
 
+Sourcecode will follow after cleanup
+
 License: GNU General Public License v2.0
 
 (c) 2021-2025 FrankieTheFluff
