@@ -19,14 +19,20 @@ Mail: fluxmyfluffyfloppy@mail.de
 Requirements: 
 - Microsoft(r)Windows(r) 
 
+![FluffyFloppy64_v0 61_20250114_202445](https://github.com/user-attachments/assets/e7478304-8845-44f2-b4b3-6e7fa3d329f5)
+
 Uses:
+
 -----------------------------------------------------------------
 Font: "C64_Pro_Mono-Style.ttf"
 https://style64.org
+
 -----------------------------------------------------------------
 Database: SQLite
 https://www.sqlite.org/index.html
+
 -----------------------------------------------------------------
 Converter: NibTools (nibconv.exe) 
 https://https://github.com/markusC64/nibtools
+
 -----------------------------------------------------------------
