@@ -23,10 +23,13 @@ Uses:
 -----------------------------------------------------------------
 Font: "C64_Pro_Mono-Style.ttf"
 https://style64.org
+
 -----------------------------------------------------------------
 Database: SQLite
 https://www.sqlite.org/index.html
+
 -----------------------------------------------------------------
 Converter: NibTools (nibconv.exe) 
 https://https://github.com/markusC64/nibtools
+
 -----------------------------------------------------------------
