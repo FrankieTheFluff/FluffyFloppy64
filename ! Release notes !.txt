@@ -1,5 +1,5 @@
 ﻿-----------------------------------------------------------------
-FluffyFloppy64 
+FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
 A Microsoft(r) Windows(r) tool to catalog 
@@ -17,18 +17,35 @@ Requirements:
 Uses:
 -----------------------------------------------------------------
 Font: "C64_Pro_Mono-Style.ttf"
-https://style64.org
+https://style64.org/c64-truetype
 -----------------------------------------------------------------
 Database: SQLite
 https://www.sqlite.org/index.html
 -----------------------------------------------------------------
 Converter: NibTools (nibconv.exe) 
 https://https://github.com/markusC64/nibtools
+https://c64preservation.com/dp.php?pg=nibtools
 -----------------------------------------------------------------
-
 
 Release notes
 *new, +update, -bugfix, #unfixed
+
+
+# Unfinished feature: "Refresh"/"Delete" database entries
+
+
+v0.70 - 2025-01-19
++ Menu "Import/Sync" behaviour fixed
++ About: Added Copyrights
++ Font Updated "C64_Pro_Mono-STYLE.ttf" v1.2.1
+
+v0.63 - 2025-01-18
+* Non-public test/debug version
+- Database: Shows now on autostart the directory of first entry
+- Font: Unloads now the font on closing the app
+
+v0.62 - 2025-01-17
+* Non-public test/debug version
 
 v0.61 - 2025-01-14
 * First public release
