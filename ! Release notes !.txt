@@ -33,6 +33,16 @@ Release notes
 
 # Unfinished feature: "Refresh"/"Delete" database entries
 
+v0.73 - 2025-01-20
+- Font: Removed unneeded "SendNotifyMessage" methods
+
+v0.72 - 2025-01-20
+* Non-public test/debug version
+- Font: Changed font-unloading to "SendNotifyMessage" method on close
+
+v0.71 - 2025-01-19
+* Non-public test/debug version
+- Font: Changed font-loading to "SendNotifyMessage" method on start
 
 v0.70 - 2025-01-19
 + Menu "Import/Sync" behaviour fixed
