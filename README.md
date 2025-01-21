@@ -12,6 +12,8 @@ License: GNU General Public License v2.0
 
 (c) 2021-2025 FrankieTheFluff
 
+Sourcecode will follow when cleaned...
+
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 
 Mail: fluxmyfluffyfloppy@mail.de
