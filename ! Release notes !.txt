@@ -33,6 +33,19 @@ Release notes
 
 # Unfinished feature: "Refresh"/"Delete" database entries
 
+v0.75 - 2025-01-25
+* Import: Shows now hints/errors during import
+* Import: It's now possible to cancel during import
++ Import: Added simple errorhandler (needs more improvement)
+- Import: Fixes wrong "total count" of imported files
+- Import: Fixes a file not found problem with g64 images
+- Import: Fixes a failed convert problem with g64 images
+- Filter/Search: Fixes if path is "All" and extension is not "All"
+
+v0.74 - 2025-01-23
+* Non-public test/debug version
+- Database: path fields size now 1024 (Database version 106)
+
 v0.73 - 2025-01-20
 - Font: Removed unneeded "SendNotifyMessage" methods
 
