@@ -1,0 +1,80 @@
+object Form2: TForm2
+  Left = 969
+  Height = 158
+  Top = 488
+  Width = 439
+  BorderStyle = bsDialog
+  Caption = 'Database'
+  ClientHeight = 158
+  ClientWidth = 439
+  Position = poMainFormCenter
+  LCLVersion = '3.6.0.0'
+  object grbDBProperties: TGroupBox
+    Left = 8
+    Height = 120
+    Top = 0
+    Width = 424
+    ClientHeight = 100
+    ClientWidth = 420
+    TabOrder = 0
+    object lblVersion: TLabel
+      Left = 8
+      Height = 15
+      Top = 0
+      Width = 42
+      Caption = 'Version:'
+      ParentColor = False
+    end
+    object lblCreated: TLabel
+      Left = 240
+      Height = 15
+      Top = 0
+      Width = 44
+      Caption = 'Created:'
+      ParentColor = False
+    end
+    object sTVersion: TStaticText
+      Left = 72
+      Height = 17
+      Top = 0
+      Width = 48
+      Alignment = taCenter
+      BorderStyle = sbsSunken
+      TabOrder = 0
+    end
+    object sTCreated: TStaticText
+      Left = 304
+      Height = 17
+      Top = 0
+      Width = 105
+      Alignment = taCenter
+      BorderStyle = sbsSunken
+      TabOrder = 1
+    end
+    object lblLocation: TLabel
+      Left = 8
+      Height = 15
+      Top = 32
+      Width = 49
+      Caption = 'Location:'
+      ParentColor = False
+    end
+    object sTLocation: TStaticText
+      Left = 72
+      Height = 58
+      Top = 32
+      Width = 337
+      BorderStyle = sbsSunken
+      TabOrder = 2
+    end
+  end
+  object btOK: TButton
+    Left = 357
+    Height = 25
+    Top = 127
+    Width = 75
+    Caption = 'OK'
+    TabOrder = 1
+    OnClick = btOKClick
+  end
+end

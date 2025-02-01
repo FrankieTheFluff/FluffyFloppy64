@@ -1,0 +1,390 @@
+object Form4: TForm4
+  Left = 814
+  Height = 370
+  Top = 323
+  Width = 676
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ClientHeight = 370
+  ClientWidth = 676
+  OnShow = FormShow
+  Position = poMainFormCenter
+  LCLVersion = '3.6.0.0'
+  object btOK: TButton
+    Left = 592
+    Height = 25
+    Top = 336
+    Width = 75
+    Caption = '&OK'
+    TabOrder = 0
+    OnClick = btOKClick
+  end
+  object tbSettings: TPageControl
+    Left = 0
+    Height = 328
+    Top = 0
+    Width = 676
+    ActivePage = tbSetting
+    Align = alTop
+    TabIndex = 0
+    TabOrder = 1
+    object tbSetting: TTabSheet
+      Caption = 'Settings'
+      ClientHeight = 300
+      ClientWidth = 668
+      object grbStart: TGroupBox
+        Left = 0
+        Height = 120
+        Top = 0
+        Width = 664
+        Anchors = [akTop, akLeft, akRight]
+        Caption = 'Start'
+        ClientHeight = 100
+        ClientWidth = 660
+        TabOrder = 0
+        object cbStartOpenDB: TCheckBox
+          Left = 16
+          Height = 19
+          Top = 8
+          Width = 209
+          Caption = 'Open recent used database (default)'
+          TabOrder = 0
+        end
+        object lbVICELocation1: TLabel
+          Left = 8
+          Height = 15
+          Top = 40
+          Width = 95
+          Caption = 'Temporary folder:'
+          ParentColor = False
+        end
+        object folderTemp: TDirectoryEdit
+          Left = 16
+          Height = 23
+          Top = 64
+          Width = 632
+          ShowHidden = False
+          ButtonWidth = 23
+          NumGlyphs = 1
+          MaxLength = 0
+          TabOrder = 1
+        end
+      end
+      object GroupBox1: TGroupBox
+        Left = 0
+        Height = 128
+        Top = 120
+        Width = 666
+        Anchors = [akTop, akLeft, akRight]
+        Caption = 'Directory'
+        ClientHeight = 108
+        ClientWidth = 662
+        TabOrder = 1
+        object cbPETSCIITracks: TCheckBox
+          Left = 16
+          Height = 19
+          Top = 8
+          Width = 517
+          Anchors = [akTop, akLeft, akRight]
+          Caption = 'Load PETSCII directory from database, if tracks (18,19,40 or 53) were imported, instead from file'
+          TabOrder = 0
+        end
+        object clbFont: TColorBox
+          Left = 152
+          Height = 22
+          Top = 40
+          Width = 128
+          DefaultColorColor = 16365429
+          Selected = 16365429
+          Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
+          ItemHeight = 16
+          TabOrder = 1
+        end
+        object Label1: TLabel
+          Left = 16
+          Height = 15
+          Top = 40
+          Width = 57
+          Caption = 'Font color:'
+          ParentColor = False
+        end
+        object Label2: TLabel
+          Left = 16
+          Height = 15
+          Top = 71
+          Width = 97
+          Caption = 'Background color:'
+          ParentColor = False
+        end
+        object clbBackground: TColorBox
+          Left = 152
+          Height = 22
+          Top = 71
+          Width = 128
+          DefaultColorColor = 14368542
+          Selected = 14368542
+          Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
+          DropDownCount = 10
+          ItemHeight = 16
+          TabOrder = 3
+        end
+        object btDefaultFont: TButton
+          Left = 296
+          Height = 23
+          Top = 40
+          Width = 75
+          Caption = 'Default'
+          TabOrder = 2
+          OnClick = btDefaultFontClick
+        end
+        object btDefaultBackground: TButton
+          Left = 296
+          Height = 23
+          Top = 72
+          Width = 75
+          Caption = 'Default'
+          TabOrder = 4
+          OnClick = btDefaultBackgroundClick
+        end
+      end
+    end
+    object tbImport: TTabSheet
+      Caption = 'Import'
+      ClientHeight = 300
+      ClientWidth = 668
+      object grbImport: TGroupBox
+        Left = 0
+        Height = 80
+        Top = 0
+        Width = 666
+        Caption = 'Import D64, G64:'
+        ClientHeight = 60
+        ClientWidth = 662
+        TabOrder = 0
+        object cbImportT18T19: TCheckBox
+          Left = 16
+          Height = 19
+          Top = 8
+          Width = 420
+          Caption = 'Import also track 18/19 to database (fully usage of database without images)'
+          TabOrder = 0
+        end
+        object Label3: TLabel
+          Left = 32
+          Height = 15
+          Top = 32
+          Width = 293
+          Caption = 'Not recommended! Could go slow, needs more storage'
+          ParentColor = False
+        end
+      end
+      object GroupBox2: TGroupBox
+        Left = 0
+        Height = 81
+        Top = 80
+        Width = 666
+        Caption = 'Import D71:'
+        ClientHeight = 61
+        ClientWidth = 662
+        TabOrder = 1
+        object cbImportT18T53: TCheckBox
+          Left = 16
+          Height = 19
+          Top = 8
+          Width = 420
+          Caption = 'Import also track 18/53 to database (fully usage of database without images)'
+          TabOrder = 0
+        end
+        object Label4: TLabel
+          Left = 32
+          Height = 15
+          Top = 32
+          Width = 293
+          Caption = 'Not recommended! Could go slow, needs more storage'
+          ParentColor = False
+        end
+      end
+      object GroupBox3: TGroupBox
+        Left = 0
+        Height = 80
+        Top = 160
+        Width = 666
+        Caption = 'Import D81:'
+        ClientHeight = 60
+        ClientWidth = 662
+        TabOrder = 2
+        object cbImportT40: TCheckBox
+          Left = 16
+          Height = 19
+          Top = 8
+          Width = 403
+          Caption = 'Import also track 40 to database (fully usage of database without images)'
+          TabOrder = 0
+        end
+        object Label5: TLabel
+          Left = 32
+          Height = 15
+          Top = 32
+          Width = 293
+          Caption = 'Not recommended! Could go slow, needs more storage'
+          ParentColor = False
+        end
+      end
+    end
+    object tbVICE: TTabSheet
+      Caption = 'Open with...'
+      ClientHeight = 300
+      ClientWidth = 668
+      object lbVICELocation: TLabel
+        Left = 8
+        Height = 15
+        Top = 232
+        Width = 25
+        Caption = 'Vice:'
+        ParentColor = False
+      end
+      object fileVICE: TFileNameEdit
+        Left = 16
+        Height = 23
+        Top = 256
+        Width = 632
+        DialogTitle = 'Select VICE'
+        Filter = 'VICE|*.exe'
+        FilterIndex = 0
+        DefaultExt = 'exe'
+        HideDirectories = False
+        ButtonWidth = 23
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 4
+      end
+      object lblCCS64Location: TLabel
+        Left = 8
+        Height = 15
+        Top = 8
+        Width = 37
+        Caption = 'CCS64:'
+        ParentColor = False
+      end
+      object fileCCS64: TFileNameEdit
+        Left = 16
+        Height = 23
+        Top = 32
+        Width = 632
+        DialogTitle = 'Select CCS64'
+        Filter = 'CCS64|*.exe'
+        FilterIndex = 0
+        DefaultExt = 'exe'
+        HideDirectories = False
+        ButtonWidth = 23
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 0
+      end
+      object lblDenise: TLabel
+        Left = 8
+        Height = 15
+        Top = 64
+        Width = 38
+        Caption = 'Denise:'
+        ParentColor = False
+      end
+      object fileDenise: TFileNameEdit
+        Left = 16
+        Height = 23
+        Top = 88
+        Width = 632
+        DialogTitle = 'Select CCS64'
+        Filter = 'CCS64|*.exe'
+        FilterIndex = 0
+        DefaultExt = 'exe'
+        HideDirectories = False
+        ButtonWidth = 23
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 1
+      end
+      object lbHoxs64Location: TLabel
+        Left = 8
+        Height = 15
+        Top = 176
+        Width = 41
+        Caption = 'Hoxs64:'
+        ParentColor = False
+      end
+      object fileHoxs64: TFileNameEdit
+        Left = 16
+        Height = 23
+        Top = 200
+        Width = 632
+        DialogTitle = 'Select VICE'
+        Filter = 'VICE|*.exe'
+        FilterIndex = 0
+        DefaultExt = 'exe'
+        HideDirectories = False
+        ButtonWidth = 23
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 3
+      end
+      object lblDirMaster: TLabel
+        Left = 8
+        Height = 15
+        Top = 120
+        Width = 54
+        Caption = 'DirMaster:'
+        ParentColor = False
+      end
+      object fileDirMaster: TFileNameEdit
+        Left = 16
+        Height = 23
+        Top = 144
+        Width = 632
+        FilterIndex = 0
+        HideDirectories = False
+        ButtonWidth = 23
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 2
+      end
+    end
+    object TabSheet1: TTabSheet
+      Caption = 'NibTools'
+      ClientHeight = 300
+      ClientWidth = 668
+      object lbNibConvLocation: TLabel
+        Left = 8
+        Height = 15
+        Top = 8
+        Width = 50
+        Caption = 'NibConv:'
+        ParentColor = False
+      end
+      object fileNibConv: TFileNameEdit
+        Left = 16
+        Height = 23
+        Top = 32
+        Width = 632
+        DialogTitle = 'Select NibConv'
+        Filter = 'NibConv|*.exe'
+        FilterIndex = 0
+        DefaultExt = 'exe'
+        HideDirectories = False
+        ButtonWidth = 23
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 0
+      end
+    end
+  end
+  object btCancel: TButton
+    Left = 8
+    Height = 25
+    Top = 336
+    Width = 75
+    Caption = '&Cancel'
+    Default = True
+    TabOrder = 2
+    OnClick = btCancelClick
+  end
+end

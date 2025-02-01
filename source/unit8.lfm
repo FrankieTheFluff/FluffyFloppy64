@@ -1,0 +1,50 @@
+object Form5: TForm5
+  Left = 645
+  Height = 366
+  Top = 337
+  Width = 712
+  BorderStyle = bsDialog
+  Caption = 'Manual'
+  ClientHeight = 366
+  ClientWidth = 712
+  Position = poMainFormCenter
+  LCLVersion = '3.6.0.0'
+  object btClose: TButton
+    Left = 629
+    Height = 25
+    Top = 336
+    Width = 75
+    Caption = 'Close'
+    TabOrder = 0
+    OnClick = btCloseClick
+  end
+  object Memo1: TMemo
+    Left = 8
+    Height = 322
+    Top = 8
+    Width = 696
+    Enabled = False
+    Lines.Strings = (
+      'FluffyFloppy64'
+      ''
+      'A Microsoft(r) Windows(r) tool to catalog Commodore 64 (C64) floppy disk images (D64, G64, D71, D81, PRG)'
+      'and mount or run in emulators...'
+      ''
+      'New:'
+      'Creates a new database'
+      ''
+      'Open:'
+      'Opens an existing database'
+      ''
+      'Import:'
+      'Imports images into the already opened database'
+      ''
+      'Filter/Search:'
+      'Filter and search the content (path or search) of the database. "*" allowed'
+      ''
+      ''
+    )
+    ScrollBars = ssAutoVertical
+    TabOrder = 1
+  end
+end

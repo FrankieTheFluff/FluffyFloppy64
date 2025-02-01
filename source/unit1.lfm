@@ -1,0 +1,1145 @@
+object Form1: TForm1
+  Left = 412
+  Height = 643
+  Top = 129
+  Width = 1114
+  Caption = 'Form1'
+  ClientHeight = 643
+  ClientWidth = 1114
+  KeyPreview = True
+  Menu = MainMenu1
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '3.6.0.0'
+  object StatusBar1: TStatusBar
+    Left = 0
+    Height = 23
+    Top = 620
+    Width = 1114
+    Panels = <    
+      item
+        Width = 100
+      end    
+      item
+        Width = 220
+      end    
+      item
+        Width = 130
+      end    
+      item
+        Width = 130
+      end    
+      item
+        Width = 50
+      end>
+    SimplePanel = False
+  end
+  object pnDirView: TPanel
+    Left = 579
+    Height = 620
+    Top = 0
+    Width = 535
+    Align = alRight
+    ClientHeight = 620
+    ClientWidth = 535
+    TabOrder = 1
+    object PageControl2: TPageControl
+      Left = 1
+      Height = 618
+      Top = 1
+      Width = 533
+      ActivePage = TabSheet3
+      Align = alClient
+      Font.CharSet = ANSI_CHARSET
+      Font.Height = -12
+      Font.Name = 'Segoe UI'
+      Font.Pitch = fpVariable
+      Font.Quality = fqDraft
+      ParentFont = False
+      TabIndex = 0
+      TabOrder = 0
+      OnChange = PageControl2Change
+      object TabSheet3: TTabSheet
+        Caption = 'Directory'
+        ClientHeight = 590
+        ClientWidth = 525
+        object TgScratch: TToggleBox
+          Left = 6
+          Height = 23
+          Hint = 'Show scratched entries'
+          Top = 8
+          Width = 75
+          Caption = 'Scratched'
+          ParentFont = False
+          TabOrder = 0
+          OnChange = TgScratchChange
+        end
+        object TgCShift: TToggleBox
+          Left = 96
+          Height = 23
+          Top = 8
+          Width = 75
+          Caption = 'C=-Shift'
+          ParentFont = False
+          TabOrder = 1
+          OnChange = TgCShiftChange
+        end
+        object LstBxDirectoryPETSCII: TListBox
+          Left = 8
+          Height = 469
+          Top = 40
+          Width = 511
+          Anchors = [akTop, akLeft, akRight, akBottom]
+          Color = 14368542
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = 16365429
+          Font.Height = -15
+          Font.Name = 'C64 Pro Mono'
+          Font.Pitch = fpFixed
+          Font.Quality = fqDraft
+          ItemHeight = 0
+          ParentFont = False
+          TabOrder = 2
+          OnDblClick = LstBxDirectoryPETSCIIDblClick
+        end
+        object Label1: TLabel
+          Left = 6
+          Height = 15
+          Top = 515
+          Width = 53
+          Anchors = [akLeft, akBottom]
+          Caption = 'BAM Info:'
+          ParentColor = False
+        end
+        object MemoBAMHint: TMemo
+          Left = 6
+          Height = 48
+          Top = 533
+          Width = 511
+          Anchors = [akLeft, akRight, akBottom]
+          Font.CharSet = ANSI_CHARSET
+          Font.Height = -11
+          Font.Name = 'C64 Pro Mono'
+          Font.Pitch = fpFixed
+          Font.Quality = fqDraft
+          ParentFont = False
+          ReadOnly = True
+          TabOrder = 3
+        end
+        object cbEmulator: TComboBox
+          Left = 368
+          Height = 23
+          Top = 8
+          Width = 149
+          Anchors = [akTop, akRight]
+          DropDownCount = 9
+          ItemHeight = 15
+          ItemIndex = 0
+          Items.Strings = (
+            'CCS64'
+            'CCS64 (mount only)'
+            'Denise'
+            'Denise (mount only)'
+            'DirMaster'
+            'Hoxs64'
+            'Hoxs64 (mount only)'
+            'Vice'
+            'Vice (mount only)'
+          )
+          Style = csDropDownList
+          TabOrder = 4
+          Text = 'CCS64'
+        end
+        object lblOpenWith: TLabel
+          Left = 263
+          Height = 15
+          Top = 12
+          Width = 85
+          Anchors = [akTop, akRight]
+          Caption = 'Select emulator:'
+          ParentColor = False
+        end
+      end
+      object TabSheet5: TTabSheet
+        Caption = 'BAM'
+        ClientHeight = 590
+        ClientWidth = 525
+        object Label2: TLabel
+          Left = 6
+          Height = 15
+          Top = 8
+          Width = 154
+          Caption = 'BAM (Block Availability Map)'
+          ParentColor = False
+        end
+        object LstBAM: TMemo
+          Left = 6
+          Height = 543
+          Top = 36
+          Width = 507
+          Anchors = [akTop, akLeft, akRight, akBottom]
+          Font.CharSet = ANSI_CHARSET
+          Font.Height = -12
+          Font.Name = 'Consolas'
+          Font.Pitch = fpFixed
+          Font.Quality = fqDraft
+          Lines.Strings = (
+            ''
+          )
+          ParentFont = False
+          ReadOnly = True
+          ScrollBars = ssBoth
+          TabOrder = 0
+          WordWrap = False
+        end
+      end
+      object TabSheet6: TTabSheet
+        Caption = 'Sectors (Hex)'
+        ClientHeight = 590
+        ClientWidth = 525
+        object Edit1: TEdit
+          Left = 40
+          Height = 23
+          Top = 312
+          Width = 168
+          TabOrder = 3
+          Text = 'Edit1'
+        end
+        object lblTrack: TLabel
+          Left = 6
+          Height = 15
+          Top = 8
+          Width = 32
+          Caption = 'Track:'
+          ParentColor = False
+        end
+        object cbTrack: TComboBox
+          Left = 56
+          Height = 23
+          Top = 8
+          Width = 44
+          DropDownCount = 10
+          ItemHeight = 15
+          ItemIndex = 0
+          Items.Strings = (
+            '1'
+          )
+          Style = csDropDownList
+          TabOrder = 0
+          Text = '1'
+          OnChange = cbTrackChange
+        end
+        object lblSec: TLabel
+          Left = 120
+          Height = 15
+          Top = 8
+          Width = 36
+          Caption = 'Sector:'
+          ParentColor = False
+        end
+        object cbSector: TComboBox
+          Left = 176
+          Height = 23
+          Top = 8
+          Width = 48
+          DropDownCount = 10
+          ItemHeight = 15
+          ItemIndex = 0
+          Items.Strings = (
+            '0'
+          )
+          Style = csDropDownList
+          TabOrder = 1
+          Text = '0'
+          OnChange = cbSectorChange
+        end
+        object lblSource: TLabel
+          Left = 248
+          Height = 15
+          Top = 8
+          Width = 39
+          Caption = 'Source:'
+          ParentColor = False
+        end
+        object cbSource: TComboBox
+          Left = 304
+          Height = 23
+          Top = 8
+          Width = 168
+          Enabled = False
+          ItemHeight = 15
+          ItemIndex = 0
+          Items.Strings = (
+            'Database (Track 18/19)'
+            'Image file (All Tracks)'
+          )
+          TabOrder = 2
+          Text = 'Database (Track 18/19)'
+        end
+        object lstBoxASCII: TMemo
+          Left = 392
+          Height = 316
+          Top = 36
+          Width = 126
+          Anchors = [akTop, akLeft, akRight]
+          Font.CharSet = ANSI_CHARSET
+          Font.Height = -13
+          Font.Name = 'Consolas'
+          Font.Pitch = fpFixed
+          Font.Quality = fqDraft
+          ParentFont = False
+          ReadOnly = True
+          TabOrder = 4
+        end
+        object lstBoxSectors: TMemo
+          Left = 6
+          Height = 316
+          Top = 36
+          Width = 380
+          Font.CharSet = ANSI_CHARSET
+          Font.Height = -13
+          Font.Name = 'Consolas'
+          Font.Pitch = fpFixed
+          Font.Quality = fqDraft
+          ParentFont = False
+          ReadOnly = True
+          TabOrder = 5
+        end
+      end
+      object TabSheet4: TTabSheet
+        Caption = 'Text'
+        ClientHeight = 590
+        ClientWidth = 525
+        TabVisible = False
+        object LstBxDirectoryTXT: TListBox
+          Left = 6
+          Height = 546
+          Top = 36
+          Width = 511
+          Anchors = [akTop, akLeft, akRight, akBottom]
+          ItemHeight = 0
+          ParentColor = True
+          TabOrder = 0
+          OnDblClick = LstBxDirectoryPETSCIIDblClick
+        end
+        object Label4: TLabel
+          Left = 6
+          Height = 15
+          Top = 8
+          Width = 184
+          Caption = 'Directory (TXT entries in database):'
+          ParentColor = False
+        end
+      end
+    end
+  end
+  object pnDBView: TPanel
+    Left = 0
+    Height = 620
+    Top = 0
+    Width = 574
+    Align = alClient
+    Caption = 'pnDBView'
+    ClientHeight = 620
+    ClientWidth = 574
+    TabOrder = 2
+    object PageControl1: TPageControl
+      Left = 1
+      Height = 618
+      Top = 1
+      Width = 572
+      ActivePage = TabSheet1
+      Align = alClient
+      TabIndex = 0
+      TabOrder = 0
+      OnChange = PageControl1Change
+      object TabSheet1: TTabSheet
+        Caption = 'Database'
+        ClientHeight = 590
+        ClientWidth = 564
+        object Panel3: TPanel
+          Left = 0
+          Height = 104
+          Top = 0
+          Width = 564
+          Align = alTop
+          BevelOuter = bvNone
+          ClientHeight = 104
+          ClientWidth = 564
+          TabOrder = 0
+          object GroupBox1: TGroupBox
+            Left = 0
+            Height = 104
+            Top = 0
+            Width = 558
+            Anchors = [akTop, akLeft, akRight]
+            Caption = 'Filter/Search (Use *):'
+            ClientHeight = 84
+            ClientWidth = 554
+            TabOrder = 0
+            object cbDBFilePath: TComboBox
+              Left = 72
+              Height = 23
+              Hint = 'Filter: Path to the images'
+              Top = 0
+              Width = 475
+              Anchors = [akTop, akLeft, akRight]
+              DropDownCount = 20
+              ItemHeight = 15
+              ItemIndex = 0
+              Items.Strings = (
+                'All'
+              )
+              ParentShowHint = False
+              ShowHint = True
+              TabOrder = 0
+              Text = 'All'
+              TextHint = 'Filter: Path to the images'
+              OnChange = cbDBFilePathChange
+            end
+            object cbDBFileNameExt: TComboBox
+              Left = 72
+              Height = 23
+              Hint = 'Filter: File extensions'
+              Top = 28
+              Width = 79
+              Anchors = [akLeft]
+              ItemHeight = 15
+              ItemIndex = 0
+              Items.Strings = (
+                'All'
+                'd64'
+                'D64'
+                'g64'
+                'G64'
+                'prg'
+                'PRG'
+                'd71'
+                'D71'
+                'd81'
+                'D81'
+              )
+              ParentShowHint = False
+              ReadOnly = True
+              ShowHint = True
+              Style = csDropDownList
+              TabOrder = 1
+              Text = 'All'
+              TextHint = 'Filter: Path to the images'
+              OnChange = cbDBFileNameExtChange
+            end
+            object EdSQLSearch: TEdit
+              Left = 72
+              Height = 23
+              Hint = 'Search database...'
+              Top = 56
+              Width = 199
+              Anchors = [akTop, akLeft, akRight]
+              Enabled = False
+              ParentShowHint = False
+              ShowHint = True
+              TabOrder = 4
+              TextHint = 'Search database...'
+              OnChange = EdSQLSearchChange
+            end
+            object cbSQLSearch: TComboBox
+              Left = 287
+              Height = 23
+              Hint = 'Select field'
+              Top = 56
+              Width = 164
+              Anchors = [akTop, akRight]
+              BorderStyle = bsSingle
+              Color = clInfoBk
+              ItemHeight = 15
+              ItemIndex = 0
+              Items.Strings = (
+                'Directory entry'
+                'Diskname'
+                'Image filename'
+                'Tags'
+              )
+              ParentShowHint = False
+              ReadOnly = True
+              ShowHint = True
+              Style = csDropDownList
+              TabOrder = 5
+              Text = 'Directory entry'
+              OnChange = cbSQLSearchChange
+            end
+            object BtSQLSearch: TBitBtn
+              Left = 467
+              Height = 23
+              Hint = 'Search'
+              Top = 56
+              Width = 80
+              Anchors = [akTop, akRight]
+              Caption = 'Search'
+              Enabled = False
+              Images = ImageList1
+              ImageIndex = 2
+              OnClick = BtSQLSearchClick
+              TabOrder = 6
+            end
+            object cbFilterFav: TCheckBox
+              Left = 192
+              Height = 19
+              Hint = 'Filter: Show favorites'
+              Top = 28
+              Width = 67
+              Caption = 'Favourite'
+              ParentShowHint = False
+              ShowHint = True
+              TabOrder = 2
+              OnChange = cbFilterFavChange
+            end
+            object cbFilterCorrupt: TCheckBox
+              Left = 280
+              Height = 19
+              Hint = 'Filter: Show corrupt'
+              Top = 28
+              Width = 59
+              Caption = 'Corrupt'
+              ParentShowHint = False
+              ShowHint = True
+              TabOrder = 3
+              OnChange = cbFilterCorruptChange
+            end
+            object lblFilterPath: TLabel
+              Left = 8
+              Height = 15
+              Top = 0
+              Width = 27
+              Caption = 'Path:'
+              ParentColor = False
+            end
+            object lblFilterExt: TLabel
+              Left = 8
+              Height = 15
+              Top = 28
+              Width = 53
+              Caption = 'Extension:'
+              ParentColor = False
+            end
+            object lblSearch: TLabel
+              Left = 8
+              Height = 15
+              Top = 56
+              Width = 38
+              Caption = 'Search:'
+              ParentColor = False
+            end
+          end
+        end
+        object Panel4: TPanel
+          Left = 0
+          Height = 486
+          Top = 104
+          Width = 564
+          Align = alClient
+          BevelOuter = bvNone
+          Caption = 'Panel4'
+          ClientHeight = 486
+          ClientWidth = 564
+          TabOrder = 1
+          object DBGridDirTxt: TDBGrid
+            Left = 0
+            Height = 179
+            Top = 5
+            Width = 558
+            Align = alTop
+            AlternateColor = 16709873
+            AutoEdit = False
+            AutoFillColumns = True
+            BorderSpacing.Top = 5
+            BorderSpacing.Right = 6
+            BorderSpacing.Bottom = 2
+            Color = clWindow
+            Columns = <            
+              item
+                SizePriority = 0
+                Title.Caption = 'Blocks'
+                Width = 50
+                FieldName = 'FileSizeTxt'
+              end            
+              item
+                SizePriority = 0
+                Title.Caption = 'Entry'
+                Width = 200
+                FieldName = 'FileNameTxt'
+              end            
+              item
+                SizePriority = 0
+                Title.Caption = 'Filetype'
+                Width = 60
+                FieldName = 'FileTypeTxt'
+              end            
+              item
+                Title.Caption = 'Location'
+                Width = 227
+                FieldName = 'Filefull'
+              end>
+            DataSource = DataSourceSearch
+            FixedCols = 0
+            Options = [dgTitles, dgColumnResize, dgColumnMove, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit]
+            ReadOnly = True
+            TabOrder = 0
+            Visible = False
+            OnCellClick = DBGridDirTxtCellClick
+            OnDblClick = DBGridDirTxtDblClick
+            OnKeyUp = DBGridDirTxtKeyUp
+            OnMouseWheel = DBGridDirTxtMouseWheel
+            OnTitleClick = DBGridDirTxtTitleClick
+          end
+          object DBGridSplitter: TSplitter
+            Cursor = crVSplit
+            Left = 0
+            Height = 5
+            Top = 186
+            Width = 564
+            Align = alTop
+            ResizeAnchor = akTop
+            Visible = False
+          end
+          object DBGridDir: TDBGrid
+            Left = 0
+            Height = 171
+            Top = 191
+            Width = 558
+            Align = alClient
+            AlternateColor = 16709873
+            AutoEdit = False
+            AutoFillColumns = True
+            BorderSpacing.Right = 6
+            BorderSpacing.Bottom = 2
+            Color = clWindow
+            Columns = <            
+              item
+                MinSize = 150
+                MaxSize = 150
+                SizePriority = 0
+                Title.Caption = 'Filename'
+                Width = 300
+                FieldName = 'FileName'
+              end            
+              item
+                Alignment = taRightJustify
+                MinSize = 1
+                MaxSize = 2
+                SizePriority = 0
+                Title.Caption = 'Ext'
+                Width = 50
+                FieldName = 'FileNameExt'
+              end            
+              item
+                MaxSize = 10
+                SizePriority = 0
+                Title.Caption = 'FileSize'
+                Width = 60
+                FieldName = 'FileSizeIMG'
+              end            
+              item
+                MinSize = 80
+                MaxSize = 400
+                SizePriority = 0
+                Title.Caption = 'Diskname'
+                Width = 150
+                FieldName = 'DiskName'
+              end            
+              item
+                MinSize = 20
+                SizePriority = 0
+                Title.Caption = 'Last'
+                Width = 0
+                Visible = False
+                FieldName = 'DateLast'
+              end            
+              item
+                MinSize = 20
+                MaxSize = 100
+                SizePriority = 0
+                Title.Caption = 'Imported'
+                Width = 0
+                Visible = False
+                FieldName = 'DateImport'
+              end            
+              item
+                ReadOnly = True
+                SizePriority = 0
+                Title.Caption = 'Favourite'
+                Width = 60
+                FieldName = 'Favourite'
+              end            
+              item
+                ReadOnly = True
+                SizePriority = 0
+                Title.Caption = 'Corrupt'
+                Width = 60
+                FieldName = 'Corrupt'
+              end            
+              item
+                SizePriority = 0
+                Title.Caption = 'Location'
+                FieldName = 'FileFull'
+              end>
+            DataSource = DataSourceDir
+            FixedCols = 0
+            Options = [dgTitles, dgColumnResize, dgColumnMove, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit]
+            ParentFont = False
+            PopupMenu = mnuKontextDBGridDir
+            ReadOnly = True
+            TabOrder = 2
+            TitleImageList = ImageList1
+            OnCellClick = DBGridDirCellClick
+            OnDblClick = DBGridDirDblClick
+            OnEnter = DBGridDirEnter
+            OnExit = DBGridDirExit
+            OnKeyUp = DBGridDirKeyUp
+            OnMouseWheel = DBGridDirMouseWheel
+            OnTitleClick = DBGridDirTitleClick
+          end
+          object Panel1: TPanel
+            Left = 0
+            Height = 122
+            Top = 364
+            Width = 564
+            Align = alBottom
+            BevelOuter = bvNone
+            ClientHeight = 122
+            ClientWidth = 564
+            TabOrder = 3
+            object lblNotes: TLabel
+              Left = 96
+              Height = 15
+              Top = 49
+              Width = 34
+              Anchors = [akLeft, akBottom]
+              Caption = 'Notes:'
+              ParentColor = False
+            end
+            object lblImage: TLabel
+              Left = 0
+              Height = 15
+              Top = 8
+              Width = 36
+              Anchors = [akLeft, akBottom]
+              Caption = 'Image:'
+              ParentColor = False
+            end
+            object cbFavourite: TDBCheckBox
+              Left = 8
+              Height = 23
+              Hint = 'Image is a favourite <F>'
+              Top = 24
+              Width = 74
+              Anchors = [akLeft, akBottom]
+              Caption = 'Favourite'
+              DataField = 'Favourite'
+              DataSource = DataSourceDir
+              ParentShowHint = False
+              ShowHint = True
+              TabOrder = 0
+              ValueChecked = '1'
+              ValueUnchecked = '0'
+            end
+            object cbCorrupt: TDBCheckBox
+              Left = 8
+              Height = 23
+              Hint = 'Image is corrupt <C>'
+              Top = 49
+              Width = 74
+              Anchors = [akLeft, akBottom]
+              Caption = 'Corrupt'
+              DataField = 'Corrupt'
+              DataSource = DataSourceDir
+              ParentShowHint = False
+              ShowHint = True
+              TabOrder = 1
+              ValueChecked = '1'
+              ValueUnchecked = '0'
+            end
+            object memInfo: TDBMemo
+              Left = 104
+              Height = 48
+              Top = 64
+              Width = 454
+              Anchors = [akLeft, akRight, akBottom]
+              DataField = 'Info'
+              DataSource = DataSourceDir
+              OnEditingDone = memInfoEditingDone
+              TabOrder = 3
+            end
+            object lblTags: TLabel
+              Left = 96
+              Height = 15
+              Top = 8
+              Width = 28
+              Anchors = [akLeft, akBottom]
+              Caption = 'Tags:'
+              ParentColor = False
+            end
+            object edTags: TDBEdit
+              Left = 104
+              Height = 23
+              Hint = 'tags divided with comma'
+              Top = 24
+              Width = 454
+              DataField = 'Tags'
+              DataSource = DataSourceDir
+              Anchors = [akLeft, akRight, akBottom]
+              MaxLength = 0
+              ParentShowHint = False
+              ShowHint = True
+              TabOrder = 2
+              OnEditingDone = edTagsEditingDone
+            end
+          end
+        end
+      end
+      object TabSheet2: TTabSheet
+        Caption = 'File-Browser'
+        ClientHeight = 590
+        ClientWidth = 564
+        TabVisible = False
+        object ShellTreeView1: TShellTreeView
+          Left = 0
+          Height = 259
+          Top = 0
+          Width = 564
+          Align = alTop
+          FileSortType = fstNone
+          TabOrder = 0
+          ObjectTypes = [otFolders]
+          ShellListView = LstBrowse
+        end
+        object LstBrowse: TShellListView
+          Left = 0
+          Height = 326
+          Top = 264
+          Width = 564
+          Align = alClient
+          Color = clDefault
+          Mask = '*.d64;*.g64;*.d71;*.d81'
+          TabOrder = 1
+          OnClick = LstBrowseClick
+          OnKeyUp = LstBrowseKeyUp
+          ObjectTypes = [otNonFolders]
+          ShellTreeView = ShellTreeView1
+        end
+        object Splitter1: TSplitter
+          Cursor = crVSplit
+          Left = 0
+          Height = 5
+          Top = 259
+          Width = 564
+          Align = alTop
+          ResizeAnchor = akTop
+        end
+      end
+    end
+  end
+  object Splitter2: TSplitter
+    Left = 574
+    Height = 620
+    Top = 0
+    Width = 5
+    Align = alRight
+    ResizeAnchor = akRight
+  end
+  object MainMenu1: TMainMenu
+    Left = 968
+    Top = 96
+    object mnuFile: TMenuItem
+      Caption = '&File'
+      object MenuItem2: TMenuItem
+        Caption = '&Database'
+        object mnuNew: TMenuItem
+          Caption = '&New'
+          ShortCut = 16462
+          OnClick = mnuNewClick
+        end
+        object mnuOpen: TMenuItem
+          Caption = '&Open'
+          ShortCut = 16463
+          OnClick = mnuOpenClick
+        end
+      end
+      object Separator1: TMenuItem
+        Caption = '-'
+      end
+      object mnuImport: TMenuItem
+        Caption = '&Import/Sync'
+        Enabled = False
+        ShortCut = 24649
+        OnClick = mnuImportClick
+      end
+      object Separator2: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem1: TMenuItem
+        Caption = '&Properties'
+        OnClick = MenuItem1Click
+      end
+      object Separator3: TMenuItem
+        Caption = '-'
+      end
+      object mnuClose: TMenuItem
+        Caption = '&Close'
+        OnClick = mnuCloseClick
+      end
+    end
+    object mnuRecord: TMenuItem
+      Caption = '&Record'
+      object mnuOpenRec: TMenuItem
+        Caption = '&Open'
+        OnClick = mnuOpenRecClick
+      end
+      object mnuOpenLocationRec: TMenuItem
+        Caption = '&Open location'
+        OnClick = mnuOpenLocationRecClick
+      end
+      object Separator6: TMenuItem
+        Caption = '-'
+      end
+      object mnuFavouriteRec: TMenuItem
+        Caption = 'Mark as favourite'
+        ShortCut = 70
+        OnClick = mnuFavouriteRecClick
+      end
+      object mnuCorruptRec: TMenuItem
+        Caption = 'Mark as corrupt'
+        ShortCut = 67
+        OnClick = mnuCorruptRecClick
+      end
+      object Separator7: TMenuItem
+        Caption = '-'
+      end
+      object mnuDeleteRec: TMenuItem
+        Caption = 'Delete'
+        ShortCut = 46
+        OnClick = mnuDeleteRecClick
+      end
+    end
+    object mnuExtras: TMenuItem
+      Caption = '&Extras'
+      object mnuOptions: TMenuItem
+        Caption = 'Options'
+        OnClick = mnuOptionsClick
+      end
+    end
+    object mnuHelp: TMenuItem
+      Caption = '&Help'
+      object mnuManual: TMenuItem
+        Caption = '&Manual'
+        OnClick = mnuManualClick
+      end
+      object Separator8: TMenuItem
+        Caption = '-'
+      end
+      object mnuAbout: TMenuItem
+        Caption = '&About'
+        OnClick = mnuAboutClick
+      end
+    end
+  end
+  object Database_OpenDialog: TOpenDialog
+    DefaultExt = '.sl3'
+    Filter = 'FluffyFloppy64 Database|*.sl3'
+    Left = 680
+    Top = 96
+  end
+  object DataSourceDir: TDataSource
+    DataSet = SQLQueryDir
+    Left = 680
+    Top = 240
+  end
+  object SQLQueryDir: TSQLQuery
+    PacketRecords = -1
+    IndexFieldNames = 'idxImg'
+    FieldDefs = <>
+    Transaction = ATransaction
+    SQL.Strings = (
+      ''
+      ''
+    )
+    Params = <>
+    Macros = <>
+    UpdateMode = upWhereAll
+    Left = 680
+    Top = 176
+  end
+  object SQLQueryDirTxt: TSQLQuery
+    PacketRecords = -1
+    FieldDefs = <>
+    SQL.Strings = (
+      ''
+      ''
+    )
+    Params = <>
+    Macros = <>
+    UpdateMode = upWhereAll
+    Left = 760
+    Top = 176
+  end
+  object DataSourceDirTxt: TDataSource
+    DataSet = SQLQueryDirTxt
+    Left = 752
+    Top = 240
+  end
+  object ATransaction: TSQLTransaction
+    Active = False
+    Left = 848
+    Top = 176
+  end
+  object ImageList1: TImageList
+    Left = 896
+    Top = 96
+    Bitmap = {
+      4C7A040000001000000010000000F00300000000000078DAED534D4C5457187D
+      D588A8416DE2B031317161C0C46E6C3463622BD8D845376ADBE9A02B5393BA32
+      326C6B42DC14565D48FC5909A636C619B1A6B64252DA451BB1C65846E5BD9181
+      CCBF303F30802888608EDF99DC6770E60D7D33EC882F399937F7DE73EE39DFF7
+      3D4D5BD68F4BA19CC721482B38CAE0FB0450F096E11B797095E83B9F6F3787CF
+      826B37876B11EEFFE528E6DB6E0E9F0D6EB9FD78FF2CFFA794F9F159F0AB0519
+      1BDC8C3A6BF57CB384EFC74E0E9F8D3A14CBB1986F3B395C4BE887AF8C7E9A39
+      4AF16D95C3B59C871E400E73D3F1CAC9B877B7714DFB5EF769ED82F3FF79B513
+      9309EF56D95B619EB34230F8E307E13F9D6774AF16D53BD762E0760D02B7B640
+      F7AD7C2D3A77C27F39BF28C6E5BDE41A37AA10BE7B1CD9743F26C76318CF8691
+      8A7623F8C71EEACCC47A9D7B8178019F9EE5DE48A8F718C6520FF17C2A8999E9
+      2C5E3C4F8B4E14C9F06D3CE9FA0803B7B45FA647BD1FE6F31F7BB5D37AE71AA4
+      12F730918D08771CF3F3B3987DF90C5393C3184D0510F1FF807EAF9694BB3EC9
+      E7CBDD1D81DFB62139FC08D9B190DC9B11EE54CEC3B38904324903B1E075F25F
+      09FF60015FEA6CFCBA194FE3F79196B3F440DE84781FCB0C6224D187B07E89FC
+      17C22FA8237BD42F758E04AE6238F14034FA319A7E824CCA104F0F118FDC45F0
+      CE77E40F097F6741FDA4BFEC51A0FB6384F49FE57C2F12D17F73BC68E86F0CDE
+      6F867ED301C9D929FC7516FD5BC1FE8A8719E3F75A0CDE3B8DA1C71D18F29FC3
+      C03FDFE6B87237110BF538BF2C3607EC2F7BC43AB356CC4BCFBC975CA5F1921A
+      72E7AA428DB8C6FEB2478243AC15F3D273B8C77958B833D410BD98F8FD6AB179
+      B682681CE27C2B8D59D1F85A7C54D8E5D333BD3383E923D2E3FCBC541F4A833E
+      5EEBD7B4E652F9F421DE0F08BF39E5F76CCBDF4F2651D9DD8D1DD5D568A8A981
+      A7B6161EBE777561C7C8082A17D3EEE880A3A10117851310CC0BA0302F5A01B7
+      1B17DADBB1C98ADBDA8ACFE49C21888AC6D9C646EC6A6A4215C177596B93BD98
+      E8E82D2DD8BF907BF9321C8A9B387A149F4A860A8B5C15B2B78F67A861FA605E
+      E539AAB81B257FBDDF8F2A93CB77AE714F69C49885F560AD98979E7907CFC9FF
+      A7F5F568218FE03BD794C66A66110F066BCADAB23ECC68DE5557973BFF4A7065
+      FB765C91DF39596B353D9D3A85DD5C13AE5B749A58638F07EB4DBF7D7DA892F5
+      9F0473AAF65765EDEDBEDCB55EF5C5A37A5C942F28E09F3C890DE488B7C6A5FA
+      5F50BF36BBF593DABFAD1F7B20FFCFC97E5C7EEBEDF64FEEBB60CE33678133A1
+      E6671FEFB0989FD5478EA04ECEBD333F2638934A83DA6DCCC83A137CA7E762F3
+      6B829A9C2B66637D167C3FEC8321BAE78B7D3F269849CD959BFD55DFAFBBD8F7
+      FB06783CC330
+    }
+  end
+  object SQLQueryFP: TSQLQuery
+    PacketRecords = -1
+    FieldDefs = <>
+    SQL.Strings = (
+      ''
+      ''
+    )
+    Params = <>
+    Macros = <>
+    Left = 848
+    Top = 240
+  end
+  object mnuKontextDBGridDir: TPopupMenu
+    Left = 968
+    Top = 152
+    object mnuOpenImage: TMenuItem
+      Caption = 'Open'
+      OnClick = mnuOpenImageClick
+    end
+    object mnuOpenFileBrowser: TMenuItem
+      Caption = 'Open with File-Browser'
+      OnClick = mnuOpenFileBrowserClick
+    end
+    object Separator9: TMenuItem
+      Caption = '-'
+    end
+    object mnuOpenExplorer: TMenuItem
+      Caption = 'Go to location'
+      OnClick = mnuOpenExplorerClick
+    end
+    object Separator4: TMenuItem
+      Caption = '-'
+    end
+    object mnuFavourite: TMenuItem
+      Caption = 'Mark as favourite'
+      ShortCut = 70
+      OnClick = mnuFavouriteClick
+    end
+    object mnuCorrupt: TMenuItem
+      Caption = 'Mark as corrupt'
+      ShortCut = 67
+      OnClick = mnuCorruptClick
+    end
+    object Separator5: TMenuItem
+      Caption = '-'
+    end
+    object mnuSync: TMenuItem
+      Caption = 'Sync entry'
+      OnClick = mnuSyncClick
+    end
+    object Separator10: TMenuItem
+      Caption = '-'
+    end
+    object mnuDelete: TMenuItem
+      Caption = 'Delete'
+      ShortCut = 46
+      OnClick = mnuDeleteClick
+    end
+  end
+  object SQLQueryDB: TSQLQuery
+    PacketRecords = -1
+    FieldDefs = <>
+    SQL.Strings = (
+      ''
+      ''
+    )
+    Params = <>
+    Macros = <>
+    UpdateMode = upWhereAll
+    Left = 608
+    Top = 176
+  end
+  object SQLQuerySearch: TSQLQuery
+    PacketRecords = -1
+    FieldDefs = <>
+    SQL.Strings = (
+      ''
+      ''
+    )
+    Params = <>
+    Macros = <>
+    Left = 752
+    Top = 304
+  end
+  object DataSourceSearch: TDataSource
+    DataSet = SQLQuerySearch
+    Left = 752
+    Top = 368
+  end
+  object SQLQueryTrks: TSQLQuery
+    PacketRecords = -1
+    FieldDefs = <>
+    SQL.Strings = (
+      ''
+      ''
+    )
+    Params = <>
+    Macros = <>
+    Left = 848
+    Top = 304
+  end
+  object SQLite3Connection1: TSQLite3Connection
+    Connected = False
+    LoginPrompt = False
+    KeepConnection = False
+    AlwaysUseBigint = False
+    Left = 952
+    Top = 224
+  end
+end

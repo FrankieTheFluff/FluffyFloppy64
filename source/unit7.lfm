@@ -1,0 +1,113 @@
+object frmSync: TfrmSync
+  Left = 941
+  Height = 242
+  Top = 311
+  Width = 600
+  BorderStyle = bsDialog
+  Caption = 'Sync directories'
+  ClientHeight = 242
+  ClientWidth = 600
+  OnClose = FormClose
+  OnShow = FormShow
+  Position = poMainFormCenter
+  LCLVersion = '2.2.6.0'
+  object grSyncProgress: TGroupBox
+    Left = 5
+    Height = 128
+    Top = 72
+    Width = 589
+    Caption = 'Progress:'
+    ClientHeight = 108
+    ClientWidth = 585
+    TabOrder = 2
+    object lblSync: TLabel
+      Left = 16
+      Height = 15
+      Top = 24
+      Width = 41
+      Caption = 'Synced:'
+      ParentColor = False
+    end
+    object lblSyncCount: TLabel
+      Left = 88
+      Height = 15
+      Top = 24
+      Width = 6
+      Caption = '0'
+      ParentColor = False
+    end
+    object memoSync: TMemo
+      Left = 8
+      Height = 48
+      Top = 48
+      Width = 568
+      Enabled = False
+      ReadOnly = True
+      TabOrder = 0
+    end
+    object memoProgressBar: TProgressBar
+      Left = 8
+      Height = 20
+      Top = 1
+      Width = 568
+      TabOrder = 1
+    end
+  end
+  object GroupBox1: TGroupBox
+    Left = 5
+    Height = 68
+    Top = 0
+    Width = 589
+    Caption = 'Sync directory:'
+    ClientHeight = 48
+    ClientWidth = 585
+    TabOrder = 3
+    object cbSyncDir: TComboBox
+      Left = 8
+      Height = 23
+      Hint = 'Select directory to sync'
+      Top = 1
+      Width = 568
+      Anchors = [akTop, akLeft, akRight]
+      DropDownCount = 20
+      ItemHeight = 15
+      ItemIndex = 0
+      Items.Strings = (
+        'Select directory to sync'
+      )
+      OnChange = cbSyncDirChange
+      ParentShowHint = False
+      ReadOnly = True
+      ShowHint = True
+      Style = csDropDownList
+      TabOrder = 0
+      Text = 'Select directory to sync'
+      TextHint = 'Select directory to sync'
+    end
+    object lblImportFound: TLabel
+      Left = 16
+      Height = 15
+      Top = 28
+      Width = 73
+      Caption = '0 file(s) found'
+      ParentColor = False
+    end
+  end
+  object btClose: TButton
+    Left = 5
+    Height = 25
+    Top = 208
+    Width = 93
+    Caption = 'Close'
+    TabOrder = 0
+  end
+  object btSync: TButton
+    Left = 501
+    Height = 25
+    Top = 208
+    Width = 93
+    Caption = 'Sync'
+    OnClick = btSyncClick
+    TabOrder = 1
+  end
+end
