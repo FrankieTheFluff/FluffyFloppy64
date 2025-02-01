@@ -23,8 +23,7 @@ Database: SQLite
 https://www.sqlite.org/index.html
 -----------------------------------------------------------------
 Converter: NibTools (nibconv.exe) 
-https://https://github.com/markusC64/nibtools
-https://c64preservation.com/dp.php?pg=nibtools
+https://github.com/rittwage/nibtools
 -----------------------------------------------------------------
 
 Release notes
@@ -32,6 +31,10 @@ Release notes
 
 
 # Unfinished feature: "Refresh"/"Delete" database entries
+
+v0.76 - 2025-02-01
+* First release with sourcecode
+- I began to clean sourcecode... Still a lot to do ;)
 
 v0.75 - 2025-01-25
 * Import: Shows now hints/errors during import
