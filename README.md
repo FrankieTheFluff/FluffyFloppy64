@@ -38,6 +38,6 @@ https://www.sqlite.org/index.html
 
 -----------------------------------------------------------------
 Converter: NibTools (nibconv.exe) 
-https://github.com/rittwage/nibtools)
+https://github.com/rittwage/nibtools
 
 -----------------------------------------------------------------
