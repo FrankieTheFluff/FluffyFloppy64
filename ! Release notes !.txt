@@ -30,7 +30,19 @@ Release notes
 *new, +update, -bugfix, #unfixed
 
 
-# Unfinished feature: "Refresh"/"Delete" database entries
+# Unfinished feature: Sync "Refresh"/"Delete" database entries
+# Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
+
+v0.77 - 2025-02-09
+* Database: v107 Support ZIP archives
+* Database: v107 Properties: possibility to add a comment
++ Database: Slightly faster browsing through the entries
++ Database: "sqlite.dll" v3.49 2025-02-06
+- Startup: Fixes a crash if database has no entries on startup
+* Import: New ini entry: 'FluffyFloppy64', 'DBModulo', 50 (Default: 50, Database "Commit" every N imported entries)
++ Import: Select Imagetypes to import
+- Import: Shows now correct number of succesfully additional imported files
+- Import: Improved sourcecode, less "refreshes"
 
 v0.76 - 2025-02-01
 * First release with sourcecode

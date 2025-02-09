@@ -204,7 +204,7 @@ object Form3: TForm3
       Height = 15
       Top = 264
       Width = 434
-      Caption = '"sqlite3.dll" v3.48 (2025-01-14) (c) 2000-2025 SQLite.org Team'
+      Caption = '"sqlite3.dll" v3.49 (2025-02-06) (c) 2000-2025 SQLite.org Team'
       Font.CharSet = ANSI_CHARSET
       Font.Color = 16365429
       Font.Height = -13

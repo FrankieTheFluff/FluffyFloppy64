@@ -1,6 +1,6 @@
 -----------------------------------------------------------------
 
-FluffyFloppy64 v0.76 - 2025-02-01
+FluffyFloppy64 v0.77 - 2025-02-09
 -
 
 A Microsoft(r) Windows(r) tool to catalog 
@@ -11,8 +11,6 @@ FREEWARE / OpenSource
 License: GNU General Public License v2.0
 
 (c) 2021-2025 FrankieTheFluff
-
-Sourcecode will follow when cleaned...
 
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 
@@ -38,6 +36,6 @@ https://www.sqlite.org/index.html
 
 -----------------------------------------------------------------
 Converter: NibTools (nibconv.exe) 
-https://https://github.com/markusC64/nibtools
+https://github.com/rittwage/nibtools
 
 -----------------------------------------------------------------

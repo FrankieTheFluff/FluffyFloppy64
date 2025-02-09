@@ -37,7 +37,7 @@ object Form5: TForm5
       'Opens an existing database'
       ''
       'Import:'
-      'Imports images into the already opened database'
+      'Imports floppy disk images, also contained in ZIP archives, into the already opened database'
       ''
       'Filter/Search:'
       'Filter and search the content (path or search) of the database. "*" allowed'

@@ -23,7 +23,7 @@ interface
 uses
   Classes, SysUtils, StrUtils, Process, SQLite3Conn, SQLDB, DB, Forms, Controls,
   Graphics, Dialogs, StdCtrls, ComCtrls, Menus, ExtCtrls, Buttons, DBGrids, ShellAPI,
-  ShellCtrls, FileUtil, Inifiles, LCLIntf, DBCtrls, LazUTF8, LazFileUtils, windows;
+  ShellCtrls, FileUtil, Inifiles, LCLIntf, DBCtrls, LazUTF8, LazFileUtils, windows, Zipper;
 
 type
   TByteArr = array of Byte;
@@ -45,6 +45,7 @@ type
     cbFilterFav: TCheckBox;
     cbFilterCorrupt: TCheckBox;
     cbEmulator: TComboBox;
+    DataSourceDB: TDataSource;
     DataSourceDir: TDataSource;
     DataSourceDirTxt: TDataSource;
     DataSourceSearch: TDataSource;
@@ -78,8 +79,8 @@ type
     lstBoxASCII: TMemo;
     lstBoxSectors: TMemo;
     MemoBAMHint: TMemo;
-    MenuItem1: TMenuItem;
-    MenuItem2: TMenuItem;
+    mnuProperties: TMenuItem;
+    mnuDatabase: TMenuItem;
     mnuSync: TMenuItem;
     Separator10: TMenuItem;
     Separator9: TMenuItem;
@@ -167,6 +168,7 @@ type
     procedure DBGridDirTxtTitleClick(Column: TColumn);
     procedure EdSQLSearchChange(Sender: TObject);
     procedure edTagsEditingDone(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -174,7 +176,7 @@ type
     procedure LstBrowseKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure LstBxDirectoryPETSCIIDblClick(Sender: TObject);
     procedure memInfoEditingDone(Sender: TObject);
-    procedure MenuItem1Click(Sender: TObject);
+    procedure mnuPropertiesClick(Sender: TObject);
     procedure mnuDeleteRecClick(Sender: TObject);
     procedure mnuCorruptRecClick(Sender: TObject);
     procedure mnuFavouriteRecClick(Sender: TObject);
@@ -194,10 +196,9 @@ type
     procedure mnuAboutClick(Sender: TObject);
     procedure mnuImportClick(Sender: TObject);
     procedure DBFilter;
-    procedure DBGridDir_ReadEntry;
+    procedure DBGridDir_ReadEntry(aImageName : String);
     procedure DBGridDirTxt_ReadEntry;
     procedure DBSearch;
-    procedure EmptyTemp;
     procedure Init_FilePath;
     procedure mnuSyncClick(Sender: TObject);
     procedure PageControl1Change(Sender: TObject);
@@ -210,6 +211,7 @@ type
     procedure LoadBAM_D81(aFileName : String);
     procedure LoadTS(aFileName : String);
     procedure Init_TrkSec_HexDropdown(aImageName : String);
+    procedure UnpackFileFullContainsPipe(aFileFull : String);
     procedure LoadDir;
     procedure Init_SectorsHexDropDown;
     procedure LstBrowseClick(Sender: TObject);
@@ -230,6 +232,7 @@ var
   Dev_mode : bool;
   DB_RecCount : Integer;
   sAppPath, sAppVersion, sAppCaption, sAppDate: String;
+  FileFull : String; // Global, check if field contains pipe "|"
   IniFluff : TInifile;
   arrStr: array of array of String;
   arrD64 : array [01..40, 0..20] of String;
@@ -256,11 +259,11 @@ var
   trk, sec, secPos : integer;
   s, ImageSize : String;
 Begin
+ result := false;
  // Images read into array arrD64
   BA := LoadByteArray(aImageName);
   s := ByteArraytoHexString(BA);
   ImageSize := ByteArrayToHexString(BA);
-
   secPos := 1;
   for trk := 01 to 17 do  // ----------------------------------------------01-17
    begin
@@ -292,10 +295,14 @@ Begin
       begin
        arrD64[trk, sec] := copy(s,secPos, 512);  // 256bytes per sector
        secPos := secPos + 512;
-       if (trk = 35) and ((length(ImageSize) div 2) <= 175531) then exit // 35 tracks only
+       if (trk = 35) and ((length(ImageSize) div 2) <= 175531) then
+        begin
+           result := true;
+           exit // 35 tracks only
+        end;
       end;
    end;
-  //result := true;
+  result := true;
 end;
 
 function Init_ArrD71(aImageName : String): Boolean;  // Read D71 image into array
@@ -304,6 +311,7 @@ var
   trk, sec, secPos : integer;
   s : String;
 Begin
+ result := false;
  // Images read into array arrD71
   BA := LoadByteArray(aImageName);
   s := ByteArraytoHexString(BA);
@@ -373,7 +381,7 @@ Begin
        secPos := secPos + 512;
       end;
    end;
-  //result := true;
+  result := true;
 end;
 
 function Init_ArrD81(aImageName : String): Boolean;  // Read D81 image into array
@@ -382,6 +390,7 @@ var
   trk, sec, secPos : integer;
   s : String;
 begin
+ result := false;
  if fileexists(aImageName) then
   begin
    BA := LoadByteArray(aImageName);
@@ -395,7 +404,7 @@ begin
        secPos := secPos + 512;
       end;
     end;
-   //result := true;
+   result := true;
   end;
 end;
 
@@ -424,34 +433,75 @@ begin
   end;
 end;
 
-procedure DumpExceptionCallStack(E: Exception);
+procedure TForm1.UnpackFileFullContainsPipe(aFileFull : String);
 var
-  I: Integer;
-  Frames: PPointer;
-  Report: string;
+ tmpPath : String;
+ ImageFileArray : TStringArray;
 begin
-  Report := 'Program exception!' + LineEnding + 'Stacktrace:' + LineEnding + LineEnding;
-  if E <> nil then
+ // FileFull = SQLQueryDir.FieldByName('FileFull').Text
+ // or
+ // FileFull = "....|...." ( = archive )
+
+ If aFileFull.Contains('|') = true then  // check if path locates an archive
   begin
-    Report := Report + 'Exception class: ' + E.ClassName + LineEnding + 'Message: ' + E.Message + LineEnding;
-  end;
-  Report := Report + BackTraceStrFunc(ExceptAddr);
-  Frames := ExceptFrames;
-  for I := 0 to ExceptFrameCount - 1 do
-    Report := Report + LineEnding + BackTraceStrFunc(Frames[I]);
-  ShowMessage(Report);
-  Halt; // End of program execution
+   ImageFileArray := aFileFull.Split('|');
+   tmpPath := DirCheck(IniFluff.ReadString('Options', 'FolderTemp', ''));
+   FileFull := tmpPath + ExtractFileName(ImageFileArray[0]) + ImageFileArray[1]; //location of D64 in tmp folder  "c:\temp\mops.zip\123.d64"
+   if fileexists(FileFull) = false then  // check if archive already unpacked
+    begin
+     If DirectoryExists(tmpPath + ExtractFileName(ImageFileArray[0])) = false then
+      begin
+       CreateDir(tmpPath + ExtractFileName(ImageFileArray[0])); // folder to temporarly unzip archive
+      end;
+     UnPackFiles(ImageFileArray[0], '', tmpPath + ExtractFileName(ImageFileArray[0]));
+    end;
+   end
+ else FileFull := aFileFull;
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
+var
+ GetDB : String;
 begin
-
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - Check if database exists and load if autostart selected');
+ GetDB := IniFluff.ReadString('Database', 'Location', ''); // location of database
+ If fileexists(GetDB) then
+  begin
+   If IniFluff.ReadBool('Start', 'OpenDatabase', true) = true then
+    begin
+     OpenDatabase(GetDB);
+     Database_OpenDialog.FileName := GetDB;
+     if SQLQueryDir.RecordCount = 0 then exit;
+     if SQLQueryDir.RecordCount > 0 then
+      begin
+       If FileExists(FileFull) then
+        begin
+         // UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+         // GetDirectoryImage(FileFull, TgScratch.Checked, TgCShift.Checked);
+         // Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
+        end
+       else
+       begin
+        LstBxDirectoryPETSCII.Clear;
+        LstBxDirectoryPETSCII.Items.Add('File not found!');
+        Statusbar1.Panels[4].Text := 'Cannot load directory from image. File not found!';
+       end;
+      EdSQLSearch.Enabled:=true;
+      cbSQLSearch.Enabled:=true;
+      TgScratch.Enabled:=true;
+      TgCShift.Enabled:=true;
+      cbFavourite.Enabled:=true;
+      cbCorrupt.Enabled:=true;
+      Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
+    end;
+    end;
+  end;
 end;
 
 procedure TForm1.LstBrowseKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
- FileFull, FileSizeImg, FileNameExt : String;
+ FileSizeImg, FileNameExt : String;
  BA : TByteArr;
  s, ImageSize : String;
 begin
@@ -491,8 +541,11 @@ end;
 procedure TForm1.LstBxDirectoryPETSCIIDblClick(Sender: TObject);
 var
   i, answer : Integer;
-  s, img_file : string;
+  s : string;
+  img_file : string; // File Browser
 begin
+
+ UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
 
   // CCS64###################################################################
   If cbEmulator.Text = 'CCS64' then
@@ -505,7 +558,7 @@ begin
          exit;
         end;
      end;
-    If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d81' then
+    If lowercase(ExtractFileExt(FileFull)) = '.d81' then
      begin
       answer := MessageDlg('CCS64 does not support d81 images!',mtWarning, [mbOK], 0);
       if answer = mrOk then
@@ -513,7 +566,7 @@ begin
         exit;
        end;
      end;
-    If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d71' then
+    If lowercase(ExtractFileExt(FileFull)) = '.d71' then
      begin
       answer := MessageDlg('CCS64 does not support d71 images!',mtWarning, [mbOK], 0);
       if answer = mrOk then
@@ -524,13 +577,13 @@ begin
     DBGridDirTxt_ReadEntry;
     if LstBxDirectoryPETSCII.ItemIndex = 0 then
      begin
-      OpenEmu(IniFluff.ReadString('CCS64', 'Location', ''),'"' +  SQLQueryDir.FieldByName('FileFull').Text + '" -autorun');
+      OpenEmu(IniFluff.ReadString('CCS64', 'Location', ''),'"' + FileFull + '" -autorun');
      end;
     if LstBxDirectoryPETSCII.ItemIndex > 0 then
      begin
       i := LstBxDirectoryPETSCII.ItemIndex;
       s := lowercase(LstBxDirectoryTXT.Items[i-1]);
-      OpenEmu(IniFluff.ReadString('CCS64', 'Location', ''),'"' +  SQLQueryDir.FieldByName('FileFull').Text + ',' + IntToStr(i-1) + '"');
+      OpenEmu(IniFluff.ReadString('CCS64', 'Location', ''),'"' + FileFull + ',' + IntToStr(i-1) + '"');
      end;
    end;
   // CCS64 mount only ########################################################
@@ -544,7 +597,7 @@ begin
          exit;
         end;
      end;
-    If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d81' then
+    If lowercase(ExtractFileExt(FileFull)) = '.d81' then
      begin
       answer := MessageDlg('CCS64 does not support d81 images!',mtWarning, [mbOK], 0);
       if answer = mrOk then
@@ -552,7 +605,7 @@ begin
         exit;
        end;
      end;
-    If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d71' then
+    If lowercase(ExtractFileExt(FileFull)) = '.d71' then
      begin
       answer := MessageDlg('CCS64 does not support d71 images!',mtWarning, [mbOK], 0);
       if answer = mrOk then
@@ -560,7 +613,7 @@ begin
         exit;
        end;
      end;
-    OpenEmu(IniFluff.ReadString('CCS64', 'Location', ''),'"' +  SQLQueryDir.FieldByName('FileFull').Text + ',-1"');
+    OpenEmu(IniFluff.ReadString('CCS64', 'Location', ''),'"' + FileFull + ',-1"');
    end;
 
   // Denise #################################################################
@@ -574,7 +627,7 @@ begin
          exit;
         end;
      end;
-     If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d81' then
+     If lowercase(ExtractFileExt(FileFull)) = '.d81' then
       begin
        answer := MessageDlg('Denise does not support d81 images!',mtWarning, [mbOK], 0);
        if answer = mrOk then
@@ -582,7 +635,7 @@ begin
          exit;
         end;
       end;
-     If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d71' then
+     If lowercase(ExtractFileExt(FileFull)) = '.d71' then
       begin
        answer := MessageDlg('Denise does not support d71 images!',mtWarning, [mbOK], 0);
        if answer = mrOk then
@@ -593,13 +646,13 @@ begin
     DBGridDirTxt_ReadEntry;
     if LstBxDirectoryPETSCII.ItemIndex = 0 then
      begin
-      OpenEmu(IniFluff.ReadString('Denise', 'Location', ''),'"' +  SQLQueryDir.FieldByName('FileFull').Text + '" -autostart-prg 2');
+      OpenEmu(IniFluff.ReadString('Denise', 'Location', ''),'"' + FileFull + '" -autostart-prg 2');
      end;
     if LstBxDirectoryPETSCII.ItemIndex > 0 then
      begin
       i := LstBxDirectoryPETSCII.ItemIndex;
       s := lowercase(LstBxDirectoryTXT.Items[i-1]);
-      OpenEmu(IniFluff.ReadString('Denise', 'Location', ''), ' -autostart "' + SQLQueryDir.FieldByName('FileFull').Text + ':' + s + '"');
+      OpenEmu(IniFluff.ReadString('Denise', 'Location', ''), ' -autostart "' + FileFull + ':' + s + '"');
      end;
    end;
   // Denise mount only ######################################################
@@ -613,7 +666,7 @@ begin
          exit;
         end;
      end;
-     If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d81' then
+     If lowercase(ExtractFileExt(FileFull)) = '.d81' then
       begin
        answer := MessageDlg('Denise does not support d81 images!',mtWarning, [mbOK], 0);
        if answer = mrOk then
@@ -621,7 +674,7 @@ begin
          exit;
         end;
       end;
-     If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d71' then
+     If lowercase(ExtractFileExt(FileFull)) = '.d71' then
       begin
        answer := MessageDlg('Denise does not support d71 images!',mtWarning, [mbOK], 0);
        if answer = mrOk then
@@ -629,7 +682,7 @@ begin
          exit;
         end;
       end;
-    OpenEmu(IniFluff.ReadString('Denise', 'Location', ''), ' -attach8 "' + SQLQueryDir.FieldByName('FileFull').Text + '"');
+    OpenEmu(IniFluff.ReadString('Denise', 'Location', ''), ' -attach8 "' + FileFull + '"');
    end;
   // DirMaster ##############################################################
   If cbEmulator.Text = 'DirMaster' then
@@ -642,7 +695,7 @@ begin
          exit;
         end;
      end;
-    OpenEmu(IniFluff.ReadString('DirMaster', 'Location', ''), ' "' + SQLQueryDir.FieldByName('FileFull').Text + '"');
+    OpenEmu(IniFluff.ReadString('DirMaster', 'Location', ''), ' "' + FileFull + '"');
    end;
   // Hoxs64 #################################################################
   If cbEmulator.Text = 'Hoxs64' then
@@ -655,7 +708,7 @@ begin
          exit;
         end;
      end;
-     If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d81' then
+     If lowercase(ExtractFileExt(FileFull)) = '.d81' then
       begin
        answer := MessageDlg('Hoxs64 does not support d81 images!',mtWarning, [mbOK], 0);
        if answer = mrOk then
@@ -663,7 +716,7 @@ begin
          exit;
         end;
       end;
-     If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d71' then
+     If lowercase(ExtractFileExt(FileFull)) = '.d71' then
       begin
        answer := MessageDlg('Hoxs64 does not support d71 images!',mtWarning, [mbOK], 0);
        if answer = mrOk then
@@ -674,13 +727,13 @@ begin
     DBGridDirTxt_ReadEntry;
     if LstBxDirectoryPETSCII.ItemIndex = 0 then
      begin
-      OpenEmu(IniFluff.ReadString('Hoxs64', 'Location', ''),' -autoload "' +  SQLQueryDir.FieldByName('FileFull').Text + '"');
+      OpenEmu(IniFluff.ReadString('Hoxs64', 'Location', ''),' -autoload "' + FileFull + '"');
      end;
     if LstBxDirectoryPETSCII.ItemIndex > 0 then
      begin
       i := LstBxDirectoryPETSCII.ItemIndex;
       s := lowercase(LstBxDirectoryTXT.Items[i-1]);
-      OpenEmu(IniFluff.ReadString('Hoxs64', 'Location', ''),' -autoload "' +  SQLQueryDir.FieldByName('FileFull').Text + '" #' + IntToStr(i-1) + '');
+      OpenEmu(IniFluff.ReadString('Hoxs64', 'Location', ''),' -autoload "' + FileFull + '" #' + IntToStr(i-1) + '');
      end;
    end;
   // Hoxs64 mount only #######################################################
@@ -694,7 +747,7 @@ begin
          exit;
         end;
      end;
-     If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d81' then
+     If lowercase(ExtractFileExt(FileFull)) = '.d81' then
       begin
        answer := MessageDlg('Hoxs64 does not support d81 images!',mtWarning, [mbOK], 0);
        if answer = mrOk then
@@ -702,7 +755,7 @@ begin
          exit;
         end;
       end;
-     If lowercase(ExtractFileExt(SQLQueryDir.FieldByName('FileFull').Text)) = '.d71' then
+     If lowercase(ExtractFileExt(FileFull)) = '.d71' then
       begin
        answer := MessageDlg('Hoxs64 does not support d71 images!',mtWarning, [mbOK], 0);
        if answer = mrOk then
@@ -710,7 +763,7 @@ begin
          exit;
         end;
       end;
-    OpenEmu(IniFluff.ReadString('Hoxs64', 'Location', ''),' -mountdisk "' +  SQLQueryDir.FieldByName('FileFull').Text + '"');
+    OpenEmu(IniFluff.ReadString('Hoxs64', 'Location', ''),' -mountdisk "' + FileFull + '"');
    end;
   // Vice ###################################################################
   If cbEmulator.Text = 'Vice' then
@@ -745,13 +798,13 @@ begin
     DBGridDirTxt_ReadEntry;
     if LstBxDirectoryPETSCII.ItemIndex = 0 then
      begin
-      OpenEmu(IniFluff.ReadString('VICE', 'Location', ''), ' -autostart "' + SQLQueryDir.FieldByName('FileFull').Text + '"');
+      OpenEmu(IniFluff.ReadString('VICE', 'Location', ''), ' -autostart "' + FileFull + '"');
      end;
     if LstBxDirectoryPETSCII.ItemIndex > 0 then
      begin
       i := LstBxDirectoryPETSCII.ItemIndex;
       s := lowercase(LstBxDirectoryTXT.Items[i-1]);
-      OpenEmu(IniFluff.ReadString('VICE', 'Location', ''), ' -autostart "' + SQLQueryDir.FieldByName('FileFull').Text + ':' + s + '"');
+      OpenEmu(IniFluff.ReadString('VICE', 'Location', ''), ' -autostart "' + FileFull + ':' + s + '"');
      end;
    end;
 
@@ -766,7 +819,7 @@ begin
          exit;
         end;
      end;
-    OpenEmu(IniFluff.ReadString('VICE', 'Location', ''), ' -8 "' + SQLQueryDir.FieldByName('FileFull').Text + '"');
+    OpenEmu(IniFluff.ReadString('VICE', 'Location', ''), ' -8 "' + FileFull + '"');
    end;
 end;
 
@@ -782,16 +835,8 @@ begin
    end;
 end;
 
-procedure TForm1.MenuItem1Click(Sender: TObject);
+procedure TForm1.mnuPropertiesClick(Sender: TObject);
 begin
- SQLQueryDB.DataBase := AConnection;
- SQLQueryDB.SQL.Clear;
- SQLQueryDB.SQL.Add('Select * from DB');
- SQLQueryDB.Active:=true;
- Form2.sTVersion.Caption := SQLQueryDB.FieldByName('DBVersion').AsString + ' ';
- Form2.sTCreated.Caption := SQLQueryDB.FieldByName('DBCreated').AsString + ' ';
- Form2.sTLocation.Caption := IniFluff.ReadString('Database', 'Location', '');
- SQLQueryDB.Active:=false;
  Form2.showmodal;
 end;
 
@@ -881,6 +926,7 @@ begin
    end;
   try
     // Database_Create
+    If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - Step 1');
     ATransaction.Active:=false;
     //AConnection.Close;
     AConnection := TSQLite3Connection.Create(nil);
@@ -892,19 +938,21 @@ begin
     AConnection.ExecuteDirect('CREATE TABLE "DB"('+
                 ' "idDB" Integer PRIMARY KEY,'+
                 ' "DBVersion" String,'+
-                ' "DBCreated" String);');
+                ' "DBCreated" String,'+
+                ' "DBComment" Char(1024));');
     // Table FileImage
     AConnection.ExecuteDirect('CREATE TABLE "FileImage"('+
                 ' "idx" Integer PRIMARY KEY,'+
                 ' "idxImg" Integer,'+
                 ' "DateImport" DateTime,'+
                 ' "DateLast" DateTime,'+
-                ' "FilePath" Char(255),'+
+                ' "FilePath" Char(1024),'+
                 ' "FileName" Char(255),'+
                 ' "FileNameExt" Char(3),'+
                 ' "FileSizeImg" Integer,'+
                 ' "FileDateTime" DateTime,'+
                 ' "FileFull" Char(1024) NOT NULL UNIQUE,'+
+                ' "FileArchType" Char(16),'+
                 ' "DiskName" Char(16),'+
                 ' "DiskIDTxt" Char(3),'+
                 ' "DOSTypeTxt" Char(2),'+
@@ -918,7 +966,7 @@ begin
     // Table FilePath
     AConnection.ExecuteDirect('CREATE TABLE "FilePath"('+
                 ' "idFp" Integer PRIMARY KEY,'+
-                ' "FilePath" Char(1024) UNIQUE);');  // v106 = 1024
+                ' "FilePath" Char(1024) UNIQUE);');
     // Table Tracks
     AConnection.ExecuteDirect('CREATE TABLE "Tracks"('+
                 ' "idx" Integer PRIMARY KEY,'+
@@ -936,8 +984,9 @@ begin
                 ' "FileTypeTxt" Char(3),'+
                 ' FOREIGN KEY (idxTxt) REFERENCES FileImage(idxImg));');
     // Version, Created
-    AConnection.ExecuteDirect('insert into DB (idDB,DBVersion,DBCreated) values (1,''106'', ''' + DateToStr(now) + ''');');
+    AConnection.ExecuteDirect('insert into DB (idDB,DBVersion,DBCreated) values (1,''107'', ''' + DateToStr(now) + ''');');
     ATransaction.Commit;
+    If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - Step 2');
   except
     answer := MessageDlg('Unable to create new Database!',mtWarning, [mbOK], 0);
      if answer = mrOk then
@@ -946,8 +995,15 @@ begin
        exit;
       end;
   end;
+
   DBGridDir.Clear;
   mnuImport.Enabled:=true;
+  mnuOpenRec.Enabled:=true;
+  mnuOpenLocationRec.Enabled:=true;
+  mnuFavouriteRec.Enabled:=true;
+  mnuFavouriteRec.Enabled:=true;
+  mnuCorruptRec.Enabled:=true;
+  mnuDeleteRec.Enabled:=true;
   StatusBar1.Panels[0].Text:= '0/0';
   StatusBar1.Panels[1].Text:= '';
   StatusBar1.Panels[2].Text:= '';
@@ -963,7 +1019,9 @@ begin
      //
     end;
    Init_FilePath;
-   Form1.ATransaction.Active:=false;
+
+   ATransaction.Active:=false;
+   If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - End');
   end;
 end;
 
@@ -978,7 +1036,11 @@ end;
 
 procedure TForm1.mnuOpenExplorerClick(Sender: TObject);
 begin
-  SysUtils.ExecuteProcess(UTF8ToSys('explorer.exe'), '/select,'+'"'+ SQLQueryDir.FieldByName('FileFull').AsString +'"', []);
+ if SQLQueryDir.RecordCount > 0 then
+  begin
+   UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+   SysUtils.ExecuteProcess(UTF8ToSys('explorer.exe'), '/select,'+'"'+ FileFull +'"', []);
+  end;
 end;
 
 procedure TForm1.mnuOpenFileBrowserClick(Sender: TObject);
@@ -997,12 +1059,16 @@ end;
 
 procedure TForm1.mnuOpenLocationRecClick(Sender: TObject);
 begin
- SysUtils.ExecuteProcess(UTF8ToSys('explorer.exe'), '/select,'+'"'+ SQLQueryDir.FieldByName('FileFull').AsString +'"', []);
+ if SQLQueryDir.RecordCount > 0 then
+  begin
+   UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+   SysUtils.ExecuteProcess(UTF8ToSys('explorer.exe'), '/select,'+'"'+ FileFull +'"', []);
+  end;
 end;
 
 procedure TForm1.mnuOpenRecClick(Sender: TObject);
 begin
- OpenDocument(DirCheck(SQLQueryDir.FieldByName('FilePath').DisplayText) + SQLQueryDir.FieldByName('FileName').DisplayText + '.' + SQLQueryDir.FieldByName('FileNameExt').DisplayText);
+ if SQLQueryDir.RecordCount > 0 then OpenDocument(DirCheck(SQLQueryDir.FieldByName('FilePath').DisplayText) + SQLQueryDir.FieldByName('FileName').DisplayText + '.' + SQLQueryDir.FieldByName('FileNameExt').DisplayText);
 end;
 
 procedure TForm1.mnuOptionsClick(Sender: TObject);
@@ -1030,6 +1096,7 @@ var
 begin
     Str_FP := TStringList.Create;
     Str_FP.Sorted:=true;
+
     // Fill FileFull dropdown
     SQLQueryFP.DataBase := AConnection;
     SQLQueryFP.SQL.Clear;
@@ -1050,13 +1117,12 @@ begin
       cbDBFilePath.Text:=IniFluff.ReadString('Database', 'FilePathLast', cbDBFilePath.Text);
      end
     else cbDBFilePath.ItemIndex:=0;
-    DBFilter;
     SQLQueryFP.Active:=false;
 end;
 
 procedure TForm1.mnuSyncClick(Sender: TObject);
 begin
- frmImport.Init_str_FindAllImages_Sync;
+ // frmImport.Init_str_FindAllImages_Sync;
 end;
 
 procedure TForm1.PageControl1Change(Sender: TObject);
@@ -1074,7 +1140,7 @@ end;
 
 procedure TForm1.PageControl2Change(Sender: TObject);
 var
- FileFull, FileNameExt, FileSizeImg : String;
+ FileNameExt, FileSizeImg : String;
  BA : TByteArr;
  s, ImageSize : String;
 begin
@@ -1084,7 +1150,7 @@ begin
  // Database
  If PageControl1.Pages[0].Visible = true then
   begin
-   FileFull    := SQLQueryDir.FieldByName('FileFull').Text;
+   UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text); // FileFull
    FileSizeImg := SQLQueryDir.FieldByName('FileSizeImg').Text;
    FileNameExt := lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString);
    if PageControl2.Pages[1].Visible = true then
@@ -1108,40 +1174,40 @@ begin
   end;
 
   // FileBrowser
-  If PageControl1.Pages[1].Visible = true then
-   begin
-    If LstBrowse.SelCount < 1 then Exit;
-    FileFull := ShellTreeView1.Path + LstBrowse.Selected.caption;
-    BA := LoadByteArray(FileFull);
-    s := ByteArraytoHexString(BA);
-    ImageSize := ByteArrayToHexString(BA);
-    FileSizeImg := IntToStr(length(ImageSize) div 2);
-    FileNameExt := ExtractFileExt(FileFull);
-    if (length(FileNameExt)>0) and (FileNameExt[1]='.') then delete(FileNameExt,1,1); // d64 ohne Punkt
-    GetDirectoryImage(FileFull, TgScratch.Checked, TgCShift.Checked);
-
-    if PageControl2.Pages[1].Visible = true then
-     begin
-      // PRG
-      If (lowercase(FileNameExt) = 'prg') then LstBAM.Clear;
-      // D64/G64
-      If (lowercase(FileNameExt) = 'd64') or (Lowercase(FileNameExt) = 'g64') then LoadBAM_D64(FileFull, FileSizeImg);
-      // D71
-      If lowercase(FileNameExt) = 'd71' then LoadBAM_D71(FileFull);
-      // D81
-      If lowercase(FileNameExt) = 'd81' then LoadBAM_D81(FileFull);
-     end;
-     if PageControl2.Pages[2].Visible = true then
-     begin
-      Init_TrkSec_HexDropdown(FileFull);
-      Init_SectorsHexDropDown;
-      LoadTS(FileFull);
-     end;
-     if PageControl2.Pages[3].Visible = true then
-      begin
-       LstBxDirectoryTxt.Clear;
-      end;
-   end;
+  //If PageControl1.Pages[1].Visible = true then
+  // begin
+  //  If LstBrowse.SelCount < 1 then Exit;
+  //  FileFull := ShellTreeView1.Path + LstBrowse.Selected.caption;
+  //  BA := LoadByteArray(FileFull);
+  //  s := ByteArraytoHexString(BA);
+  //  ImageSize := ByteArrayToHexString(BA);
+  //  FileSizeImg := IntToStr(length(ImageSize) div 2);
+  //  FileNameExt := ExtractFileExt(FileFull);
+  //  if (length(FileNameExt)>0) and (FileNameExt[1]='.') then delete(FileNameExt,1,1); // d64 ohne Punkt
+  //  GetDirectoryImage(FileFull, TgScratch.Checked, TgCShift.Checked);
+  //
+  //  if PageControl2.Pages[1].Visible = true then
+  //   begin
+  //    // PRG
+  //    If (lowercase(FileNameExt) = 'prg') then LstBAM.Clear;
+  //    // D64/G64
+  //    If (lowercase(FileNameExt) = 'd64') or (Lowercase(FileNameExt) = 'g64') then LoadBAM_D64(FileFull, FileSizeImg);
+  //    // D71
+  //    If lowercase(FileNameExt) = 'd71' then LoadBAM_D71(FileFull);
+  //    // D81
+  //    If lowercase(FileNameExt) = 'd81' then LoadBAM_D81(FileFull);
+  //   end;
+  //   if PageControl2.Pages[2].Visible = true then
+  //   begin
+  //    Init_TrkSec_HexDropdown(FileFull);
+  //    Init_SectorsHexDropDown;
+  //    LoadTS(FileFull);
+  //   end;
+  //   if PageControl2.Pages[3].Visible = true then
+  //    begin
+  //     LstBxDirectoryTxt.Clear;
+  //    end;
+  // end;
 
   end;
 end;
@@ -1188,6 +1254,9 @@ Begin
 end;
 
 Procedure TForm1.OpenDatabase(aFileName : String);
+var
+ sTVersion : Integer;
+ answer : Integer;
 begin
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Start OpenDatabase procedure');
  Statusbar1.Panels[0].Text := '';
@@ -1206,14 +1275,41 @@ begin
  ATransaction := TSQLTransaction.Create(AConnection);
  AConnection.Transaction := ATransaction;
  AConnection.Open;
+
+ // Check version
+ SQLQueryDB.DataBase := AConnection;
+ SQLQueryDB.SQL.Clear;
+ SQLQueryDB.SQL.Add('Select * from DB');
+ SQLQueryDB.Active:=true;
+ sTVersion := SQLQueryDB.FieldByName('DBVersion').AsInteger;
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - DB version: ' + IntToStr(sTVersion));
+
+ If sTVersion < 107 then
+  begin
+   answer := MessageDlg('The database "' + aFileName + '" version "' + IntToStr(sTVersion) + '" is older than expected!',mtWarning, [mbOK], 0);
+    if answer = mrOk then
+     begin
+      AConnection.ExecuteDirect('ALTER TABLE "DB" ADD "DBComment" Char(1024);');
+      AConnection.ExecuteDirect('ALTER TABLE "FileImage" ADD "FileArchPath" Char(1024);');   // inside archive
+      AConnection.ExecuteDirect('ALTER TABLE "FileImage" ADD "FileArchType" Char(16);');     // archive type e.g. zip
+      SQlQueryDB.Edit;
+      SQlQueryDB.FieldByName('DBVersion').AsString := '107';
+      SQlQueryDB.Post;
+      SQlQueryDB.ApplyUpdates;
+      ATransaction.Commit;
+     end;
+  end;
+
+ // Get entries
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - Get entries');
  SQLQueryDir.DataBase := AConnection;
  SQlQueryDir.SQL.Clear;
  SQlQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
  SQLQueryDir.Active:=true;
- SQLQueryDir.Last;
- SQLQueryDir.First;
+
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Start Init_FilePath procedure');
  Init_FilePath;
+
  Form1.Caption:= sAppCaption + sAppVersion + ' - [' + ExtractFileName(aFileName) + ']';
  If Dev_Mode = true then
   begin
@@ -1222,12 +1318,30 @@ begin
  IniFluff.WriteString('Database', 'Location', aFileName);
  mnuImport.Enabled:=true;
 
- If Dev_Mode = true then Showmessage('[Dev_Mode] - Init statusbar after OpenDatabase');
- Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
-
- // Grid Init after OpenDatabase
- If Dev_Mode = true then Showmessage('[Dev_Mode] - Start LoadDir procedure');
- LoadDir;
+ If SQLQueryDir.RecordCount > 0 then
+  begin
+   Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
+   mnuOpenRec.Enabled:=true;
+   mnuOpenLocationRec.Enabled:=true;
+   mnuFavouriteRec.Enabled:=true;
+   mnuFavouriteRec.Enabled:=true;
+   mnuCorruptRec.Enabled:=true;
+   mnuDeleteRec.Enabled:=true;
+   cbFavourite.Enabled:=true;
+   cbCorrupt.Enabled:=true;
+   edTags.Enabled:=true;
+   memInfo.Enabled:=true;
+   mnuOpenImage.Enabled:=true;
+   mnuOpenFileBrowser.Enabled:=true;
+   mnuOpenExplorer.Enabled:=true;
+   mnuFavourite.Enabled:=true;
+   mnuCorrupt.Enabled:=true;
+   mnuSync.Enabled:=false;
+   mnuDelete.Enabled:=true;
+   edTags.Enabled:=true;
+   memInfo.Enabled:=true;
+  end;
+ if SQLQueryDir.RecordCount < 1 then    Statusbar1.Panels[0].Text := ' -/- ';
 end;
 
 procedure TForm1.Convert_G64(aImageName: String);
@@ -1278,43 +1392,16 @@ begin
      Process.Execute;
      Process.Free;
      except
-      on E: Exception do frmImport.memoImportErr.Lines.Add('An Convert exception was raised: ' + E.Message + '- File: ' + aImageName);
+      on E: Exception do frmImport.memoImportErr.Lines.Add('A convert exception was raised: ' + E.Message + '- File: ' + aImageName);
     end;
 
-end;
-
-procedure TForm1.EmptyTemp;
-var
-  str_FindTempImages : TStringList;
-  answer, i : Integer;
-begin
-  // Check if temp folder is not empty
-  str_FindTempImages := TStringList.Create;
-
-   FindAllFiles(str_FindTempImages, IniFluff.ReadString('Options', 'FolderTemp', ''), '*.*', true);
-   If str_FindTempImages.Count > 0 then
-    begin
-     try
-      For i := 0 to str_FindTempImages.Count-1 do
-       begin
-        DeleteFileUTF8(str_FindTempImages[i]);
-       end;
-     except
-      answer := MessageDlg('Unable to delete file(s) in temp folder!',mtWarning, [mbOK], 0);
-       if answer = mrOk then
-        begin
-         //
-        end;
-     end;
-    end;
-  str_FindTempImages.Free;
 end;
 
 procedure TForm1.DBSearch;
 var
  StrSQL : String;
 begin
-
+ StrSQL := '';
  if BtSQLSearch.Caption ='Reset' then
   begin
    EdSQLSearch.Text:='';  // Field reacts OnChange
@@ -1434,7 +1521,8 @@ begin
          end;
         If Form1.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
          begin
-          DBGridDir_ReadEntry;
+          UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+          DBGridDir_ReadEntry(FileFull);
           LstBxDirectoryPETSCII.Clear;
           Statusbar1.Panels[0].Text := ' 0/0';
           Statusbar1.Panels[1].Text := 'No entries found';
@@ -1471,7 +1559,8 @@ begin
         If Form1.SQLQueryDir.RecordCount > 0 then
          begin
           Form1.Statusbar1.Panels[0].Text := ' ' + IntToStr(Form1.SQLQueryDir.RecNo) + '/' + IntToStr(Form1.SQLQueryDir.RecordCount);
-          GetDirectoryImage(Form1.SQLQueryDir.FieldByName('FileFull').Text, TgScratch.Checked, TgCShift.Checked);
+          UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+          GetDirectoryImage(FileFull, TgScratch.Checked, TgCShift.Checked);
           Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
          end;
         If Form1.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
@@ -1512,7 +1601,8 @@ begin
         If Form1.SQLQueryDir.RecordCount > 0 then
          begin
           Form1.Statusbar1.Panels[0].Text := ' ' + IntToStr(Form1.SQLQueryDir.RecNo) + '/' + IntToStr(Form1.SQLQueryDir.RecordCount);
-          GetDirectoryImage(Form1.SQLQueryDir.FieldByName('FileFull').Text, TgScratch.Checked, TgCShift.Checked);
+          UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+          GetDirectoryImage(FileFull, TgScratch.Checked, TgCShift.Checked);
           Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
          end;
         If Form1.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
@@ -1553,7 +1643,8 @@ begin
         If Form1.SQLQueryDir.RecordCount > 0 then
          begin
           Form1.Statusbar1.Panels[0].Text := ' ' + IntToStr(Form1.SQLQueryDir.RecNo) + '/' + IntToStr(Form1.SQLQueryDir.RecordCount);
-          GetDirectoryImage(Form1.SQLQueryDir.FieldByName('FileFull').Text, TgScratch.Checked, TgCShift.Checked);
+          UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+          GetDirectoryImage(FileFull, TgScratch.Checked, TgCShift.Checked);
           Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
          end;
         If Form1.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
@@ -1661,7 +1752,6 @@ begin
    DBSearch;
    exit;
   end;
-
 end;
 
 procedure TForm1.cbDBFilePathChange(Sender: TObject);
@@ -1688,7 +1778,7 @@ procedure TForm1.cbSectorChange(Sender: TObject);
 begin
  If PageControl1.Pages[0].Visible = true then
   begin
-   LoadTS(SQLQueryDir.FieldByName('FileFull').Text);
+   LoadTS(FileFull);
   end;
  If PageControl1.Pages[1].Visible = true then
   begin
@@ -1741,7 +1831,7 @@ begin
  If PageControl1.Pages[0].Visible = true then
   begin
    Init_SectorsHexDropDown;
-   LoadTS(SQLQueryDir.FieldByName('FileFull').Text);
+   LoadTS(FileFull);
   end;
  If PageControl1.Pages[1].Visible = true then
   begin
@@ -1757,17 +1847,28 @@ begin
   begin
    if SQlQuerySearch.RecordCount > 0 then SQlQuerySearch.Locate('idxSearch', SQLQueryDir.FieldByName('idxImg').Text, []);
   end;
- LoadDir;
+ if SQLQueryDir.RecordCount > 0 then
+  begin
+   LoadDir;
+  end;
 end;
 
 procedure TForm1.TgCShiftChange(Sender: TObject);
 begin
- if SQLQueryDir.Active then GetDirectoryImage(Form1.SQLQueryDir.FieldByName('FileFull').Text, TgScratch.Checked, TgCShift.Checked);
+ if SQLQueryDir.RecordCount > 0 then
+  begin
+   UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+   GetDirectoryImage(FileFull, TgScratch.Checked, TgCShift.Checked);
+  end;
 end;
 
 procedure TForm1.TgScratchChange(Sender: TObject);
 begin
- if SQLQueryDir.Active then GetDirectoryImage(Form1.SQLQueryDir.FieldByName('FileFull').Text, TgScratch.Checked, TgCShift.Checked);
+ if SQLQueryDir.RecordCount > 0 then
+  begin
+   UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+   GetDirectoryImage(FileFull, TgScratch.Checked, TgCShift.Checked);
+  end;
 end;
 
 procedure GetDirectoryImage(aFileFull : String; aScratch : Boolean; aLower: Boolean);
@@ -2468,18 +2569,26 @@ begin
 
 end;
 
+
 procedure TForm1.DBGridDirDblClick(Sender: TObject);
 begin
- OpenDocument(SQLQueryDir.FieldByName('FileFull').AsString);
+if SQlQueryDir.RecordCount > 0 then
+ begin
+  UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+  OpenDocument(FileFull);
+ end;
 end;
 
 procedure TForm1.DBGridDirEnter(Sender: TObject);
 begin
-  mnuOpenRec.Enabled:=true;
-  mnuOpenLocationRec.Enabled:=true;
-  mnuFavouriteRec.Enabled:=true;
-  mnuCorruptRec.Enabled:=true;
-  mnuDeleteRec.Enabled:=true;
+ if SQLQueryDir.RecordCount > 0 then
+  begin
+   mnuOpenRec.Enabled:=true;
+   mnuOpenLocationRec.Enabled:=true;
+   mnuFavouriteRec.Enabled:=true;
+   mnuCorruptRec.Enabled:=true;
+   mnuDeleteRec.Enabled:=true;
+  end;
 end;
 
 procedure TForm1.DBGridDirExit(Sender: TObject);
@@ -2583,7 +2692,11 @@ end;
 
 procedure TForm1.DBGridDirTxtDblClick(Sender: TObject);
 begin
-  OpenDocument(SQLQueryDir.FieldByName('FileFull').AsString);
+  if SQLQueryDir.RecordCount > 0 then
+   begin
+    UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+    OpenDocument(FileFull);
+   end;
 end;
 
 procedure TForm1.DBGridDirTxtKeyUp(Sender: TObject; var Key: Word;
@@ -2655,8 +2768,6 @@ begin
     FLastColumn:=column;
     Exit;
    end;
-
-
 end;
 
 procedure TForm1.EdSQLSearchChange(Sender: TObject);
@@ -2740,8 +2851,19 @@ begin
    end;
 end;
 
+procedure TForm1.FormActivate(Sender: TObject);
+begin
+ // Get first database entry / show directory of image
+ If SQLQueryDir.RecordCount > 0 then
+  begin
+   DBFilter;
+   LoadDir;
+  end;
+end;
+
 procedure TForm1.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
+ DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),true);
  IniFluff.WriteString('Database', 'FilePathLast', DirCheck(cbDBFilePath.Text));
  IniFluff.WriteBool('Options', 'Scratched', TgScratch.Checked);
  IniFluff.WriteBool('Options', 'Shifted', TgCShift.Checked);
@@ -2756,15 +2878,15 @@ begin
    ATransaction.Commit;
   end;
  AConnection.Free;
+
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   Dev_mode := false;
-  try
   sAppCaption := 'FluffyFloppy64 ';
-  sAppVersion := 'v0.76';
-  sAppDate    := '2025-02-01';
+  sAppVersion := 'v0.77';
+  sAppDate    := '2025-02-09';
   Form1.Caption:= sAppCaption + sAppVersion;
   sAppPath := ExtractFilePath(ParamStr(0));
   SQlSearch_Click := false;
@@ -2775,17 +2897,18 @@ begin
    try
     IniFluff := TINIFile.Create(sAppPath + 'fluffyfloppy64.ini');
     IniFluff.WriteString('FluffyFloppy64', 'Version', sAppVersion);
-    INIFluff.WriteString('FluffyFloppy64', 'Language', 'English');
-    INIFluff.WriteBool('FluffyFloppy64', 'Dev_Mode', false);
+    InIFluff.WriteString('FluffyFloppy64', 'Language', 'English');
+    IniFluff.WriteInteger('FluffyFloppy64', 'DBModulo', 50);
+    InIFluff.WriteBool('FluffyFloppy64', 'Dev_Mode', false);
     IniFluff.WriteBool('Start', 'OpenDatabase', true);
     IniFluff.WriteString('Options', 'FolderTemp', DirCheck(sAppPath + 'temp\'));
-    If FileExists(DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe') = true then IniFluff.WriteString('NibConv', 'Location', DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe');
     IniFluff.WriteBool('Options', 'Scratched', false);
     IniFluff.WriteBool('Options', 'Shifted', false);
     IniFluff.WriteBool('Options', 'IncludeT18T19', false);
     IniFluff.WriteBool('Options', 'cbPETSCII1819', false);
     IniFluff.WriteString('Options', 'DirFont', '$00F9B775');
     IniFluff.WriteString('Options', 'DirFontBackground', '$00DB3F1E');
+    If FileExists(DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe') = true then IniFluff.WriteString('NibConv', 'Location', DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe');
     IniFluff.WriteInteger('Emulators', 'Select', 2);
     IniFluff.WriteString('CCS64', 'Location', '');
     IniFluff.WriteString('Denise', 'Location', '');
@@ -2797,7 +2920,7 @@ begin
   IniFluff := TINIFile.Create(sAppPath + 'fluffyfloppy64.ini');
 
   // Clean temp folder
-  EmptyTemp;
+  DeleteDirectory(IniFluff.ReadString('Options', 'FolderTemp', ''),true);
 
   // Dev_Mode ?
   Dev_Mode :=  IniFluff.ReadBool('FluffyFloppy64', 'Dev_Mode', false);
@@ -2834,58 +2957,6 @@ begin
   LstBxDirectoryPETSCII.Font.Color := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
   LstBxDirectoryPETSCII.Color := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
   //
-  If Dev_Mode = true then Showmessage('[Dev_Mode] - Check if database exists and load if autostart selected');
-  If fileexists(IniFluff.ReadString('Database', 'Location', '')) then
-   begin
-    If IniFluff.ReadBool('Start', 'OpenDatabase', true) = true then
-     begin
-      OpenDatabase(IniFluff.ReadString('Database', 'Location', ''));
-      Database_OpenDialog.FileName := IniFluff.ReadString('Database', 'Location', '');
-      if SQLQueryDir.RecordCount < 1 then
-       begin
-        EdSQLSearch.Enabled:=false;
-        cbSQLSearch.Enabled:=false;
-        TgScratch.Enabled:=false;
-        TgCShift.Enabled:=false;
-        LstBxDirectoryPETSCII.Clear;
-        LstBxDirectoryPETSCII.Items.Add('File not found!');
-        cbFavourite.Enabled:=false;
-        cbCorrupt.Enabled:=false;
-        memInfo.Enabled:=false;
-        Statusbar1.Panels[0].Text := ' 0/0';
-        Statusbar1.Panels[1].Text := 'No entries found';
-        Statusbar1.Panels[2].Text := '';
-        Statusbar1.Panels[3].Text := '';
-        Statusbar1.Panels[4].Text := '';
-        exit;
-       end;
-      if SQLQueryDir.RecordCount > 0 then
-       begin
-        If FileExists(SQLQueryDir.FieldByName('FileFull').Text) then
-         begin
-          GetDirectoryImage(SQLQueryDir.FieldByName('FileFull').Text, TgScratch.Checked, TgCShift.Checked);
-          Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
-         end
-        else
-        begin
-         LstBxDirectoryPETSCII.Clear;
-         LstBxDirectoryPETSCII.Items.Add('File not found!');
-         Statusbar1.Panels[4].Text := 'Cannot load directory from image. File not found!';
-        end;
-       EdSQLSearch.Enabled:=true;
-       cbSQLSearch.Enabled:=true;
-       TgScratch.Enabled:=true;
-       TgCShift.Enabled:=true;
-       cbFavourite.Enabled:=true;
-       cbCorrupt.Enabled:=true;
-       Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
-     end;
-     end;
-   end;
-  except
-    on E: Exception do
-    DumpExceptionCallStack(E);
-  end;
   If Dev_Mode = true then Showmessage('[Dev_Mode] - FormCreate end');
 end;
 
@@ -2937,8 +3008,9 @@ begin
    end;
 end;
 
-procedure TForm1.DBGridDir_ReadEntry;
+procedure TForm1.DBGridDir_ReadEntry(aImageName : String);
 begin
+
   If Dev_Mode = true then Showmessage('[Dev_Mode] - Start DBGridDir_ReadEntry procedure');
   If PageControl1.Pages[0].Visible = true then
    begin
@@ -2962,9 +3034,9 @@ begin
      end;
     if SQLQueryDir.RecordCount > 0 then
      begin
-      If FileExists(SQLQueryDir.FieldByName('FileFull').Text) then
+      If FileExists(aImageName) then
        begin
-        GetDirectoryImage(SQLQueryDir.FieldByName('FileFull').Text, TgScratch.Checked, TgCShift.Checked);
+        GetDirectoryImage(aImageName, TgScratch.Checked, TgCShift.Checked);
         Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
        end
       else
@@ -2982,6 +3054,7 @@ begin
      Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
    end;
   end;
+   If Dev_Mode = true then Showmessage('[Dev_Mode] - End DBGridDir_ReadEntry procedure');
 end;
 
 procedure TForm1.LoadBAM_D64(aFileName : String; aFileSizeImg : String);
@@ -3613,32 +3686,34 @@ end;
 
 procedure TForm1.LoadDir;
 var
- FileFull, FileNameExt, FileSizeImg : String;
+ FileNameExt, FileSizeImg : String;
 begin
-
- FileFull    := SQLQueryDir.FieldByName('FileFull').Text;
- FileSizeImg := SQLQueryDir.FieldByName('FileSizeImg').Text;
- FileNameExt := lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString);
-
- DBGridDir_ReadEntry;
-
- if PageControl2.Pages[1].Visible = true then
+ if SQLQueryDir.RecordCount > 0 then
   begin
-   // PRG
-   If (lowercase(FileNameExt) = 'prg') then LstBAM.Clear;
-   // D64/G64
-   If (lowercase(FileNameExt) = 'd64') or (lowercase(FileNameExt) = 'g64') then LoadBAM_D64(FileFull, FileSizeImg);
-   // D71
-   If lowercase(FileNameExt) = 'd71' then LoadBAM_D71(FileFull);
-   // D81
-   If lowercase(FileNameExt) = 'd81' then LoadBAM_D81(FileFull);
-  end;
+   UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text); // FileFull
+   FileSizeImg := SQLQueryDir.FieldByName('FileSizeImg').Text;
+   FileNameExt := lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString);
 
- if PageControl2.Pages[2].Visible = true then
-  begin
-   Init_TrkSec_HexDropdown(FileFull);
-   Init_SectorsHexDropDown;
-   LoadTS(FileFull);
+   // Read directory
+   DBGridDir_ReadEntry(FileFull);
+   if PageControl2.Pages[1].Visible = true then
+    begin
+     // PRG
+     If (lowercase(FileNameExt) = 'prg') then LstBAM.Clear;
+     // D64/G64
+     If (lowercase(FileNameExt) = 'd64') or (lowercase(FileNameExt) = 'g64') then LoadBAM_D64(FileFull, FileSizeImg);
+     // D71
+     If lowercase(FileNameExt) = 'd71' then LoadBAM_D71(FileFull);
+     // D81
+     If lowercase(FileNameExt) = 'd81' then LoadBAM_D81(FileFull);
+    end;
+
+   if PageControl2.Pages[2].Visible = true then
+    begin
+     Init_TrkSec_HexDropdown(FileFull);
+     Init_SectorsHexDropDown;
+     LoadTS(FileFull);
+    end;
   end;
 end;
 
@@ -3759,10 +3834,7 @@ begin
     cbSector.ItemIndex:=0;
     exit;
    end;
-
 end;
-
-
 
 end.
 

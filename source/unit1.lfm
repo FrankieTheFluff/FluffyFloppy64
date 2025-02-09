@@ -1,13 +1,14 @@
 object Form1: TForm1
-  Left = 412
+  Left = 440
   Height = 643
-  Top = 129
+  Top = 226
   Width = 1114
   Caption = 'Form1'
   ClientHeight = 643
   ClientWidth = 1114
   KeyPreview = True
   Menu = MainMenu1
+  OnActivate = FormActivate
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -739,6 +740,7 @@ object Form1: TForm1
               Caption = 'Favourite'
               DataField = 'Favourite'
               DataSource = DataSourceDir
+              Enabled = False
               ParentShowHint = False
               ShowHint = True
               TabOrder = 0
@@ -755,6 +757,7 @@ object Form1: TForm1
               Caption = 'Corrupt'
               DataField = 'Corrupt'
               DataSource = DataSourceDir
+              Enabled = False
               ParentShowHint = False
               ShowHint = True
               TabOrder = 1
@@ -769,7 +772,9 @@ object Form1: TForm1
               Anchors = [akLeft, akRight, akBottom]
               DataField = 'Info'
               DataSource = DataSourceDir
+              Enabled = False
               OnEditingDone = memInfoEditingDone
+              ScrollBars = ssBoth
               TabOrder = 3
             end
             object lblTags: TLabel
@@ -790,6 +795,7 @@ object Form1: TForm1
               DataField = 'Tags'
               DataSource = DataSourceDir
               Anchors = [akLeft, akRight, akBottom]
+              Enabled = False
               MaxLength = 0
               ParentShowHint = False
               ShowHint = True
@@ -854,7 +860,7 @@ object Form1: TForm1
     Top = 96
     object mnuFile: TMenuItem
       Caption = '&File'
-      object MenuItem2: TMenuItem
+      object mnuDatabase: TMenuItem
         Caption = '&Database'
         object mnuNew: TMenuItem
           Caption = '&New'
@@ -879,9 +885,9 @@ object Form1: TForm1
       object Separator2: TMenuItem
         Caption = '-'
       end
-      object MenuItem1: TMenuItem
+      object mnuProperties: TMenuItem
         Caption = '&Properties'
-        OnClick = MenuItem1Click
+        OnClick = mnuPropertiesClick
       end
       object Separator3: TMenuItem
         Caption = '-'
@@ -895,10 +901,12 @@ object Form1: TForm1
       Caption = '&Record'
       object mnuOpenRec: TMenuItem
         Caption = '&Open'
+        Enabled = False
         OnClick = mnuOpenRecClick
       end
       object mnuOpenLocationRec: TMenuItem
         Caption = '&Open location'
+        Enabled = False
         OnClick = mnuOpenLocationRecClick
       end
       object Separator6: TMenuItem
@@ -906,11 +914,13 @@ object Form1: TForm1
       end
       object mnuFavouriteRec: TMenuItem
         Caption = 'Mark as favourite'
+        Enabled = False
         ShortCut = 70
         OnClick = mnuFavouriteRecClick
       end
       object mnuCorruptRec: TMenuItem
         Caption = 'Mark as corrupt'
+        Enabled = False
         ShortCut = 67
         OnClick = mnuCorruptRecClick
       end
@@ -919,6 +929,7 @@ object Form1: TForm1
       end
       object mnuDeleteRec: TMenuItem
         Caption = 'Delete'
+        Enabled = False
         ShortCut = 46
         OnClick = mnuDeleteRecClick
       end
@@ -1050,10 +1061,12 @@ object Form1: TForm1
     Top = 152
     object mnuOpenImage: TMenuItem
       Caption = 'Open'
+      Enabled = False
       OnClick = mnuOpenImageClick
     end
     object mnuOpenFileBrowser: TMenuItem
       Caption = 'Open with File-Browser'
+      Enabled = False
       OnClick = mnuOpenFileBrowserClick
     end
     object Separator9: TMenuItem
@@ -1061,6 +1074,7 @@ object Form1: TForm1
     end
     object mnuOpenExplorer: TMenuItem
       Caption = 'Go to location'
+      Enabled = False
       OnClick = mnuOpenExplorerClick
     end
     object Separator4: TMenuItem
@@ -1068,11 +1082,13 @@ object Form1: TForm1
     end
     object mnuFavourite: TMenuItem
       Caption = 'Mark as favourite'
+      Enabled = False
       ShortCut = 70
       OnClick = mnuFavouriteClick
     end
     object mnuCorrupt: TMenuItem
       Caption = 'Mark as corrupt'
+      Enabled = False
       ShortCut = 67
       OnClick = mnuCorruptClick
     end
@@ -1081,6 +1097,7 @@ object Form1: TForm1
     end
     object mnuSync: TMenuItem
       Caption = 'Sync entry'
+      Enabled = False
       OnClick = mnuSyncClick
     end
     object Separator10: TMenuItem
@@ -1088,6 +1105,7 @@ object Form1: TForm1
     end
     object mnuDelete: TMenuItem
       Caption = 'Delete'
+      Enabled = False
       ShortCut = 46
       OnClick = mnuDeleteClick
     end
@@ -1095,6 +1113,7 @@ object Form1: TForm1
   object SQLQueryDB: TSQLQuery
     PacketRecords = -1
     FieldDefs = <>
+    Transaction = ATransaction
     SQL.Strings = (
       ''
       ''
@@ -1141,5 +1160,10 @@ object Form1: TForm1
     AlwaysUseBigint = False
     Left = 952
     Top = 224
+  end
+  object DataSourceDB: TDataSource
+    DataSet = SQLQueryDB
+    Left = 608
+    Top = 240
   end
 end

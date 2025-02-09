@@ -16,7 +16,6 @@ object frmDel: TfrmDel
     Top = 64
     Width = 75
     Caption = 'Yes'
-    Default = True
     TabOrder = 0
     OnClick = btYesClick
   end
@@ -26,6 +25,7 @@ object frmDel: TfrmDel
     Top = 64
     Width = 75
     Caption = 'No'
+    Default = True
     TabOrder = 1
     OnClick = btNoClick
   end

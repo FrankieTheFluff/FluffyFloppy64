@@ -60,18 +60,34 @@ begin
 end;
 
 procedure TfrmDel.btYesClick(Sender: TObject);
+var
+  tmpFileFull : String;
+  tmpImageFileArray : TStringArray;
 begin
- if cbDelFile.Checked = true then DeleteFileUtf8(Form1.SQLQueryDir.FieldByName('FileFull').Text);
+ if cbDelFile.Checked = true then
+  begin
+   tmpFileFull := Form1.SQLQueryDir.FieldByName('FileFull').Text;
+   If tmpFileFull.Contains('|') = true then  // check if path locates an archive
+   begin
+    tmpImageFileArray := tmpFileFull.Split('|');
+    DeleteFileUtf8(tmpImageFileArray[0]);
+   end
+   else DeleteFileUtf8(Form1.SQLQueryDir.FieldByName('FileFull').Text);
+  end;
+
  Form1.AConnection.ExecuteDirect('DELETE from DirectoryTXT WHERE idxTXT = ' + Form1.SQLQueryDir.FieldByName('idxImg').Text + '');
  Form1.AConnection.ExecuteDirect('DELETE from Tracks WHERE idxTrks = ' + Form1.SQLQueryDir.FieldByName('idxImg').Text + '');
  Form1.SQLQueryDir.Delete;
  Form1.SQLQueryDir.ApplyUpdates;
  Form1.ATransaction.CommitRetaining;
+
 if Form1.DBGridDirTxt.Visible = true then
  begin
   if Form1.SQlQuerySearch.RecordCount > 0 then Form1.SQlQuerySearch.Locate('idxSearch', Form1.SQLQueryDir.FieldByName('idxImg').Text, []);
  end;
- Form1.DBGridDir_ReadEntry;
+
+ Form1.UnpackFileFullContainsPipe(Form1.SQLQueryDir.FieldByName('FileFull').Text);
+ Form1.DBGridDir_ReadEntry(FileFull);
  //Form1.DBGridDirTxt_ReadEntry;
  Form1.LoadBAM_D64(Form1.SQLQueryDir.FieldByName('FileFull').Text,Form1.SQLQueryDir.FieldByName('FileSizeImg').Text );
  Form1.LoadTS(Form1.SQLQueryDir.FieldByName('FileFull').Text);

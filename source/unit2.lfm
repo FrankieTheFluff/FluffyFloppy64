@@ -1,21 +1,22 @@
 object Form2: TForm2
-  Left = 969
-  Height = 158
-  Top = 488
-  Width = 439
+  Left = 765
+  Height = 265
+  Top = 417
+  Width = 496
   BorderStyle = bsDialog
   Caption = 'Database'
-  ClientHeight = 158
-  ClientWidth = 439
+  ClientHeight = 265
+  ClientWidth = 496
+  OnShow = FormShow
   Position = poMainFormCenter
   LCLVersion = '3.6.0.0'
   object grbDBProperties: TGroupBox
     Left = 8
-    Height = 120
+    Height = 224
     Top = 0
-    Width = 424
-    ClientHeight = 100
-    ClientWidth = 420
+    Width = 480
+    ClientHeight = 204
+    ClientWidth = 476
     TabOrder = 0
     object lblVersion: TLabel
       Left = 8
@@ -26,7 +27,7 @@ object Form2: TForm2
       ParentColor = False
     end
     object lblCreated: TLabel
-      Left = 240
+      Left = 288
       Height = 15
       Top = 0
       Width = 44
@@ -43,7 +44,7 @@ object Form2: TForm2
       TabOrder = 0
     end
     object sTCreated: TStaticText
-      Left = 304
+      Left = 360
       Height = 17
       Top = 0
       Width = 105
@@ -63,15 +64,34 @@ object Form2: TForm2
       Left = 72
       Height = 58
       Top = 32
-      Width = 337
+      Width = 393
       BorderStyle = sbsSunken
       TabOrder = 2
     end
+    object lblLocation1: TLabel
+      Left = 8
+      Height = 15
+      Top = 104
+      Width = 57
+      Caption = 'Comment:'
+      ParentColor = False
+    end
+    object memComment: TDBMemo
+      Left = 72
+      Height = 90
+      Top = 104
+      Width = 393
+      DataField = 'DBComment'
+      DataSource = Form1.DataSourceDB
+      OnEditingDone = memCommentEditingDone
+      ScrollBars = ssAutoBoth
+      TabOrder = 3
+    end
   end
   object btOK: TButton
-    Left = 357
+    Left = 413
     Height = 25
-    Top = 127
+    Top = 232
     Width = 75
     Caption = 'OK'
     TabOrder = 1
