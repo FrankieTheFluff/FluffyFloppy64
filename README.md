@@ -19,7 +19,7 @@ Mail: fluxmyfluffyfloppy@mail.de
 Requirements: 
 - Microsoft(r)Windows(r) 
 
-![FluffyFloppy64_v0 61_20250114_202445](https://github.com/user-attachments/assets/e7478304-8845-44f2-b4b3-6e7fa3d329f5)
+![20250209_224443_ff64_v077](https://github.com/user-attachments/assets/612225f1-9e83-4d17-bc65-ffc1cdeb97e3)
 
 Open or mount the disks in various emulators (Vice, CCS64, DirMaster, Hoxs...)
 
