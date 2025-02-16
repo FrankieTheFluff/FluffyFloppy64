@@ -188,8 +188,8 @@ object Form3: TForm3
       Left = 96
       Height = 15
       Top = 224
-      Width = 322
-      Caption = '"nibconv.exe" Converter (c) 2005 Pete Rittwage'
+      Width = 476
+      Caption = '"nibconv.exe" Converter (c) 2004-2024 Peter Rittwage, Markus Brenner'
       Font.CharSet = ANSI_CHARSET
       Font.Color = 16365429
       Font.Height = -13

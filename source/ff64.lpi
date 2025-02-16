@@ -7,16 +7,19 @@
       <SessionStorage Value="InProjectDir"/>
       <Title Value="ff64"/>
       <Scaled Value="True"/>
+      <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
       <XPManifest>
         <DpiAware Value="True/PM_V2"/>
+        <TextName Value="FluffyFloppy64"/>
+        <TextDesc Value="Catalog C64 floppy images"/>
       </XPManifest>
       <Icon Value="0"/>
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
-      <MinorVersionNr Value="77"/>
+      <MinorVersionNr Value="78"/>
       <StringTable Comments="FREEWARE" CompanyName="FrankieTheFluff" FileDescription="FluffyFloppy64" LegalCopyright="(c) 2021-2025 FrankieTheFluff" OriginalFilename="ff64.exe" ProductName="FluffyFloppy64" ProductVersion="1.00"/>
     </VersionInfo>
     <BuildModes>
@@ -117,13 +120,14 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="ff64"/>
+      <Filename Value="fluffyfloppy64"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
+      <TargetOS Value="win64"/>
       <Optimizations>
         <OptimizationLevel Value="3"/>
       </Optimizations>

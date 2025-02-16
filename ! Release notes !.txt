@@ -32,6 +32,17 @@ Release notes
 
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
+# Importing archives (ZIP) takes too much time
+# Clearing temp folder: problems with attribute "readonly"
+
+v0.78 - 2025-02-16
+* EXE: Renamed "ff64.exe" to "fluffyfloppy64.exe"
+* EXE: "64bit" version
+* Menu: New entry "Extras|Clear temp folder" (It's already clearing automatically when closing the app)
+* Import: v108 Usage of new field 'FileArchType'
++ Import: Improvements to import-dialog: progressbar and importing archives (ZIP)
+- Menu: Fixes a problem with disabled menuitems after creating a new database
++ About: Small Copyright correction "nibtools"
 
 v0.77 - 2025-02-09
 * Database: v107 Support ZIP archives

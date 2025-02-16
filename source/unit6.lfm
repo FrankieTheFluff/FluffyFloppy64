@@ -11,7 +11,7 @@ object frmImport: TfrmImport
   OnClose = FormClose
   OnShow = FormShow
   Position = poMainFormCenter
-  LCLVersion = '3.6.0.0'
+  LCLVersion = '3.8.0.0'
   object btClose: TButton
     Left = 5
     Height = 25
@@ -197,8 +197,10 @@ object frmImport: TfrmImport
       Top = 56
       Width = 43
       Caption = '*.ZIP'
+      Checked = True
+      State = cbChecked
       TabOrder = 8
-      OnChange = DirImportChange
+      OnChange = cbArcZIPChange
     end
     object cbImgD64: TCheckBox
       Left = 368
@@ -209,7 +211,7 @@ object frmImport: TfrmImport
       Checked = True
       State = cbChecked
       TabOrder = 3
-      OnChange = DirImportChange
+      OnChange = cbImgD64Change
     end
     object cbImgD71: TCheckBox
       Left = 430
@@ -220,7 +222,7 @@ object frmImport: TfrmImport
       Checked = True
       State = cbChecked
       TabOrder = 6
-      OnChange = DirImportChange
+      OnChange = cbImgD71Change
     end
     object cbImgD81: TCheckBox
       Left = 430
@@ -231,7 +233,7 @@ object frmImport: TfrmImport
       Checked = True
       State = cbChecked
       TabOrder = 7
-      OnChange = DirImportChange
+      OnChange = cbImgD81Change
     end
     object cbImgG64: TCheckBox
       Left = 368
@@ -242,7 +244,7 @@ object frmImport: TfrmImport
       Checked = True
       State = cbChecked
       TabOrder = 4
-      OnChange = DirImportChange
+      OnChange = cbImgG64Change
     end
     object cbImgPRG: TCheckBox
       Left = 368
@@ -253,7 +255,7 @@ object frmImport: TfrmImport
       Checked = True
       State = cbChecked
       TabOrder = 5
-      OnChange = DirImportChange
+      OnChange = cbImgPRGChange
     end
   end
   object btImport: TButton

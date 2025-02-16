@@ -28,10 +28,12 @@ unit FFFunctions;
 interface
 
 uses
-  Classes, SysUtils, StrUtils, Zipper, LConvEncoding, LazUTF8;
+  Classes, SysUtils, StrUtils, Zipper, LConvEncoding, LazUTF8, FileUtil;
 type
   TByteArr = array of Byte;
 
+
+function FileWithReadAttr(aFileName : String) : Boolean;
 function HexStrToStr(const HexStr: string): string;
 function DirCheck(const dir:string; add_if_length_is_zero:boolean=false): String;
 function LoadByteArray(const AFileName: string): TByteArr;
@@ -40,9 +42,16 @@ function HexToString(Hexy: string): string;
 function HexToASCII(mnuHexView:string):string;
 function EndPathCP866ToUTF8(AText:string):string;
 function UnPackFiles(aFilename, aImageFilename, UnPackPath: String): Integer;
-
 implementation
 uses Unit1;
+
+function FileWithReadAttr(aFileName : String) : Boolean;
+Var
+  F : Longint;
+begin
+  result := false;
+  If (F and faReadOnly)<>0 then result := true;
+end;
 
 function HexStrToStr(const HexStr: string): string;
 var
@@ -200,6 +209,7 @@ begin
        end;
   end;
 end;
+
 
 end.
 

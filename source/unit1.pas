@@ -22,8 +22,8 @@ interface
 
 uses
   Classes, SysUtils, StrUtils, Process, SQLite3Conn, SQLDB, DB, Forms, Controls,
-  Graphics, Dialogs, StdCtrls, ComCtrls, Menus, ExtCtrls, Buttons, DBGrids, ShellAPI,
-  ShellCtrls, FileUtil, Inifiles, LCLIntf, DBCtrls, LazUTF8, LazFileUtils, windows, Zipper;
+  Graphics, Dialogs, StdCtrls, ComCtrls, Menus, ExtCtrls, Buttons, DBGrids,
+  ShellCtrls, FileUtil, Inifiles, LCLIntf, DBCtrls, LazUTF8, LazFileUtils, windows;
 
 type
   TByteArr = array of Byte;
@@ -79,6 +79,8 @@ type
     lstBoxASCII: TMemo;
     lstBoxSectors: TMemo;
     MemoBAMHint: TMemo;
+    mnuDelTemp: TMenuItem;
+    Separator11: TMenuItem;
     mnuProperties: TMenuItem;
     mnuDatabase: TMenuItem;
     mnuSync: TMenuItem;
@@ -176,6 +178,7 @@ type
     procedure LstBrowseKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure LstBxDirectoryPETSCIIDblClick(Sender: TObject);
     procedure memInfoEditingDone(Sender: TObject);
+    procedure mnuDelTempClick(Sender: TObject);
     procedure mnuPropertiesClick(Sender: TObject);
     procedure mnuDeleteRecClick(Sender: TObject);
     procedure mnuCorruptRecClick(Sender: TObject);
@@ -416,6 +419,7 @@ begin
     Move(Pointer(LongInt(Source) + Index)^,
         Pointer(LongInt(Dest) + (Size - Index - 1))^ , 1);
 end;
+
 procedure OpenEmu(aEmu: string; aParam: string);
 var
   Process: TProcess;
@@ -433,15 +437,68 @@ begin
   end;
 end;
 
+procedure DeleteDirectoryAndContents(const Dir: string);
+var
+  SearchRec: TSearchRec;
+  PDir: PChar;
+begin
+  PDir := PChar(Dir);  // Umwandlung des Verzeichnispfads in PChar
+
+  try
+    // Suche nach allen Dateien und Verzeichnissen im angegebenen Verzeichnis
+    if FindFirst(PDir + PathDelim + '*', faAnyFile, SearchRec) = 0 then
+    begin
+      repeat
+        // Ausschließen von "." und ".."
+        if (SearchRec.Name <> '.') and (SearchRec.Name <> '..') then
+        begin
+          if (SearchRec.Attr and faDirectory) = faDirectory then
+          begin
+            // Rekursiv in Unterverzeichnisse gehen
+            DeleteDirectoryAndContents(Dir + PathDelim + SearchRec.Name);
+          end
+          else
+          begin
+            // Datei löschen
+            try
+              DeleteFile(PChar(PDir + PathDelim + SearchRec.Name));
+            except
+              on E: Exception do
+                Writeln('Fehler beim Löschen der Datei: ', E.Message);
+            end;
+          end;
+        end;
+      until FindNext(SearchRec) <> 0;
+    end;
+  except
+    on E: Exception do
+    begin
+      // Fehlerbehandlung, falls ein Fehler auftritt (z.B. bei FindFirst oder FindNext)
+      Writeln('Fehler beim Durchsuchen des Verzeichnisses: ', E.Message);
+    end;
+  end;
+
+  try
+    // Verzeichnis löschen
+    RemoveDir(PDir);
+  except
+    on E: Exception do
+      Writeln('Fehler beim Löschen des Verzeichnisses: ', E.Message);
+  end;
+end;
+
 procedure TForm1.UnpackFileFullContainsPipe(aFileFull : String);
 var
  tmpPath : String;
  ImageFileArray : TStringArray;
+ i : Integer;
+ FileAttrs: Integer;
+ FileAttrList : TStringlist;
+ FileAttrAnsi : AnsiString;
 begin
  // FileFull = SQLQueryDir.FieldByName('FileFull').Text
  // or
  // FileFull = "....|...." ( = archive )
-
  If aFileFull.Contains('|') = true then  // check if path locates an archive
   begin
    ImageFileArray := aFileFull.Split('|');
@@ -454,6 +511,21 @@ begin
        CreateDir(tmpPath + ExtractFileName(ImageFileArray[0])); // folder to temporarly unzip archive
       end;
      UnPackFiles(ImageFileArray[0], '', tmpPath + ExtractFileName(ImageFileArray[0]));
+
+     // Remove readonly fileattribute for a later delete of temp files
+     //FileAttrList.Create;
+     //FindAllFiles(FileAttrList, tmpPath + ExtractFileName(ImageFileArray[0]));
+     //for i := 0 to FileAttrList.Count - 1 do
+     // begin
+     //  FileAttrs := FileGetAttr(FileAttrList[i]);
+     //  if (FileAttrs and faReadOnly <> 0) then
+     //  begin
+     //    // Entferne das ReadOnly-Attribut
+     //    FileAttrs := FileAttrs and not faReadOnly;
+     //    FileSetAttr(FileName, FileAttrs);  // Attribut ändern
+     //    WriteLn('ReadOnly-Attribut wurde entfernt von: ', FileName);
+     //  end;
+     // end;
     end;
    end
  else FileFull := aFileFull;
@@ -835,6 +907,24 @@ begin
    end;
 end;
 
+procedure TForm1.mnuDelTempClick(Sender: TObject);
+var
+  tmpPathArch : TStringList;
+  i : Integer;
+begin
+ If MessageDlg('Are you sure you want to clear the temporary folder?',mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  begin
+   try
+    DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),true)
+   except
+   On E : Exception do
+    begin
+     ShowMessage(E.Message + ' - Unable to clear temporary folder! Please check files for "readonly" attribute.');
+    end;
+   end;
+  end;
+end;
+
 procedure TForm1.mnuPropertiesClick(Sender: TObject);
 begin
  Form2.showmodal;
@@ -946,12 +1036,12 @@ begin
                 ' "idxImg" Integer,'+
                 ' "DateImport" DateTime,'+
                 ' "DateLast" DateTime,'+
-                ' "FilePath" Char(1024),'+
+                ' "FilePath" Char(512),'+
                 ' "FileName" Char(255),'+
                 ' "FileNameExt" Char(3),'+
                 ' "FileSizeImg" Integer,'+
                 ' "FileDateTime" DateTime,'+
-                ' "FileFull" Char(1024) NOT NULL UNIQUE,'+
+                ' "FileFull" Char(512) NOT NULL UNIQUE,'+
                 ' "FileArchType" Char(16),'+
                 ' "DiskName" Char(16),'+
                 ' "DiskIDTxt" Char(3),'+
@@ -966,7 +1056,7 @@ begin
     // Table FilePath
     AConnection.ExecuteDirect('CREATE TABLE "FilePath"('+
                 ' "idFp" Integer PRIMARY KEY,'+
-                ' "FilePath" Char(1024) UNIQUE);');
+                ' "FilePath" Char(512) UNIQUE);');
     // Table Tracks
     AConnection.ExecuteDirect('CREATE TABLE "Tracks"('+
                 ' "idx" Integer PRIMARY KEY,'+
@@ -984,7 +1074,7 @@ begin
                 ' "FileTypeTxt" Char(3),'+
                 ' FOREIGN KEY (idxTxt) REFERENCES FileImage(idxImg));');
     // Version, Created
-    AConnection.ExecuteDirect('insert into DB (idDB,DBVersion,DBCreated) values (1,''107'', ''' + DateToStr(now) + ''');');
+    AConnection.ExecuteDirect('insert into DB (idDB,DBVersion,DBCreated) values (1,''108'', ''' + DateToStr(now) + ''');');
     ATransaction.Commit;
     If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - Step 2');
   except
@@ -995,15 +1085,26 @@ begin
        exit;
       end;
   end;
-
-  DBGridDir.Clear;
   mnuImport.Enabled:=true;
-  mnuOpenRec.Enabled:=true;
-  mnuOpenLocationRec.Enabled:=true;
-  mnuFavouriteRec.Enabled:=true;
-  mnuFavouriteRec.Enabled:=true;
-  mnuCorruptRec.Enabled:=true;
-  mnuDeleteRec.Enabled:=true;
+  mnuOpenRec.Enabled:=false;
+  mnuOpenLocationRec.Enabled:=false;
+  mnuFavouriteRec.Enabled:=false;
+  mnuFavouriteRec.Enabled:=false;
+  mnuCorruptRec.Enabled:=false;
+  mnuDeleteRec.Enabled:=false;
+  cbFavourite.Enabled:=false;
+  cbCorrupt.Enabled:=false;
+  edTags.Enabled:=false;
+  memInfo.Enabled:=false;
+  mnuOpenImage.Enabled:=false;
+  mnuOpenFileBrowser.Enabled:=false;
+  mnuOpenExplorer.Enabled:=false;
+  mnuFavourite.Enabled:=false;
+  mnuCorrupt.Enabled:=false;
+  mnuSync.Enabled:=false;
+  mnuDelete.Enabled:=false;
+  edTags.Enabled:=false;
+  memInfo.Enabled:=false;
   StatusBar1.Panels[0].Text:= '0/0';
   StatusBar1.Panels[1].Text:= '';
   StatusBar1.Panels[2].Text:= '';
@@ -1086,6 +1187,52 @@ end;
 procedure TForm1.mnuImportClick(Sender: TObject);
 begin
   frmImport.Showmodal;
+ If SQLQueryDir.RecordCount > 0 then
+  begin
+   // Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
+   mnuOpenRec.Enabled:=true;
+   mnuOpenLocationRec.Enabled:=true;
+   mnuFavouriteRec.Enabled:=true;
+   mnuFavouriteRec.Enabled:=true;
+   mnuCorruptRec.Enabled:=true;
+   mnuDeleteRec.Enabled:=true;
+   cbFavourite.Enabled:=true;
+   cbCorrupt.Enabled:=true;
+   edTags.Enabled:=true;
+   memInfo.Enabled:=true;
+   mnuOpenImage.Enabled:=true;
+   mnuOpenFileBrowser.Enabled:=true;
+   mnuOpenExplorer.Enabled:=true;
+   mnuFavourite.Enabled:=true;
+   mnuCorrupt.Enabled:=true;
+   mnuSync.Enabled:=false;
+   mnuDelete.Enabled:=true;
+   edTags.Enabled:=true;
+   memInfo.Enabled:=true;
+  end
+ else
+  begin
+   // if SQLQueryDir.RecordCount < 1 then    Statusbar1.Panels[0].Text := ' -/- ';
+   mnuOpenRec.Enabled:=false;
+   mnuOpenLocationRec.Enabled:=false;
+   mnuFavouriteRec.Enabled:=false;
+   mnuFavouriteRec.Enabled:=false;
+   mnuCorruptRec.Enabled:=false;
+   mnuDeleteRec.Enabled:=false;
+   cbFavourite.Enabled:=false;
+   cbCorrupt.Enabled:=false;
+   edTags.Enabled:=false;
+   memInfo.Enabled:=false;
+   mnuOpenImage.Enabled:=false;
+   mnuOpenFileBrowser.Enabled:=false;
+   mnuOpenExplorer.Enabled:=false;
+   mnuFavourite.Enabled:=false;
+   mnuCorrupt.Enabled:=false;
+   mnuSync.Enabled:=false;
+   mnuDelete.Enabled:=false;
+   edTags.Enabled:=false;
+   memInfo.Enabled:=false;
+  end;
 end;
 
 Procedure TForm1.Init_FilePath;
@@ -1289,8 +1436,8 @@ begin
    answer := MessageDlg('The database "' + aFileName + '" version "' + IntToStr(sTVersion) + '" is older than expected!',mtWarning, [mbOK], 0);
     if answer = mrOk then
      begin
-      AConnection.ExecuteDirect('ALTER TABLE "DB" ADD "DBComment" Char(1024);');
-      AConnection.ExecuteDirect('ALTER TABLE "FileImage" ADD "FileArchPath" Char(1024);');   // inside archive
+      AConnection.ExecuteDirect('ALTER TABLE "DB" ADD "DBComment" Char(512);');
+      AConnection.ExecuteDirect('ALTER TABLE "FileImage" ADD "FileArchPath" Char(512);');   // inside archive
       AConnection.ExecuteDirect('ALTER TABLE "FileImage" ADD "FileArchType" Char(16);');     // archive type e.g. zip
       SQlQueryDB.Edit;
       SQlQueryDB.FieldByName('DBVersion').AsString := '107';
@@ -1300,12 +1447,8 @@ begin
      end;
   end;
 
- // Get entries
- If Dev_Mode = true then Showmessage('[Dev_Mode] - Get entries');
- SQLQueryDir.DataBase := AConnection;
- SQlQueryDir.SQL.Clear;
- SQlQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
- SQLQueryDir.Active:=true;
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - Database filter');
+ DBFilter;
 
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Start Init_FilePath procedure');
  Init_FilePath;
@@ -1340,8 +1483,30 @@ begin
    mnuDelete.Enabled:=true;
    edTags.Enabled:=true;
    memInfo.Enabled:=true;
+  end
+ else
+  begin
+   if SQLQueryDir.RecordCount < 1 then    Statusbar1.Panels[0].Text := ' -/- ';
+   mnuOpenRec.Enabled:=false;
+   mnuOpenLocationRec.Enabled:=false;
+   mnuFavouriteRec.Enabled:=false;
+   mnuFavouriteRec.Enabled:=false;
+   mnuCorruptRec.Enabled:=false;
+   mnuDeleteRec.Enabled:=false;
+   cbFavourite.Enabled:=false;
+   cbCorrupt.Enabled:=false;
+   edTags.Enabled:=false;
+   memInfo.Enabled:=false;
+   mnuOpenImage.Enabled:=false;
+   mnuOpenFileBrowser.Enabled:=false;
+   mnuOpenExplorer.Enabled:=false;
+   mnuFavourite.Enabled:=false;
+   mnuCorrupt.Enabled:=false;
+   mnuSync.Enabled:=false;
+   mnuDelete.Enabled:=false;
+   edTags.Enabled:=false;
+   memInfo.Enabled:=false;
   end;
- if SQLQueryDir.RecordCount < 1 then    Statusbar1.Panels[0].Text := ' -/- ';
 end;
 
 procedure TForm1.Convert_G64(aImageName: String);
@@ -1350,7 +1515,6 @@ var
  aImageNameD64 : String;
  answer : Integer;
 begin
-
    if fileexists(IniFluff.ReadString('NibConv', 'Location', '')) = false then
     begin
      answer := MessageDlg('NibConv.exe not found! Please go to settings...',mtWarning, [mbOK], 0);
@@ -1900,6 +2064,7 @@ Begin
       Form1.SQLQueryDirTxt.First;
       Form1.LstBxDirectoryPETSCII.Items.Add(Format('%-5s%-16s%', [Form1.SQLQueryDirTXT.FieldByName('FileSizeTxt').Text, Form1.SQLQueryDirTXT.FieldByName('FileNameTxt').Text]));
       Form1.Statusbar1.Panels[1].text := '';
+      Form1.Statusbar1.Panels[2].Text := 'Program file (PRG)';
      end;
    '.d64':
      begin
@@ -2857,13 +3022,17 @@ begin
  If SQLQueryDir.RecordCount > 0 then
   begin
    DBFilter;
-   LoadDir;
   end;
 end;
 
 procedure TForm1.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
- DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),true);
+ try
+  DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),false)
+ except
+ On E : Exception do
+  ShowMessage(E.Message + ' - Unable to clear temporary folder! Please check files for "readonly" attribute.');
+ end;
  IniFluff.WriteString('Database', 'FilePathLast', DirCheck(cbDBFilePath.Text));
  IniFluff.WriteBool('Options', 'Scratched', TgScratch.Checked);
  IniFluff.WriteBool('Options', 'Shifted', TgCShift.Checked);
@@ -2878,15 +3047,15 @@ begin
    ATransaction.Commit;
   end;
  AConnection.Free;
-
 end;
+
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   Dev_mode := false;
   sAppCaption := 'FluffyFloppy64 ';
-  sAppVersion := 'v0.77';
-  sAppDate    := '2025-02-09';
+  sAppVersion := 'v0.78';
+  sAppDate    := '2025-02-16';
   Form1.Caption:= sAppCaption + sAppVersion;
   sAppPath := ExtractFilePath(ParamStr(0));
   SQlSearch_Click := false;
@@ -3690,7 +3859,10 @@ var
 begin
  if SQLQueryDir.RecordCount > 0 then
   begin
-   UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text); // FileFull
+   try
+    UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text); // FileFull
+   finally
+   end;
    FileSizeImg := SQLQueryDir.FieldByName('FileSizeImg').Text;
    FileNameExt := lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString);
 
