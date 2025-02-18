@@ -1063,7 +1063,7 @@ begin
   Form1.LstBxDirectoryPETSCII.Clear;
   Form1.LstBAM.Clear;
   Form1.lstBoxSectors.Clear;
-  Form1.lstBoxASCII.Clear;
+  Form1.lstBoxPETSCII.Clear;
   Form1.LstBxDirectoryTXT.Clear;
   Form1.MemoBAMHint.Clear;
   Form1.StatusBar1.Panels[1].Text:= 'Importing...';

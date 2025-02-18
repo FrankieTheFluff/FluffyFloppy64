@@ -1,11 +1,11 @@
 object Form1: TForm1
-  Left = 456
+  Left = 377
   Height = 643
-  Top = 130
-  Width = 1114
+  Top = 151
+  Width = 1304
   Caption = 'Form1'
   ClientHeight = 643
-  ClientWidth = 1114
+  ClientWidth = 1304
   KeyPreview = True
   Menu = MainMenu1
   OnActivate = FormActivate
@@ -19,7 +19,7 @@ object Form1: TForm1
     Left = 0
     Height = 23
     Top = 620
-    Width = 1114
+    Width = 1304
     Panels = <    
       item
         Width = 100
@@ -39,19 +39,19 @@ object Form1: TForm1
     SimplePanel = False
   end
   object pnDirView: TPanel
-    Left = 579
+    Left = 834
     Height = 620
     Top = 0
-    Width = 535
+    Width = 470
     Align = alRight
     ClientHeight = 620
-    ClientWidth = 535
+    ClientWidth = 470
     TabOrder = 1
     object PageControl2: TPageControl
       Left = 1
       Height = 618
       Top = 1
-      Width = 533
+      Width = 468
       ActivePage = TabSheet3
       Align = alClient
       Font.CharSet = ANSI_CHARSET
@@ -66,7 +66,7 @@ object Form1: TForm1
       object TabSheet3: TTabSheet
         Caption = 'Directory'
         ClientHeight = 590
-        ClientWidth = 525
+        ClientWidth = 460
         object TgScratch: TToggleBox
           Left = 6
           Height = 23
@@ -92,7 +92,7 @@ object Form1: TForm1
           Left = 8
           Height = 469
           Top = 40
-          Width = 511
+          Width = 445
           Anchors = [akTop, akLeft, akRight, akBottom]
           Color = 14368542
           Font.CharSet = ANSI_CHARSET
@@ -119,7 +119,7 @@ object Form1: TForm1
           Left = 6
           Height = 48
           Top = 533
-          Width = 511
+          Width = 446
           Anchors = [akLeft, akRight, akBottom]
           Font.CharSet = ANSI_CHARSET
           Font.Height = -11
@@ -131,7 +131,7 @@ object Form1: TForm1
           TabOrder = 3
         end
         object cbEmulator: TComboBox
-          Left = 368
+          Left = 303
           Height = 23
           Top = 8
           Width = 149
@@ -155,7 +155,7 @@ object Form1: TForm1
           Text = 'CCS64'
         end
         object lblOpenWith: TLabel
-          Left = 263
+          Left = 198
           Height = 15
           Top = 12
           Width = 85
@@ -167,7 +167,7 @@ object Form1: TForm1
       object TabSheet5: TTabSheet
         Caption = 'BAM'
         ClientHeight = 590
-        ClientWidth = 525
+        ClientWidth = 460
         object Label2: TLabel
           Left = 6
           Height = 15
@@ -177,14 +177,14 @@ object Form1: TForm1
           ParentColor = False
         end
         object LstBAM: TMemo
-          Left = 6
-          Height = 543
-          Top = 36
-          Width = 507
+          Left = 8
+          Height = 540
+          Top = 40
+          Width = 445
           Anchors = [akTop, akLeft, akRight, akBottom]
           Font.CharSet = ANSI_CHARSET
           Font.Height = -12
-          Font.Name = 'Consolas'
+          Font.Name = 'C64 Pro Mono'
           Font.Pitch = fpFixed
           Font.Quality = fqDraft
           Lines.Strings = (
@@ -200,7 +200,7 @@ object Form1: TForm1
       object TabSheet6: TTabSheet
         Caption = 'Sectors (Hex)'
         ClientHeight = 590
-        ClientWidth = 525
+        ClientWidth = 460
         object Edit1: TEdit
           Left = 40
           Height = 23
@@ -280,46 +280,51 @@ object Form1: TForm1
           TabOrder = 2
           Text = 'Database (Track 18/19)'
         end
-        object lstBoxASCII: TMemo
-          Left = 392
-          Height = 316
-          Top = 36
-          Width = 126
-          Anchors = [akTop, akLeft, akRight]
+        object lstBoxPETSCII: TMemo
+          Left = 231
+          Height = 284
+          Top = 40
+          Width = 222
+          Anchors = [akTop, akRight]
           Font.CharSet = ANSI_CHARSET
-          Font.Height = -13
-          Font.Name = 'Consolas'
+          Font.Height = -12
+          Font.Name = 'C64 Pro Mono'
           Font.Pitch = fpFixed
           Font.Quality = fqDraft
           ParentFont = False
           ReadOnly = True
+          ScrollBars = ssAutoBoth
           TabOrder = 4
+          WordWrap = False
         end
         object lstBoxSectors: TMemo
-          Left = 6
-          Height = 316
-          Top = 36
-          Width = 380
+          Left = 8
+          Height = 284
+          Top = 40
+          Width = 220
+          Anchors = [akTop, akLeft, akRight]
           Font.CharSet = ANSI_CHARSET
-          Font.Height = -13
-          Font.Name = 'Consolas'
+          Font.Height = -12
+          Font.Name = 'C64 Pro Mono'
           Font.Pitch = fpFixed
           Font.Quality = fqDraft
           ParentFont = False
           ReadOnly = True
+          ScrollBars = ssBoth
           TabOrder = 5
+          WordWrap = False
         end
       end
       object TabSheet4: TTabSheet
         Caption = 'Text'
         ClientHeight = 590
-        ClientWidth = 525
+        ClientWidth = 460
         TabVisible = False
         object LstBxDirectoryTXT: TListBox
-          Left = 6
-          Height = 546
-          Top = 36
-          Width = 511
+          Left = 8
+          Height = 538
+          Top = 40
+          Width = 445
           Anchors = [akTop, akLeft, akRight, akBottom]
           ItemHeight = 0
           ParentColor = True
@@ -341,17 +346,18 @@ object Form1: TForm1
     Left = 0
     Height = 620
     Top = 0
-    Width = 574
+    Width = 829
     Align = alClient
+    Anchors = []
     Caption = 'pnDBView'
     ClientHeight = 620
-    ClientWidth = 574
+    ClientWidth = 829
     TabOrder = 2
     object PageControl1: TPageControl
       Left = 1
       Height = 618
       Top = 1
-      Width = 572
+      Width = 827
       ActivePage = TabSheet1
       Align = alClient
       TabIndex = 0
@@ -360,33 +366,33 @@ object Form1: TForm1
       object TabSheet1: TTabSheet
         Caption = 'Database'
         ClientHeight = 590
-        ClientWidth = 564
+        ClientWidth = 819
         object Panel3: TPanel
           Left = 0
           Height = 104
           Top = 0
-          Width = 564
+          Width = 819
           Align = alTop
           BevelOuter = bvNone
           ClientHeight = 104
-          ClientWidth = 564
+          ClientWidth = 819
           TabOrder = 0
           object GroupBox1: TGroupBox
             Left = 0
             Height = 104
             Top = 0
-            Width = 558
+            Width = 813
             Anchors = [akTop, akLeft, akRight]
             Caption = 'Filter/Search (Use *):'
             ClientHeight = 84
-            ClientWidth = 554
+            ClientWidth = 809
             TabOrder = 0
             object cbDBFilePath: TComboBox
               Left = 72
               Height = 23
               Hint = 'Filter: Path to the images'
               Top = 0
-              Width = 475
+              Width = 730
               Anchors = [akTop, akLeft, akRight]
               DropDownCount = 20
               ItemHeight = 15
@@ -437,8 +443,8 @@ object Form1: TForm1
               Height = 23
               Hint = 'Search database...'
               Top = 56
-              Width = 199
-              Anchors = [akTop, akLeft, akRight]
+              Width = 454
+              Anchors = [akLeft, akRight]
               Enabled = False
               ParentShowHint = False
               ShowHint = True
@@ -447,7 +453,7 @@ object Form1: TForm1
               OnChange = EdSQLSearchChange
             end
             object cbSQLSearch: TComboBox
-              Left = 287
+              Left = 542
               Height = 23
               Hint = 'Select field'
               Top = 56
@@ -472,7 +478,7 @@ object Form1: TForm1
               OnChange = cbSQLSearchChange
             end
             object BtSQLSearch: TBitBtn
-              Left = 467
+              Left = 722
               Height = 23
               Hint = 'Search'
               Top = 56
@@ -539,18 +545,18 @@ object Form1: TForm1
           Left = 0
           Height = 486
           Top = 104
-          Width = 564
+          Width = 819
           Align = alClient
           BevelOuter = bvNone
           Caption = 'Panel4'
           ClientHeight = 486
-          ClientWidth = 564
+          ClientWidth = 819
           TabOrder = 1
           object DBGridDirTxt: TDBGrid
             Left = 0
             Height = 179
             Top = 5
-            Width = 558
+            Width = 813
             Align = alTop
             AlternateColor = 16709873
             AutoEdit = False
@@ -580,7 +586,7 @@ object Form1: TForm1
               end            
               item
                 Title.Caption = 'Location'
-                Width = 227
+                Width = 482
                 FieldName = 'Filefull'
               end>
             DataSource = DataSourceSearch
@@ -600,7 +606,7 @@ object Form1: TForm1
             Left = 0
             Height = 5
             Top = 186
-            Width = 564
+            Width = 819
             Align = alTop
             ResizeAnchor = akTop
             Visible = False
@@ -609,7 +615,7 @@ object Form1: TForm1
             Left = 0
             Height = 171
             Top = 191
-            Width = 558
+            Width = 813
             Align = alClient
             AlternateColor = 16709873
             AutoEdit = False
@@ -684,6 +690,7 @@ object Form1: TForm1
               item
                 SizePriority = 0
                 Title.Caption = 'Location'
+                Width = 112
                 FieldName = 'FileFull'
               end>
             DataSource = DataSourceDir
@@ -706,11 +713,11 @@ object Form1: TForm1
             Left = 0
             Height = 122
             Top = 364
-            Width = 564
+            Width = 819
             Align = alBottom
             BevelOuter = bvNone
             ClientHeight = 122
-            ClientWidth = 564
+            ClientWidth = 819
             TabOrder = 3
             object lblNotes: TLabel
               Left = 96
@@ -734,7 +741,7 @@ object Form1: TForm1
               Left = 8
               Height = 23
               Hint = 'Image is a favourite <F>'
-              Top = 24
+              Top = 25
               Width = 74
               Anchors = [akLeft, akBottom]
               Caption = 'Favourite'
@@ -767,8 +774,8 @@ object Form1: TForm1
             object memInfo: TDBMemo
               Left = 104
               Height = 48
-              Top = 64
-              Width = 454
+              Top = 65
+              Width = 709
               Anchors = [akLeft, akRight, akBottom]
               DataField = 'Info'
               DataSource = DataSourceDir
@@ -790,8 +797,8 @@ object Form1: TForm1
               Left = 104
               Height = 23
               Hint = 'tags divided with comma'
-              Top = 24
-              Width = 454
+              Top = 25
+              Width = 709
               DataField = 'Tags'
               DataSource = DataSourceDir
               Anchors = [akLeft, akRight, akBottom]
@@ -808,13 +815,13 @@ object Form1: TForm1
       object TabSheet2: TTabSheet
         Caption = 'File-Browser'
         ClientHeight = 590
-        ClientWidth = 564
+        ClientWidth = 819
         TabVisible = False
         object ShellTreeView1: TShellTreeView
           Left = 0
           Height = 259
           Top = 0
-          Width = 564
+          Width = 819
           Align = alTop
           FileSortType = fstNone
           TabOrder = 0
@@ -825,7 +832,7 @@ object Form1: TForm1
           Left = 0
           Height = 326
           Top = 264
-          Width = 564
+          Width = 819
           Align = alClient
           Color = clDefault
           Mask = '*.d64;*.g64;*.d71;*.d81'
@@ -840,19 +847,20 @@ object Form1: TForm1
           Left = 0
           Height = 5
           Top = 259
-          Width = 564
+          Width = 819
           Align = alTop
           ResizeAnchor = akTop
         end
       end
     end
   end
-  object Splitter2: TSplitter
-    Left = 574
+  object SplitterDB: TSplitter
+    Left = 829
     Height = 620
     Top = 0
     Width = 5
     Align = alRight
+    Anchors = [akRight]
     ResizeAnchor = akRight
   end
   object MainMenu1: TMainMenu

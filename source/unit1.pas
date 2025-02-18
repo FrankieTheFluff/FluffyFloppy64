@@ -76,7 +76,7 @@ type
     memInfo: TDBMemo;
     LstBAM: TMemo;
     Database_OpenDialog: TOpenDialog;
-    lstBoxASCII: TMemo;
+    lstBoxPETSCII: TMemo;
     lstBoxSectors: TMemo;
     MemoBAMHint: TMemo;
     mnuDelTemp: TMenuItem;
@@ -127,7 +127,7 @@ type
     LstBrowse: TShellListView;
     ShellTreeView1: TShellTreeView;
     Splitter1: TSplitter;
-    Splitter2: TSplitter;
+    SplitterDB: TSplitter;
     SQLite3Connection1: TSQLite3Connection;
     SQLQueryDir: TSQLQuery;
     SQLQueryDB: TSQLQuery;
@@ -535,6 +535,89 @@ procedure TForm1.FormShow(Sender: TObject);
 var
  GetDB : String;
 begin
+ Dev_mode := false;
+ sAppCaption := 'FluffyFloppy64 ';
+ sAppVersion := 'v0.79';
+ sAppDate    := '2025-02-18';
+ Form1.Caption:= sAppCaption + sAppVersion;
+ sAppPath := ExtractFilePath(ParamStr(0));
+ SQlSearch_Click := false;
+ dbGridSorted := 'ASC';
+
+ // INI
+ if FileExists(sAppPath + 'fluffyfloppy64.ini') = False then
+  try
+   IniFluff := TINIFile.Create(sAppPath + 'fluffyfloppy64.ini');
+   IniFluff.WriteString('FluffyFloppy64', 'Version', sAppVersion);
+   InIFluff.WriteString('FluffyFloppy64', 'Language', 'English');
+   IniFluff.WriteInteger('FluffyFloppy64', 'DBModulo', 50);
+   InIFluff.WriteBool('FluffyFloppy64', 'Dev_Mode', false);
+   IniFluff.WriteBool('Start', 'OpenDatabase', true);
+   IniFluff.WriteString('Options', 'FolderTemp', DirCheck(sAppPath + 'temp\'));
+   IniFluff.WriteBool('Options', 'Scratched', false);
+   IniFluff.WriteBool('Options', 'Shifted', false);
+   IniFluff.WriteBool('Options', 'IncludeT18T19', false);
+   IniFluff.WriteBool('Options', 'cbPETSCII1819', false);
+   IniFluff.WriteString('Options', 'DirFont', '$00F9B775');
+   IniFluff.WriteString('Options', 'DirFontBackground', '$00DB3F1E');
+   If FileExists(DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe') = true then IniFluff.WriteString('NibConv', 'Location', DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe');
+   IniFluff.WriteInteger('Emulators', 'Select', 2);
+   IniFluff.WriteString('CCS64', 'Location', '');
+   IniFluff.WriteString('Denise', 'Location', '');
+   IniFluff.WriteString('Hoxs64', 'Location', '');
+   IniFluff.WriteString('VICE', 'Location', '');
+  finally
+ end;
+
+ IniFluff := TINIFile.Create(sAppPath + 'fluffyfloppy64.ini');
+
+ // Clean temp folder
+ DeleteDirectory(IniFluff.ReadString('Options', 'FolderTemp', ''),true);
+
+ // Dev_Mode ?
+ Dev_Mode :=  IniFluff.ReadBool('FluffyFloppy64', 'Dev_Mode', false);
+ Dev_mode := false; // public version!
+ If Dev_Mode = true then Form1.Caption:= sAppCaption + sAppVersion + ' [Dev_Mode]';
+
+ // Font
+ If fileexists(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = false then
+  begin
+   Showmessage('Font not found: ' + chr(13) + PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
+  end
+  else
+   begin
+    AddFontResource(PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
+    If Dev_Mode = true then Showmessage('[Dev_Mode] - Font found: ' + chr(13) + PChar(DirCheck(sAppPath))+'C64_Pro_Mono-STYLE.ttf');
+   end;
+
+ // Folder
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - Create folders');
+ If DirectoryExists(DirCheck(sAppPath + 'temp')) = false then CreateDir(DirCheck(sAppPath + 'temp'));
+ If DirectoryExists(DirCheck(sAppPath + 'nibtools')) = false then CreateDir(DirCheck(sAppPath + 'nibtools'));
+
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - ClientWidth & ClientHeight');
+ Form1.ClientWidth := IniFluff.ReadInteger('Application', 'ClientWidth', 1000);
+ Form1.ClientHeight := IniFluff.ReadInteger('Application', 'ClientHeight', 600);
+ pnDirView.Width := IniFluff.ReadInteger('Application', 'SplitterPos', 470);
+ Form1.Left := (Form1.Monitor.Width  - Form1.Width)  div 2;
+ Form1.Top  := (Form1.Monitor.Height - Form1.Height) div 2;
+
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - Get options');
+ TgScratch.Checked := IniFluff.ReadBool('Options', 'Scratched', false);
+ TgCShift.Checked := IniFluff.ReadBool('Options', 'Shifted', false);
+ cbEmulator.ItemIndex := IniFluff.ReadInteger('Emulators', 'Select', 2);
+ //
+ LstBxDirectoryPETSCII.Font.Color := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
+ LstBxDirectoryPETSCII.Color := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
+ LstBAM.Font.Color := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
+ LstBAM.Color := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
+ LstBoxSectors.Font.Color := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
+ LstBoxSectors.Color := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
+ LstBoxPETSCII.Font.Color := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
+ LstBoxPETSCII.Color := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
+ //
+
+
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Check if database exists and load if autostart selected');
  GetDB := IniFluff.ReadString('Database', 'Location', ''); // location of database
  If fileexists(GetDB) then
@@ -568,6 +651,7 @@ begin
     end;
     end;
   end;
+
 end;
 
 procedure TForm1.LstBrowseKeyUp(Sender: TObject; var Key: Word;
@@ -1281,7 +1365,7 @@ begin
     LstBxDirectoryTXT.Clear;
     LstBAM.Clear;
     LstBoxSectors.Clear;
-    LstBoxASCII.Clear;
+    lstBoxPETSCII.Clear;
    end;
 end;
 
@@ -3036,8 +3120,9 @@ begin
  IniFluff.WriteString('Database', 'FilePathLast', DirCheck(cbDBFilePath.Text));
  IniFluff.WriteBool('Options', 'Scratched', TgScratch.Checked);
  IniFluff.WriteBool('Options', 'Shifted', TgCShift.Checked);
- IniFluff.WriteInteger('Application', 'ClientWidth', Form1.ClientWidth);
- IniFluff.WriteInteger('Application', 'ClientHeight', Form1.ClientHeight);
+ IniFluff.WriteInteger('Application', 'ClientWidth', ClientWidth);
+ IniFluff.WriteInteger('Application', 'ClientHeight', ClientHeight);
+ IniFluff.WriteInteger('Application', 'SplitterPos', pnDirView.Width);
  IniFluff.WriteInteger('Emulators', 'Select', cbEmulator.ItemIndex);
  IniFluff.Free;
 
@@ -3052,81 +3137,7 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-  Dev_mode := false;
-  sAppCaption := 'FluffyFloppy64 ';
-  sAppVersion := 'v0.78';
-  sAppDate    := '2025-02-16';
-  Form1.Caption:= sAppCaption + sAppVersion;
-  sAppPath := ExtractFilePath(ParamStr(0));
-  SQlSearch_Click := false;
-  dbGridSorted := 'ASC';
 
-  // INI
-  if FileExists(sAppPath + 'fluffyfloppy64.ini') = False then
-   try
-    IniFluff := TINIFile.Create(sAppPath + 'fluffyfloppy64.ini');
-    IniFluff.WriteString('FluffyFloppy64', 'Version', sAppVersion);
-    InIFluff.WriteString('FluffyFloppy64', 'Language', 'English');
-    IniFluff.WriteInteger('FluffyFloppy64', 'DBModulo', 50);
-    InIFluff.WriteBool('FluffyFloppy64', 'Dev_Mode', false);
-    IniFluff.WriteBool('Start', 'OpenDatabase', true);
-    IniFluff.WriteString('Options', 'FolderTemp', DirCheck(sAppPath + 'temp\'));
-    IniFluff.WriteBool('Options', 'Scratched', false);
-    IniFluff.WriteBool('Options', 'Shifted', false);
-    IniFluff.WriteBool('Options', 'IncludeT18T19', false);
-    IniFluff.WriteBool('Options', 'cbPETSCII1819', false);
-    IniFluff.WriteString('Options', 'DirFont', '$00F9B775');
-    IniFluff.WriteString('Options', 'DirFontBackground', '$00DB3F1E');
-    If FileExists(DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe') = true then IniFluff.WriteString('NibConv', 'Location', DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe');
-    IniFluff.WriteInteger('Emulators', 'Select', 2);
-    IniFluff.WriteString('CCS64', 'Location', '');
-    IniFluff.WriteString('Denise', 'Location', '');
-    IniFluff.WriteString('Hoxs64', 'Location', '');
-    IniFluff.WriteString('VICE', 'Location', '');
-   finally
-  end;
-
-  IniFluff := TINIFile.Create(sAppPath + 'fluffyfloppy64.ini');
-
-  // Clean temp folder
-  DeleteDirectory(IniFluff.ReadString('Options', 'FolderTemp', ''),true);
-
-  // Dev_Mode ?
-  Dev_Mode :=  IniFluff.ReadBool('FluffyFloppy64', 'Dev_Mode', false);
-  Dev_mode := false; // public version!
-  If Dev_Mode = true then Form1.Caption:= sAppCaption + sAppVersion + ' [Dev_Mode]';
-
-  // Font
-  If fileexists(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = false then
-   begin
-    Showmessage('Font not found: ' + chr(13) + PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
-   end
-   else
-    begin
-     AddFontResource(PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
-     If Dev_Mode = true then Showmessage('[Dev_Mode] - Font found: ' + chr(13) + PChar(DirCheck(sAppPath))+'C64_Pro_Mono-STYLE.ttf');
-    end;
-
-  // Folder
-  If Dev_Mode = true then Showmessage('[Dev_Mode] - Create folders');
-  If DirectoryExists(DirCheck(sAppPath + 'temp')) = false then CreateDir(DirCheck(sAppPath + 'temp'));
-  If DirectoryExists(DirCheck(sAppPath + 'nibtools')) = false then CreateDir(DirCheck(sAppPath + 'nibtools'));
-
-  If Dev_Mode = true then Showmessage('[Dev_Mode] - ClientWidth & ClientHeight');
-  Form1.ClientWidth := IniFluff.ReadInteger('Application', 'ClientWidth', 1000);
-  Form1.ClientHeight := IniFluff.ReadInteger('Application', 'ClientHeight', 600);
-  Form1.Left := (Form1.Monitor.Width  - Form1.Width)  div 2;
-  Form1.Top  := (Form1.Monitor.Height - Form1.Height) div 2;
-
-  If Dev_Mode = true then Showmessage('[Dev_Mode] - Get options');
-  TgScratch.Checked := IniFluff.ReadBool('Options', 'Scratched', false);
-  TgCShift.Checked := IniFluff.ReadBool('Options', 'Shifted', false);
-  cbEmulator.ItemIndex := IniFluff.ReadInteger('Emulators', 'Select', 2);
-  //
-  LstBxDirectoryPETSCII.Font.Color := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
-  LstBxDirectoryPETSCII.Color := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
-  //
-  If Dev_Mode = true then Showmessage('[Dev_Mode] - FormCreate end');
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
@@ -3750,7 +3761,7 @@ var
   sec : String;
 begin
  lstBoxSectors.Clear;
- lstBoxASCII.Clear;
+ lstBoxPETSCII.Clear;
 
  if lowercase(ExtractFileExt(aFileName)) = '.prg' then exit;
 
@@ -3761,7 +3772,6 @@ begin
    TgScratch.Enabled:=false;
    TgCShift.Enabled:=false;
    LstBxDirectoryPETSCII.Clear;
-   //LstBxDirectoryPETSCII.Items.Add('File not found!');
    cbFavourite.Enabled:=false;
    cbCorrupt.Enabled:=false;
    memInfo.Enabled:=false;
@@ -3776,8 +3786,8 @@ begin
  b := 1;
  lstBoxSectors.Lines.Add('     00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F');
  lstBoxSectors.Lines.Add('     -----------------------------------------------');
- lstBoxASCII.Lines.Add('');
- lstBoxASCII.Lines.Add('----------------');
+ lstBoxPETSCII.Lines.Add('');
+ lstBoxPETSCII.Lines.Add('----------------');
 
  for a := 1 to 16 do // 16 Zeilen
   begin
@@ -3788,46 +3798,19 @@ begin
      if (lowercase(ExtractFileExt(aFileName)) = '.d64') or (lowercase(ExtractFileExt(aFileName)) = '.g64') then
       begin
        sec := sec + Copy(arrD64[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2) + ' ';
-       case Copy(arrD64[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2) of
-        '00':
-         edit1.Text  := edit1.Text + '.';
-        'FF':
-         edit1.Text  := edit1.Text + '.';
-        'A0':
-         edit1.Text  := edit1.Text + ' ';
-        else
-         edit1.Text  := edit1.Text + HexStrToStr(Copy(arrD64[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2));
-       end;
+       edit1.Text := edit1.Text + GetUTF8('$' + Copy(arrD64[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2), false, false);
        b := b + 2;
       end;
      if lowercase(ExtractFileExt(aFileName)) = '.d71' then
       begin
        sec := sec + Copy(arrD71[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2) + ' ';
-       case Copy(arrD71[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2) of
-        '00':
-         edit1.Text  := edit1.Text + '.';
-        'FF':
-         edit1.Text  := edit1.Text + '.';
-        'A0':
-         edit1.Text  := edit1.Text + ' ';
-        else
-         edit1.Text  := edit1.Text + HexStrToStr(Copy(arrD71[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2));
-       end;
+       edit1.Text := edit1.Text + GetUTF8('$' + Copy(arrD71[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2), false, false);
        b := b + 2;
       end;
      if lowercase(ExtractFileExt(aFileName)) = '.d81' then
       begin
        sec := sec + Copy(arrD81[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2) + ' ';
-       case Copy(arrD81[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2) of
-        '00':
-         edit1.Text  := edit1.Text + '.';
-        'FF':
-         edit1.Text  := edit1.Text + '.';
-        'A0':
-         edit1.Text  := edit1.Text + ' ';
-        else
-         edit1.Text  := edit1.Text + HexStrToStr(Copy(arrD81[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2));
-       end;
+       edit1.Text := edit1.Text + GetUTF8('$' + Copy(arrD81[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2), false, false);
        b := b + 2;
       end;
     end;
@@ -3849,7 +3832,7 @@ begin
     if a = 16 then lstBoxSectors.Lines.Add('F0 | ' + sec);
 
     // ASCII
-    lstBoxASCII.Lines.Add(edit1.Text);
+    lstBoxPETSCII.Lines.Add(edit1.Text);
   end;
 end;
 

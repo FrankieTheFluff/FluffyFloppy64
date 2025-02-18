@@ -35,6 +35,11 @@ Release notes
 # Importing archives (ZIP) takes too much time
 # Clearing temp folder: problems with attribute "readonly"
 
+v0.79 - 2025-02
++ GUI: Remember position of splitter
+* Tab BAM: Changed to PETSCII font
+* Tab Sectors/Hex: Changed to PETSCII font
+
 v0.78 - 2025-02-16
 * EXE: Renamed "ff64.exe" to "fluffyfloppy64.exe"
 * EXE: "64bit" version
