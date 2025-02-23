@@ -35,7 +35,13 @@ Release notes
 # Importing archives (ZIP) takes too much time
 # Clearing temp folder: problems with attribute "readonly"
 
-v0.79 - 2025-02
+v0.80 - 2025-02-23
+* GUI/Database: Image-File-Extensions Search can be now switched to non case-sensitive
++ Menu: Changed Shortcuts "c" & "F" to "Shift-STRG-C / F"
++ Import: Reset SQlQuery before import
+- Import: Fixes crash/access violations if image has wrong filesize
+
+v0.79 - 2025-02-18
 + GUI: Remember position of splitter
 * Tab BAM: Changed to PETSCII font
 * Tab Sectors/Hex: Changed to PETSCII font

@@ -38,6 +38,7 @@ type
     cbDBFilePath: TComboBox;
     cbDBFileNameExt: TComboBox;
     cbFavourite: TDBCheckBox;
+    cbFilterCase: TCheckBox;
     cbSector: TComboBox;
     cbSource: TComboBox;
     cbSQLSearch: TComboBox;
@@ -59,6 +60,7 @@ type
     ImageList1: TImageList;
     Label1: TLabel;
     Label2: TLabel;
+    lblFilterImg: TLabel;
     lblImage: TLabel;
     Label4: TLabel;
     lblNotes: TLabel;
@@ -147,6 +149,7 @@ type
     procedure BtSQLSearchClick(Sender: TObject);
     procedure cbDBFilePathChange(Sender: TObject);
     procedure cbDBFileNameExtChange(Sender: TObject);
+    procedure cbFilterCaseChange(Sender: TObject);
     procedure cbFilterCorruptChange(Sender: TObject);
     procedure cbFilterFavChange(Sender: TObject);
     procedure cbSectorChange(Sender: TObject);
@@ -172,7 +175,6 @@ type
     procedure edTagsEditingDone(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
-    procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure LstBrowseKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -537,8 +539,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.79';
- sAppDate    := '2025-02-18';
+ sAppVersion := 'v0.80';
+ sAppDate    := '2025-02-23';
  Form1.Caption:= sAppCaption + sAppVersion;
  sAppPath := ExtractFilePath(ParamStr(0));
  SQlSearch_Click := false;
@@ -1269,11 +1271,46 @@ begin
 end;
 
 procedure TForm1.mnuImportClick(Sender: TObject);
+var
+ StrSQL : String;
 begin
-  frmImport.Showmodal;
+ // Reset if search
+ If EdSQLSearch.Text <> '' then
+  begin
+   StrSQL := '';
+   EdSQLSearch.Text:='';  // Field reacts OnChange
+   AConnection.ExecuteDirect('DROP Table IF EXISTS Search');
+   If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text = 'All') then
+    begin
+     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where idxImg in (SELECT idxTXT FROM DirectoryTXT';
+    end;
+   If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text <> 'All') then
+    begin
+     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
+    end;
+   if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text = 'All') then
+    begin
+     StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
+    end;
+   if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text <> 'All') then
+    begin
+     StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+    end;
+
+   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
+    else
+   If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
+    else
+   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
+   SQLQueryDir.SQL.Add(StrSQL);
+   SQLQueryDir.Active := True;
+   SQLQueryDir.First;
+   DBFilter;
+  end;
+
+ //
  If SQLQueryDir.RecordCount > 0 then
   begin
-   // Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
    mnuOpenRec.Enabled:=true;
    mnuOpenLocationRec.Enabled:=true;
    mnuFavouriteRec.Enabled:=true;
@@ -1296,7 +1333,6 @@ begin
   end
  else
   begin
-   // if SQLQueryDir.RecordCount < 1 then    Statusbar1.Panels[0].Text := ' -/- ';
    mnuOpenRec.Enabled:=false;
    mnuOpenLocationRec.Enabled:=false;
    mnuFavouriteRec.Enabled:=false;
@@ -1317,6 +1353,9 @@ begin
    edTags.Enabled:=false;
    memInfo.Enabled:=false;
   end;
+
+  frmImport.Showmodal;
+
 end;
 
 Procedure TForm1.Init_FilePath;
@@ -1660,7 +1699,8 @@ begin
     end;
    If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text <> 'All') then
     begin
-     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
+     if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
+     if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
     end;
    if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text = 'All') then
     begin
@@ -1715,7 +1755,8 @@ begin
          end;
         If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text <> 'All') then
          begin
-          StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+          if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+          if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
          end;
         if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text = 'All') then
          begin
@@ -1723,7 +1764,8 @@ begin
          end;
         if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text <> 'All') then
          begin
-          StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+          if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+          if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
          end;
         If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
          else
@@ -1939,7 +1981,8 @@ begin
       end
      else
       begin
-       StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '"';
+       if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '"';
+       if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, Tags, Info FROM FileImage Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '"';
        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
        else
        If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
@@ -1979,7 +2022,8 @@ begin
     end;
 
    // ELSE:
-   StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt = "' + cbDBFileNameExt.Text + '"';
+   if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt = "' + cbDBFileNameExt.Text + '"';
+   if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FilePath, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '"';
    If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
    else
    If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
@@ -2008,6 +2052,11 @@ begin
 end;
 
 procedure TForm1.cbDBFileNameExtChange(Sender: TObject);
+begin
+ DBFilter;
+end;
+
+procedure TForm1.cbFilterCaseChange(Sender: TObject);
 begin
  DBFilter;
 end;
@@ -3132,12 +3181,6 @@ begin
    ATransaction.Commit;
   end;
  AConnection.Free;
-end;
-
-
-procedure TForm1.FormCreate(Sender: TObject);
-begin
-
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);

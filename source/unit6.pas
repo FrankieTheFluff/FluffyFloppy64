@@ -83,7 +83,6 @@ var
   str_FindAllFilesArchive, str_FindAllImagesArchive : TStringlist;
   Terminate : Boolean;
   ImageFileArray : TStringArray; // Needed to check if archive
-  ImageFileArrayYes : Boolean;
   ImgAdd, ImageCount, ImageCountA, ImageCountA2, ImgCountErr : Integer;  // Images/archives
 
 implementation
@@ -150,7 +149,7 @@ begin
 
   // Write FilePath (for dropdown) and flag if archive
   FileArchType := '';
-  If ImageFileArrayYes = true then
+  If aArchiveImage.Contains('|') then
    begin
     FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
@@ -161,7 +160,7 @@ begin
       ' values('+
       ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
    end;
-  If ImageFileArrayYes = false then
+  If aArchiveImage.Contains('|') = false then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
@@ -548,7 +547,7 @@ begin
 
   // Write FilePath (for dropdown) and flag if archive
   FileArchType := '';
-  If ImageFileArrayYes = true then
+  If aArchiveImage.Contains('|') then
    begin
     FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
@@ -557,9 +556,9 @@ begin
     FileArchType := sp;
     Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(ImageFileArray[0])) +');');                           // FilePath
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
    end;
-  If ImageFileArrayYes = false then
+  If aArchiveImage.Contains('|') = false then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
@@ -708,7 +707,8 @@ begin
     Track := TrackNext;   // for repeat
     Sector := SectorNext; // for repeat
     SectorCount := SectorCount + 1;  // check if extended
-    Until t = 1;
+  Until t = 1;
+
   Form1.ATransaction.Commit;
   Form1.ATransaction.Active:=false;
   result := true;
@@ -829,7 +829,7 @@ begin
 
   // Write FilePath (for dropdown) and flag if archive
   FileArchType := '';
-  If ImageFileArrayYes = true then
+  If aArchiveImage.Contains('|') then
    begin
     FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
@@ -838,9 +838,9 @@ begin
     FileArchType := sp;
     Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(ImageFileArray[0])) +');');                           // FilePath
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
    end;
-  If ImageFileArrayYes = false then
+  If aArchiveImage.Contains('|') = false then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
@@ -976,7 +976,6 @@ begin
   Form1.ATransaction.StartTransaction;
 
   // PRG
-  fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
   BA := LoadByteArray('"' + aImageName + '"');
   s := ByteArrayToHexString(BA);
   Img_FileExt := ExtractFileExt(aImageName);
@@ -988,7 +987,7 @@ begin
 
   // Write FilePath (for dropdown) and flag if archive
   FileArchType := '';
-  If ImageFileArrayYes = true then
+  If aArchiveImage.Contains('|') then
    begin
     FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
@@ -997,9 +996,9 @@ begin
     FileArchType := sp;
     Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(ImageFileArray[0])) +');');                           // FilePath
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
    end;
-  If ImageFileArrayYes = false then
+  If aArchiveImage.Contains('|') = false then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
@@ -1030,12 +1029,12 @@ begin
     ' '''','+                                                                                  //Info
     ' ''' + blocksfree + ''');');                                                              //BlocksFreeTxt
   except
-   fstream.Free;
    Form1.ATransaction.Active:=false;
    result := false;
    exit;
   end;
 
+  fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
   FileSizeTxt := IntToStr(fstream.Size div 252);
   FileNameTXT := ExtractFileName(aImageName);
   FileTypeTXT := 'PRG';
@@ -1087,7 +1086,6 @@ begin
    for img := 0 to str_FindAllImages.count-1 do
     begin
      try
-
      Application.ProcessMessages;
      memoProgressBar.Position := img+1;
      ImageFile := str_FindAllImages.Strings[img]; // e.g. ....d64
@@ -1095,14 +1093,12 @@ begin
      // Split, check if image is in archive
      If ImageFile.Contains('|')then
       begin
-       ImageFileArrayYes := true; // yes flag if archive
        ImageFileArray := str_FindAllImages.Strings[img].Split('|');
        ImageFileA := str_FindAllImages.Strings[img];  // Archive ZIP | Image location inside of archive
        ImageFile  := ImageFileArray[1];               // image location in tmp folder
       end
      else
       begin
-       ImageFileArrayYes := false; // no flag if archive
        ImageFileA := '';           // Archive ZIP
       end;
 
@@ -1158,10 +1154,10 @@ begin
           end
          else
          begin
-          fstream.Free;
           ImgCountErr := ImgCountErr + 1;
           lblImportCountErr.Caption := IntToStr(ImgCountErr);
           memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
+          fstream.Free;
          end;
         end;
       end;
@@ -1193,10 +1189,10 @@ begin
           end
          else
           begin
-           fstream.Free;
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
            memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
+           fstream.Free;
           end;
         end;
       end;
@@ -1226,7 +1222,13 @@ begin
               memoImport.Lines.Add(ImageFile);
              end;
           end
-         else fstream.Free;
+         else
+          begin
+           ImgCountErr := ImgCountErr + 1;
+           lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+           memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
+           fstream.Free;
+          end;
         end;
       end;
 
@@ -1273,6 +1275,7 @@ begin
             ImgCountErr := ImgCountErr + 1;
             lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
             memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
+            fstream.Free;
            end;
            end;
           DeleteFileUTF8(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
@@ -1341,7 +1344,8 @@ end;
 
 procedure TfrmImport.btImportClick(Sender: TObject);
 var
-  answer, img : integer;
+  answer, img, i, j, start, group : integer;
+  GroupImg : TStringList;
 begin
  if (DirImport.Directory = '') or (DirectoryExists(DirImport.Directory) = false) then
   begin
@@ -1395,8 +1399,9 @@ begin
       end
      else memoImportErr.Lines.Add('Unable to unpack "' + str_FindAllFilesArchive[img] + '"');
      DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),true); // Delete unpacked directory
-     end;
+    end;
   end;
+
   str_FindAllFilesArchive.Clear;
 
   memoImport.Lines.Add('Import finished! (duplicates ignored)');
@@ -1481,8 +1486,8 @@ var
   str_FindAllImagesTmp : TStringList;
   i : integer;
 begin
- // aFileFull = path to the image
- // aPathArchive = path to the archive
+ // aFileFull = path to the image e.g. also \temp
+ // aPathArchive = path to the archive also ...\temp123.zip
  // ImageCountA2 = found images in archive
 
  str_FindAllImages.Clear;
@@ -1490,8 +1495,9 @@ begin
  lblImportfound.Caption := ' Collecting files... Please wait.';
 
  Application.ProcessMessages;
+ str_FindAllImagesTmp.Clear;
 
- // Known images files
+ // Known images files without archives
  FindAllFiles(str_FindAllImagesTmp, DirCheck(aFileFull), '*.prg;*.d64;*.g64;*d71;*.d81', true);
 
  If aPathArchive = '' then // running this procedure without archives

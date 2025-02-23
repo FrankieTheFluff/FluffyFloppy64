@@ -2,15 +2,14 @@ object Form1: TForm1
   Left = 377
   Height = 643
   Top = 151
-  Width = 1304
+  Width = 1039
   Caption = 'Form1'
   ClientHeight = 643
-  ClientWidth = 1304
+  ClientWidth = 1039
   KeyPreview = True
   Menu = MainMenu1
   OnActivate = FormActivate
   OnClose = FormClose
-  OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poScreenCenter
@@ -19,7 +18,7 @@ object Form1: TForm1
     Left = 0
     Height = 23
     Top = 620
-    Width = 1304
+    Width = 1039
     Panels = <    
       item
         Width = 100
@@ -39,7 +38,7 @@ object Form1: TForm1
     SimplePanel = False
   end
   object pnDirView: TPanel
-    Left = 834
+    Left = 569
     Height = 620
     Top = 0
     Width = 470
@@ -346,18 +345,18 @@ object Form1: TForm1
     Left = 0
     Height = 620
     Top = 0
-    Width = 829
+    Width = 564
     Align = alClient
     Anchors = []
     Caption = 'pnDBView'
     ClientHeight = 620
-    ClientWidth = 829
+    ClientWidth = 564
     TabOrder = 2
     object PageControl1: TPageControl
       Left = 1
       Height = 618
       Top = 1
-      Width = 827
+      Width = 562
       ActivePage = TabSheet1
       Align = alClient
       TabIndex = 0
@@ -366,33 +365,33 @@ object Form1: TForm1
       object TabSheet1: TTabSheet
         Caption = 'Database'
         ClientHeight = 590
-        ClientWidth = 819
+        ClientWidth = 554
         object Panel3: TPanel
           Left = 0
           Height = 104
           Top = 0
-          Width = 819
+          Width = 554
           Align = alTop
           BevelOuter = bvNone
           ClientHeight = 104
-          ClientWidth = 819
+          ClientWidth = 554
           TabOrder = 0
           object GroupBox1: TGroupBox
             Left = 0
             Height = 104
             Top = 0
-            Width = 813
+            Width = 548
             Anchors = [akTop, akLeft, akRight]
             Caption = 'Filter/Search (Use *):'
             ClientHeight = 84
-            ClientWidth = 809
+            ClientWidth = 544
             TabOrder = 0
             object cbDBFilePath: TComboBox
               Left = 72
               Height = 23
               Hint = 'Filter: Path to the images'
               Top = 0
-              Width = 730
+              Width = 465
               Anchors = [akTop, akLeft, akRight]
               DropDownCount = 20
               ItemHeight = 15
@@ -443,17 +442,17 @@ object Form1: TForm1
               Height = 23
               Hint = 'Search database...'
               Top = 56
-              Width = 454
+              Width = 189
               Anchors = [akLeft, akRight]
               Enabled = False
               ParentShowHint = False
               ShowHint = True
-              TabOrder = 4
+              TabOrder = 5
               TextHint = 'Search database...'
               OnChange = EdSQLSearchChange
             end
             object cbSQLSearch: TComboBox
-              Left = 542
+              Left = 277
               Height = 23
               Hint = 'Select field'
               Top = 56
@@ -473,12 +472,12 @@ object Form1: TForm1
               ReadOnly = True
               ShowHint = True
               Style = csDropDownList
-              TabOrder = 5
+              TabOrder = 6
               Text = 'Directory entry'
               OnChange = cbSQLSearchChange
             end
             object BtSQLSearch: TBitBtn
-              Left = 722
+              Left = 457
               Height = 23
               Hint = 'Search'
               Top = 56
@@ -489,30 +488,32 @@ object Form1: TForm1
               Images = ImageList1
               ImageIndex = 2
               OnClick = BtSQLSearchClick
-              TabOrder = 6
+              TabOrder = 7
             end
             object cbFilterFav: TCheckBox
-              Left = 192
+              Left = 351
               Height = 19
               Hint = 'Filter: Show favorites'
               Top = 28
               Width = 67
+              Anchors = [akTop, akRight]
               Caption = 'Favourite'
               ParentShowHint = False
               ShowHint = True
-              TabOrder = 2
+              TabOrder = 3
               OnChange = cbFilterFavChange
             end
             object cbFilterCorrupt: TCheckBox
-              Left = 280
+              Left = 457
               Height = 19
               Hint = 'Filter: Show corrupt'
               Top = 28
               Width = 59
+              Anchors = [akTop, akRight]
               Caption = 'Corrupt'
               ParentShowHint = False
               ShowHint = True
-              TabOrder = 3
+              TabOrder = 4
               OnChange = cbFilterCorruptChange
             end
             object lblFilterPath: TLabel
@@ -539,24 +540,47 @@ object Form1: TForm1
               Caption = 'Search:'
               ParentColor = False
             end
+            object cbFilterCase: TCheckBox
+              Left = 160
+              Height = 19
+              Hint = 'Filter: Case-sensitive extension'
+              Top = 28
+              Width = 93
+              Caption = 'Case-sensitive'
+              Checked = True
+              ParentShowHint = False
+              ShowHint = True
+              State = cbChecked
+              TabOrder = 2
+              OnChange = cbFilterCaseChange
+            end
+            object lblFilterImg: TLabel
+              Left = 277
+              Height = 15
+              Top = 28
+              Width = 36
+              Anchors = [akTop, akRight]
+              Caption = 'Image:'
+              ParentColor = False
+            end
           end
         end
         object Panel4: TPanel
           Left = 0
           Height = 486
           Top = 104
-          Width = 819
+          Width = 554
           Align = alClient
           BevelOuter = bvNone
           Caption = 'Panel4'
           ClientHeight = 486
-          ClientWidth = 819
+          ClientWidth = 554
           TabOrder = 1
           object DBGridDirTxt: TDBGrid
             Left = 0
             Height = 179
             Top = 5
-            Width = 813
+            Width = 548
             Align = alTop
             AlternateColor = 16709873
             AutoEdit = False
@@ -586,7 +610,7 @@ object Form1: TForm1
               end            
               item
                 Title.Caption = 'Location'
-                Width = 482
+                Width = 217
                 FieldName = 'Filefull'
               end>
             DataSource = DataSourceSearch
@@ -606,7 +630,7 @@ object Form1: TForm1
             Left = 0
             Height = 5
             Top = 186
-            Width = 819
+            Width = 554
             Align = alTop
             ResizeAnchor = akTop
             Visible = False
@@ -615,7 +639,7 @@ object Form1: TForm1
             Left = 0
             Height = 171
             Top = 191
-            Width = 813
+            Width = 548
             Align = alClient
             AlternateColor = 16709873
             AutoEdit = False
@@ -690,7 +714,6 @@ object Form1: TForm1
               item
                 SizePriority = 0
                 Title.Caption = 'Location'
-                Width = 112
                 FieldName = 'FileFull'
               end>
             DataSource = DataSourceDir
@@ -713,11 +736,11 @@ object Form1: TForm1
             Left = 0
             Height = 122
             Top = 364
-            Width = 819
+            Width = 554
             Align = alBottom
             BevelOuter = bvNone
             ClientHeight = 122
-            ClientWidth = 819
+            ClientWidth = 554
             TabOrder = 3
             object lblNotes: TLabel
               Left = 96
@@ -775,7 +798,7 @@ object Form1: TForm1
               Left = 104
               Height = 48
               Top = 65
-              Width = 709
+              Width = 444
               Anchors = [akLeft, akRight, akBottom]
               DataField = 'Info'
               DataSource = DataSourceDir
@@ -798,7 +821,7 @@ object Form1: TForm1
               Height = 23
               Hint = 'tags divided with comma'
               Top = 25
-              Width = 709
+              Width = 444
               DataField = 'Tags'
               DataSource = DataSourceDir
               Anchors = [akLeft, akRight, akBottom]
@@ -815,13 +838,13 @@ object Form1: TForm1
       object TabSheet2: TTabSheet
         Caption = 'File-Browser'
         ClientHeight = 590
-        ClientWidth = 819
+        ClientWidth = 554
         TabVisible = False
         object ShellTreeView1: TShellTreeView
           Left = 0
           Height = 259
           Top = 0
-          Width = 819
+          Width = 554
           Align = alTop
           FileSortType = fstNone
           TabOrder = 0
@@ -832,7 +855,7 @@ object Form1: TForm1
           Left = 0
           Height = 326
           Top = 264
-          Width = 819
+          Width = 554
           Align = alClient
           Color = clDefault
           Mask = '*.d64;*.g64;*.d71;*.d81'
@@ -847,7 +870,7 @@ object Form1: TForm1
           Left = 0
           Height = 5
           Top = 259
-          Width = 819
+          Width = 554
           Align = alTop
           ResizeAnchor = akTop
         end
@@ -855,7 +878,7 @@ object Form1: TForm1
     end
   end
   object SplitterDB: TSplitter
-    Left = 829
+    Left = 564
     Height = 620
     Top = 0
     Width = 5
@@ -910,6 +933,7 @@ object Form1: TForm1
       object mnuOpenRec: TMenuItem
         Caption = '&Open'
         Enabled = False
+        ShortCut = 24655
         OnClick = mnuOpenRecClick
       end
       object mnuOpenLocationRec: TMenuItem
@@ -923,13 +947,13 @@ object Form1: TForm1
       object mnuFavouriteRec: TMenuItem
         Caption = 'Mark as favourite'
         Enabled = False
-        ShortCut = 70
+        ShortCut = 24646
         OnClick = mnuFavouriteRecClick
       end
       object mnuCorruptRec: TMenuItem
         Caption = 'Mark as corrupt'
         Enabled = False
-        ShortCut = 67
+        ShortCut = 24643
         OnClick = mnuCorruptRecClick
       end
       object Separator7: TMenuItem
@@ -960,6 +984,7 @@ object Form1: TForm1
       Caption = '&Help'
       object mnuManual: TMenuItem
         Caption = '&Manual'
+        ShortCut = 112
         OnClick = mnuManualClick
       end
       object Separator8: TMenuItem
@@ -1077,6 +1102,7 @@ object Form1: TForm1
     object mnuOpenImage: TMenuItem
       Caption = 'Open'
       Enabled = False
+      ShortCut = 24655
       OnClick = mnuOpenImageClick
     end
     object mnuOpenFileBrowser: TMenuItem
@@ -1098,13 +1124,13 @@ object Form1: TForm1
     object mnuFavourite: TMenuItem
       Caption = 'Mark as favourite'
       Enabled = False
-      ShortCut = 70
+      ShortCut = 24646
       OnClick = mnuFavouriteClick
     end
     object mnuCorrupt: TMenuItem
       Caption = 'Mark as corrupt'
       Enabled = False
-      ShortCut = 67
+      ShortCut = 24643
       OnClick = mnuCorruptClick
     end
     object Separator5: TMenuItem
