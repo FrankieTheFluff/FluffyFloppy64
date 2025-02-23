@@ -29,21 +29,17 @@ https://github.com/rittwage/nibtools
 Release notes
 *new, +update, -bugfix, #unfixed
 
-
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 # Importing archives (ZIP) takes too much time
 # Clearing temp folder: problems with attribute "readonly"
 
-<<<<<<< HEAD
 v0.80 - 2025-02-23
 * GUI/Database: Image-File-Extensions Search can be now switched to non case-sensitive
 + Menu: Changed Shortcuts "c" & "F" to "Shift-STRG-C / F"
 + Import: Reset SQlQuery before import
 - Import: Fixes crash/access violations if image has wrong filesize
 
-=======
->>>>>>> 17e8437c50c46040e51a15a2c77d0ad1be7b148c
 v0.79 - 2025-02-18
 + GUI: Remember position of splitter
 * Tab BAM: Changed to PETSCII font
