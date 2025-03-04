@@ -9,7 +9,7 @@ object Form3: TForm3
   ClientWidth = 623
   Color = 16365429
   Position = poMainFormCenter
-  LCLVersion = '3.6.0.0'
+  LCLVersion = '3.8.0.0'
   object btOK: TButton
     Left = 520
     Height = 25
@@ -203,8 +203,8 @@ object Form3: TForm3
       Left = 96
       Height = 15
       Top = 264
-      Width = 434
-      Caption = '"sqlite3.dll" v3.49 (2025-02-06) (c) 2000-2025 SQLite.org Team'
+      Width = 448
+      Caption = '"sqlite3.dll" v3.49.1 (2025-02-18) (c) 2000-2025 SQLite.org Team'
       Font.CharSet = ANSI_CHARSET
       Font.Color = 16365429
       Font.Height = -13

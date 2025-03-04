@@ -8,7 +8,7 @@ object Form5: TForm5
   ClientHeight = 366
   ClientWidth = 712
   Position = poMainFormCenter
-  LCLVersion = '3.6.0.0'
+  LCLVersion = '3.8.0.0'
   object btClose: TButton
     Left = 629
     Height = 25
@@ -27,7 +27,7 @@ object Form5: TForm5
     Lines.Strings = (
       'FluffyFloppy64'
       ''
-      'A Microsoft(r) Windows(r) tool to catalog Commodore 64 (C64) floppy disk images (D64, G64, D71, D81, PRG)'
+      'A Microsoft(r) Windows(r) tool to catalog Commodore 64 (C64) floppy disk images (D64, G64, D71, D81, PRG, TAP)'
       'and mount or run in emulators...'
       ''
       'New:'

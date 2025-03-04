@@ -3,7 +3,7 @@ FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
 A Microsoft(r) Windows(r) tool to catalog 
-Commodore 64 (C64) floppy disk images (D64, G64, D71, D81, PRG)
+Commodore 64 (C64) floppy disk images (D64,G64,D71,D81,PRG,TAP)
 
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
@@ -33,6 +33,13 @@ Release notes
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 # Importing archives (ZIP) takes too much time
 # Clearing temp folder: problems with attribute "readonly"
+
+v0.81 - 2025-03-04
++ Database: "sqlite.dll" v3.49.1 2025-02-18
+* Import: "TAP" tape file support
+- Search: Fixes "FilePath_1" error message (SQlQuery)
+- GUI: Fixes horizontal scrollbar behaviour
+- GUI: Fixes statusbar refresh if "0/0"
 
 v0.80 - 2025-02-23
 * GUI/Database: Image-File-Extensions Search can be now switched to non case-sensitive

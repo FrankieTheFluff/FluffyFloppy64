@@ -19,7 +19,7 @@
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
-      <MinorVersionNr Value="80"/>
+      <MinorVersionNr Value="81"/>
       <StringTable Comments="FREEWARE" CompanyName="FrankieTheFluff" FileDescription="FluffyFloppy64" LegalCopyright="(c) 2021-2025 FrankieTheFluff" OriginalFilename="ff64.exe" ProductName="FluffyFloppy64" ProductVersion="1.00"/>
     </VersionInfo>
     <BuildModes>

@@ -427,6 +427,8 @@ object Form1: TForm1
                 'D71'
                 'd81'
                 'D81'
+                'tap'
+                'TAP'
               )
               ParentShowHint = False
               ReadOnly = True
@@ -643,7 +645,6 @@ object Form1: TForm1
             Align = alClient
             AlternateColor = 16709873
             AutoEdit = False
-            AutoFillColumns = True
             BorderSpacing.Right = 6
             BorderSpacing.Bottom = 2
             Color = clWindow
@@ -659,7 +660,7 @@ object Form1: TForm1
               item
                 Alignment = taRightJustify
                 MinSize = 1
-                MaxSize = 2
+                MaxSize = 5
                 SizePriority = 0
                 Title.Caption = 'Ext'
                 Width = 50
@@ -682,6 +683,7 @@ object Form1: TForm1
               end            
               item
                 MinSize = 20
+                MaxSize = 100
                 SizePriority = 0
                 Title.Caption = 'Last'
                 Width = 0
@@ -698,6 +700,7 @@ object Form1: TForm1
                 FieldName = 'DateImport'
               end            
               item
+                MinSize = 10
                 ReadOnly = True
                 SizePriority = 0
                 Title.Caption = 'Favourite'
@@ -705,6 +708,7 @@ object Form1: TForm1
                 FieldName = 'Favourite'
               end            
               item
+                MinSize = 10
                 ReadOnly = True
                 SizePriority = 0
                 Title.Caption = 'Corrupt'
@@ -712,8 +716,11 @@ object Form1: TForm1
                 FieldName = 'Corrupt'
               end            
               item
+                MinSize = 10
+                MaxSize = 64
                 SizePriority = 0
                 Title.Caption = 'Location'
+                Width = 800
                 FieldName = 'FileFull'
               end>
             DataSource = DataSourceDir
@@ -1193,14 +1200,6 @@ object Form1: TForm1
     Macros = <>
     Left = 848
     Top = 304
-  end
-  object SQLite3Connection1: TSQLite3Connection
-    Connected = False
-    LoginPrompt = False
-    KeepConnection = False
-    AlwaysUseBigint = False
-    Left = 952
-    Top = 224
   end
   object DataSourceDB: TDataSource
     DataSet = SQLQueryDB

@@ -36,6 +36,7 @@ type
     cbImgD71: TCheckBox;
     cbImgPRG: TCheckBox;
     cbImgG64: TCheckBox;
+    cbImgTAP: TCheckBox;
     CheckBox1: TCheckBox;
     CheckBox2: TCheckBox;
     cbArcZIP: TCheckBox;
@@ -63,6 +64,7 @@ type
     procedure cbImgD81Change(Sender: TObject);
     procedure cbImgG64Change(Sender: TObject);
     procedure cbImgPRGChange(Sender: TObject);
+    procedure cbImgTAPChange(Sender: TObject);
     procedure DirImportChange(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormShow(Sender: TObject);
@@ -1050,6 +1052,93 @@ begin
   result := true;
 end;
 
+Function Database_Ins_TAP(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
+var
+  BA : TByteArr;
+  s, Img_FileExt : String;
+  fstream : TFileStream;
+  blocksfree, DiskNameTxt, DiskIDTxt, DosTypeTxt : String;
+  FileSizeTXT, FileNameTXT, FileTypeTXT, FileFullA, FilePathA, sp, FileArchType : String;
+begin
+  Form1.ATransaction.Active:=false;
+  Form1.ATransaction.StartTransaction;
+
+  // TAP
+  BA := LoadByteArray('"' + aImageName + '"');
+  s := ByteArrayToHexString(BA);
+  Img_FileExt := ExtractFileExt(aImageName);
+  if (length(Img_FileExt)>0) and (Img_FileExt[1]='.') then delete(Img_FileExt,1,1); // d64 ohne Punkt
+  DiskNameTxt := '';
+  DiskIDTxt := '';
+  DosTypeTxt := '';
+  blocksfree := IntToStr(length(s) div 2);
+
+  // Write FilePath (for dropdown) and flag if archive
+  FileArchType := '';
+  If aArchiveImage.Contains('|') then
+   begin
+    FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FilePathA := ImageFileArray[0];    // location of archive
+    sp := ExtractFileExt(ImageFileArray[0]);
+    while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
+    FileArchType := sp;
+    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+      ' values('+
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
+   end;
+  If aArchiveImage.Contains('|') = false then
+   begin
+    FileFullA := aImageName;
+    FilePathA := aImageName;
+    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+      ' values('+
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
+   end;
+
+  Try
+   Form1.AConnection.ExecuteDirect('insert into FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeIMG, FileDateTime, FileFull, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt)'+
+    ' values('+
+    ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
+    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
+    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateLast
+    ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
+    ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
+    ' ''' + Img_FileExt + ''','+                                                               //FileNameExt
+    ' ''' + IntToStr(FileSize(aImageName)) + ''','+                                            //FileSizeImg
+    ' ''' + DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))) + ''','+                //FileDateTime
+    ' ' + QuotedStr(FileFullA) + ','+                                                          //FileFull
+    ' ' + QuotedStr(FileArchType) + ','+                                                       //FileArchType
+    ' ' + QuotedStr(DiskNameTxt) + ','+                                                        //DiskName
+    ' ' + QuotedStr(DiskIDTxt) + ','+                                                          //DiskIDTxt
+    ' ' + QuotedStr(DosTypeTxt) + ','+                                                         //DOSTypeTxt
+    ' ''' + BoolToStr(false) + ''','+                                                          //Favourite
+    ' ''' + BoolToStr(false) + ''','+                                                          //Corrupt
+    ' '''','+                                                                                  //Tags
+    ' '''','+                                                                                  //Info
+    ' ''' + blocksfree + ''');');                                                              //BlocksFreeTxt
+  except
+   Form1.ATransaction.Active:=false;
+   result := false;
+   exit;
+  end;
+
+  fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
+  FileSizeTxt := IntToStr(fstream.Size div 252);
+  FileNameTXT := ExtractFileName(aImageName);
+  FileTypeTXT := 'TAP';
+  Form1.AConnection.ExecuteDirect('insert into DirectoryTXT (idxTxt, FileSizeTxt, FileNameTxt, FileTypeTxt)'+
+  ' values('+
+  ' ''' + IntToStr(aImg) + ''','+         //idxTxt (Index manuell)
+  ' ''' + FileSizeTxt + ''','+            //FileSizeTxt
+  ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
+  ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
+  fstream.Free;
+  Form1.ATransaction.Commit;
+  Form1.ATransaction.Active:=false;
+  result := true;
+end;
+
+
 procedure TfrmImport.Import;
 var
   fstream : TFileStream;
@@ -1101,6 +1190,31 @@ begin
       begin
        ImageFileA := '';           // Archive ZIP
       end;
+
+    //TAP - check if valid file
+    if cbImgPRG.Checked = true then
+     begin
+      if lowercase(ExtractFileExt(ImageFile)) = '.tap' then
+       begin
+        // Add
+        ImgCount := ImgCount + 1;
+        if Database_Ins_TAP(ImageFileA, ImageFile, ImgCount) = false then
+          begin
+           ImgCount := ImgCount - 1;
+           ImgCountErr := ImgCountErr + 1;
+           lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+           memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+          end
+        else
+          begin
+           ImgAdd := ImgAdd + 1;
+           lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
+           memoImport.Lines.Clear;
+           memoImport.Lines.Add(ImageFile);
+          end;
+         // Add Ende
+       end;
+     end;
 
      //PRG - check if valid file
      if cbImgPRG.Checked = true then
@@ -1447,6 +1561,11 @@ begin
  Init_DirImport;
 end;
 
+procedure TfrmImport.cbImgTAPChange(Sender: TObject);
+begin
+ Init_DirImport;
+end;
+
 procedure TfrmImport.DirImportChange(Sender: TObject);
 begin
  Init_DirImport;
@@ -1498,7 +1617,7 @@ begin
  str_FindAllImagesTmp.Clear;
 
  // Known images files without archives
- FindAllFiles(str_FindAllImagesTmp, DirCheck(aFileFull), '*.prg;*.d64;*.g64;*d71;*.d81', true);
+ FindAllFiles(str_FindAllImagesTmp, DirCheck(aFileFull), '*.tap;*.prg;*.d64;*.g64;*d71;*.d81', true);
 
  If aPathArchive = '' then // running this procedure without archives
   begin
