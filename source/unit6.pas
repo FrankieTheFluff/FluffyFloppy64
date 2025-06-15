@@ -290,7 +290,7 @@ begin
     ' values('+
     ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
     ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateLast
+    ' '''','+                                                                                  //DateLast
     ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
     ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
     ' ''' + ImageExt + ''','+                                                                  //FileNameExt
@@ -1425,7 +1425,7 @@ begin
       memoImport.Lines.Add('Clearing...');
       str_FindAllImages.Clear;
       Form1.SQLQueryDir.SQL.Clear;
-      Form1.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
+      Form1.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
       Form1.SQLQueryDir.Active:=true;
       memoImport.Lines.Add('Done.');
       Form1.DBGridDir_ReadEntry(Form1.SQLQueryDir.FieldByName('FileFull').Text);
@@ -1460,6 +1460,7 @@ procedure TfrmImport.btImportClick(Sender: TObject);
 var
   answer, img, i, j, start, group : integer;
   GroupImg : TStringList;
+  dirTmp : String;
 begin
  if (DirImport.Directory = '') or (DirectoryExists(DirImport.Directory) = false) then
   begin
@@ -1469,6 +1470,32 @@ begin
       btClose.Enabled:=true;
       exit;
      end;
+  end;
+
+ // Check if temp directory exists
+ dirTmp := DirCheck(IniFluff.ReadString('Options', 'FolderTemp', ''));
+ if (dirTmp = '') or (DirectoryExists(dirTmp) = false) then
+ begin
+  answer := MessageDlg('Temporary directory not found! Please check settings...',mtWarning, [mbOK], 0);
+   if answer = mrOk then
+    begin
+     btClose.Enabled:=true;
+     exit;
+    end;
+ end;
+
+ //Check if nibtools available?
+ If cbImgG64.Checked = true then
+  begin
+   If FileExists(DirCheck(IniFluff.ReadString('NibConv', 'Location', ''))) = false then
+    begin
+     answer := MessageDlg('G64 cannot be imported because NibConv not found! Please check settings first or deselect G64...',mtWarning, [mbOK], 0);
+      if answer = mrOk then
+       begin
+        btClose.Enabled:=true;
+        exit;
+       end;
+    end;
   end;
 
  // Stop import
@@ -1522,7 +1549,7 @@ begin
   memoImport.Lines.Add('Clearing...');
   str_FindAllImages.Clear;
   Form1.SQLQueryDir.SQL.Clear;
-  Form1.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
+  Form1.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
   Form1.SQLQueryDir.Active:=true;
   memoImport.Lines.Add('Done.');
   Form1.DBGridDir.DataSource := Form1.DataSourceDir;
@@ -1709,7 +1736,7 @@ begin
 
     // Sync
     Form1.SQLQueryDir.SQL.Clear;
-    Form1.SQLQueryDir.SQL.Add('SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage');
+    Form1.SQLQueryDir.SQL.Add('SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage');
     Form1.SQLQueryDir.Active := True;
     Form1.SQLQueryDir.Last;
 

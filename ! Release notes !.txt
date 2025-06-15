@@ -34,6 +34,20 @@ Release notes
 # Importing archives (ZIP) takes too much time
 # Clearing temp folder: problems with attribute "readonly"
 
+v0.82 - 2025-06-15
+* Database: v110 Save "Last" date and show now "Last" & "Imported" date
++ Database: Flags "Corrupt" and "Favourite" can now be changed within the grid
+* Menu: Add "Database|Recent opended..."
+* Menu: Add "View"|"Columns" ("Recently opende","Imported", "Location")
+* GUI: New splitter to resize "Tags" & "Notes" panel
+* Emulator: Supports "Emu64" (Mount and Load "*",8,1 available)
+* Options: Select PETSCII fontsize
+* Options: Copy PETSCII font to Windows(r) default "fonts" folder
++ Options: Completely reorganized
++ Import: Check if temp folder or nibconv (needed for G64 files) exist
+- Import: Fixed "LastDate" value now empty and not filled with date of import
+- GUI: Fixes wrong "SEGOE UI" font settings (Seen if running within Linux & WINE)
+
 v0.81 - 2025-03-04
 + Database: "sqlite.dll" v3.49.1 2025-02-18
 * Import: "TAP" tape file support

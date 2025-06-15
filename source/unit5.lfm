@@ -1,39 +1,40 @@
 object frmDel: TfrmDel
-  Left = 777
-  Height = 98
-  Top = 416
-  Width = 401
+  Left = 1390
+  Height = 172
+  Top = 755
+  Width = 702
   BorderStyle = bsDialog
   Caption = 'Delete'
-  ClientHeight = 98
-  ClientWidth = 401
-  OnShow = FormShow
+  ClientHeight = 172
+  ClientWidth = 702
+  DesignTimePPI = 168
   Position = poMainFormCenter
-  LCLVersion = '3.6.0.0'
+  LCLVersion = '4.0.0.4'
+  OnShow = FormShow
   object btYes: TButton
-    Left = 224
-    Height = 25
-    Top = 64
-    Width = 75
+    Left = 392
+    Height = 44
+    Top = 112
+    Width = 131
     Caption = 'Yes'
     TabOrder = 0
     OnClick = btYesClick
   end
   object btNo: TButton
-    Left = 312
-    Height = 25
-    Top = 64
-    Width = 75
+    Left = 546
+    Height = 44
+    Top = 112
+    Width = 131
     Caption = 'No'
     Default = True
     TabOrder = 1
     OnClick = btNoClick
   end
   object Image1: TImage
-    Left = 16
-    Height = 32
-    Top = 8
-    Width = 32
+    Left = 28
+    Height = 56
+    Top = 14
+    Width = 56
     Picture.Data = {
       1754506F727461626C654E6574776F726B47726170686963AF07000089504E47
       0D0A1A0A0000000D4948445200000020000000200806000000737A7AF4000000
@@ -101,18 +102,18 @@ object frmDel: TfrmDel
     }
   end
   object Label1: TLabel
-    Left = 63
-    Height = 15
-    Top = 8
-    Width = 318
+    Left = 110
+    Height = 23
+    Top = 14
+    Width = 515
     Caption = 'Are you sure you want to delete the selected database entry?'
     ParentColor = False
   end
   object cbDelFile: TCheckBox
-    Left = 72
-    Height = 19
-    Top = 32
-    Width = 176
+    Left = 126
+    Height = 27
+    Top = 56
+    Width = 281
     Caption = 'Delete file on data storage too'
     TabOrder = 2
   end

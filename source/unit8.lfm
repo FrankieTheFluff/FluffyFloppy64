@@ -1,28 +1,29 @@
 object Form5: TForm5
-  Left = 645
-  Height = 366
-  Top = 337
-  Width = 712
+  Left = 1141
+  Height = 640
+  Top = 812
+  Width = 1246
   BorderStyle = bsDialog
   Caption = 'Manual'
-  ClientHeight = 366
-  ClientWidth = 712
+  ClientHeight = 640
+  ClientWidth = 1246
+  DesignTimePPI = 168
   Position = poMainFormCenter
-  LCLVersion = '3.8.0.0'
+  LCLVersion = '4.0.0.4'
   object btClose: TButton
-    Left = 629
-    Height = 25
-    Top = 336
-    Width = 75
+    Left = 1101
+    Height = 44
+    Top = 588
+    Width = 131
     Caption = 'Close'
     TabOrder = 0
     OnClick = btCloseClick
   end
   object Memo1: TMemo
-    Left = 8
-    Height = 322
-    Top = 8
-    Width = 696
+    Left = 14
+    Height = 564
+    Top = 14
+    Width = 1218
     Enabled = False
     Lines.Strings = (
       'FluffyFloppy64'

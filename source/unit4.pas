@@ -22,49 +22,63 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  EditBtn, ColorBox;
+  EditBtn, ColorBox, Spin, FileUtil, LazFileUtils, windows;
 
 type
 
   { TForm4 }
 
   TForm4 = class(TForm)
+    btCopyFont: TButton;
+    btDefaultBackground: TButton;
+    btDefaultFont: TButton;
+    btDefaultSize: TButton;
     btOK: TButton;
     btCancel: TButton;
-    btDefaultFont: TButton;
-    btDefaultBackground: TButton;
     cbImportT18T19: TCheckBox;
     cbImportT18T53: TCheckBox;
     cbImportT40: TCheckBox;
     cbStartOpenDB: TCheckBox;
     cbPETSCIITracks: TCheckBox;
-    clbFont: TColorBox;
     clbBackground: TColorBox;
-    fileDenise: TFileNameEdit;
-    fileHoxs64: TFileNameEdit;
-    fileDirMaster: TFileNameEdit;
-    folderTemp: TDirectoryEdit;
+    clbFont: TColorBox;
     fileCCS64: TFileNameEdit;
+    fileDenise: TFileNameEdit;
+    fileEmu64: TFileNameEdit;
+    fileDirMaster: TFileNameEdit;
+    fileHoxs64: TFileNameEdit;
     fileNibConv: TFileNameEdit;
-    Form4: TCheckBox;
     fileVICE: TFileNameEdit;
-    grbImport: TGroupBox;
+    folderTemp: TDirectoryEdit;
+    Form4: TCheckBox;
+    grbImportD64: TGroupBox;
     grbStart: TGroupBox;
-    GroupBox1: TGroupBox;
-    GroupBox2: TGroupBox;
-    GroupBox3: TGroupBox;
-    Label1: TLabel;
-    Label2: TLabel;
+    grbDatabase: TGroupBox;
+    grbImportD71: TGroupBox;
+    grbImportD81: TGroupBox;
+    grbFontOptions: TGroupBox;
+    grbLocations: TGroupBox;
+    grbFontLocation: TGroupBox;
+    grbEmulator: TGroupBox;
+    grbTools: TGroupBox;
+    lbFontFolder: TLabel;
+    lbFontFolder2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
     Label5: TLabel;
-    lblDirMaster: TLabel;
+    lbHoxs64Location: TLabel;
     lblCCS64Location: TLabel;
     lblDenise: TLabel;
-    lbVICELocation: TLabel;
+    lblEmu64: TLabel;
+    lblDirMaster: TLabel;
+    lblFontBackground: TLabel;
+    lblFontColor: TLabel;
+    lblFontSize: TLabel;
     lbNibConvLocation: TLabel;
+    lbNibConvLocation1: TLabel;
+    lbVICELocation: TLabel;
     lbVICELocation1: TLabel;
-    lbHoxs64Location: TLabel;
+    spFontSize: TSpinEdit;
     TabSheet1: TTabSheet;
     tbImport: TTabSheet;
     tbSettings: TPageControl;
@@ -73,7 +87,9 @@ type
     procedure btCancelClick(Sender: TObject);
     procedure btDefaultBackgroundClick(Sender: TObject);
     procedure btDefaultFontClick(Sender: TObject);
+    procedure btDefaultSizeClick(Sender: TObject);
     procedure btOKClick(Sender: TObject);
+    procedure btCopyFontClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
 
@@ -99,14 +115,17 @@ begin
   IniFluff.WriteBool('Options', 'IncludeT18T53', cbImportT18T53.Checked);
   IniFluff.WriteBool('Options', 'IncludeT40', cbImportT40.Checked);
   IniFluff.WriteString('Options', 'FolderTemp', Dircheck(folderTemp.Directory));
+  IniFluff.WriteString('DirMaster', 'Location', fileDirMaster.FileName);
+  IniFluff.WriteInteger('Options', 'DirFontSize', spFontSize.Value);
   IniFluff.WriteString('Options', 'DirFont', ColorToString(clbFont.Selected));
   IniFluff.WriteString('Options', 'DirFontBackground', ColorToString(clbBackground.Selected));
   IniFluff.WriteString('CCS64', 'Location', fileCCS64.FileName);
   IniFluff.WriteString('Denise', 'Location', fileDenise.FileName);
-  IniFluff.WriteString('DirMaster', 'Location', fileDirMaster.FileName);
+  IniFluff.WriteString('Emu64', 'Location', fileEmu64.FileName);
   IniFluff.WriteString('Hoxs64', 'Location', fileHoxs64.FileName);
   IniFluff.WriteString('VICE', 'Location', fileVICE.FileName);
-  IniFluff.WriteString('NibConv', 'Location', fileNibConv.FileName);
+  IniFluff.WriteString('DirMaster', 'Location', fileDirMaster.FileName);
+  Form1.LstBxDirectoryPETSCII.Font.Size := IniFluff.ReadInteger('Options', 'DirFontSize', 12);
   Form1.LstBxDirectoryPETSCII.Font.Color := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
   Form1.LstBxDirectoryPETSCII.Color := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
   Form1.LstBAM.Font.Color := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
@@ -116,6 +135,19 @@ begin
   Form1.lstBoxPETSCII.Font.Color := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
   Form1.lstBoxPETSCII.Color := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
   close;
+end;
+
+procedure TForm4.btCopyFontClick(Sender: TObject);
+begin
+  If fileexists(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = false then
+   begin
+    Showmessage('Font not found: ' + chr(13) + PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
+   end
+   else
+    begin
+     FileUtil.CopyFile(PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'), SHGetFolderPathUTF8(20)+'C64_Pro_Mono-STYLE.ttf');
+     Showmessage('Font successfully copied!' + chr(13) + 'Please restart the application to make the changes take effect...');
+    end;
 end;
 
 procedure TForm4.btCancelClick(Sender: TObject);
@@ -133,6 +165,11 @@ begin
  clbFont.Selected := StringToColor('$00F9B775');
 end;
 
+procedure TForm4.btDefaultSizeClick(Sender: TObject);
+begin
+ spFontSize.Value := 12;
+end;
+
 procedure TForm4.FormShow(Sender: TObject);
 begin
   cbStartOpenDB.Checked := IniFluff.ReadBool('Start', 'OpenDatabase', true);
@@ -141,15 +178,18 @@ begin
   cbImportT18T53.Checked := IniFluff.ReadBool('Options', 'IncludeT18T53', false);
   cbImportT40.Checked := IniFluff.ReadBool('Options', 'IncludeT40', false);
   folderTemp.Directory := IniFluff.ReadString('Options', 'FolderTemp', '');
+  fileNibConv.FileName := IniFluff.ReadString('NibConv', 'Location', '');
+  spFontSize.Value := IniFluff.ReadInteger('Options', 'DirFontSize', 12);
   clbFont.Selected := StringToColor(IniFluff.ReadString('Options', 'DirFont', '$00F9B775'));
   clbBackground.Selected := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
   fileCCS64.FileName := IniFluff.ReadString('CCS64', 'Location', '');
   fileDenise.FileName := IniFluff.ReadString('Denise', 'Location', '');
-  fileDirMaster.FileName := IniFluff.ReadString('DirMaster', 'Location', '');
+  fileEmu64.FileName := IniFluff.ReadString('Emu64', 'Location', '');
   fileHoxs64.FileName := IniFluff.ReadString('Hoxs64', 'Location', '');
   fileVICE.FileName := IniFluff.ReadString('VICE', 'Location', '');
-  fileNibConv.FileName := IniFluff.ReadString('NibConv', 'Location', '');
+  fileDirMaster.FileName := IniFluff.ReadString('DirMaster', 'Location', '');
 end;
+
 
 end.
 

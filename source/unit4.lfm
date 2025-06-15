@@ -1,231 +1,216 @@
 object Form4: TForm4
-  Left = 814
-  Height = 370
-  Top = 323
-  Width = 676
+  Left = 1150
+  Height = 679
+  Top = 639
+  Width = 1183
   BorderStyle = bsDialog
   Caption = 'Options'
-  ClientHeight = 370
-  ClientWidth = 676
-  OnShow = FormShow
+  ClientHeight = 679
+  ClientWidth = 1183
+  DesignTimePPI = 168
   Position = poMainFormCenter
-  LCLVersion = '3.8.0.0'
+  LCLVersion = '4.0.0.4'
+  OnShow = FormShow
   object btOK: TButton
-    Left = 592
-    Height = 25
-    Top = 336
-    Width = 75
+    Left = 1036
+    Height = 44
+    Top = 624
+    Width = 131
     Caption = '&OK'
     TabOrder = 0
     OnClick = btOKClick
   end
   object tbSettings: TPageControl
     Left = 0
-    Height = 328
+    Height = 614
     Top = 0
-    Width = 676
+    Width = 1183
     ActivePage = tbSetting
     Align = alTop
     TabIndex = 0
     TabOrder = 1
     object tbSetting: TTabSheet
       Caption = 'Settings'
-      ClientHeight = 300
-      ClientWidth = 668
+      ClientHeight = 578
+      ClientWidth = 1175
       object grbStart: TGroupBox
-        Left = 0
-        Height = 120
-        Top = 0
-        Width = 664
+        Left = 7
+        Height = 98
+        Top = 7
+        Width = 1161
         Anchors = [akTop, akLeft, akRight]
-        Caption = 'Start'
-        ClientHeight = 100
-        ClientWidth = 660
+        Caption = 'Start:'
+        ClientHeight = 70
+        ClientWidth = 1157
         TabOrder = 0
         object cbStartOpenDB: TCheckBox
-          Left = 16
-          Height = 19
-          Top = 8
-          Width = 209
+          Left = 28
+          Height = 27
+          Top = 14
+          Width = 338
           Caption = 'Open recent used database (default)'
           TabOrder = 0
         end
+      end
+      object grbDatabase: TGroupBox
+        Left = 7
+        Height = 133
+        Top = 329
+        Width = 1161
+        Anchors = [akTop, akLeft, akRight]
+        Caption = 'Database:'
+        ClientHeight = 105
+        ClientWidth = 1157
+        TabOrder = 1
+        object cbPETSCIITracks: TCheckBox
+          Left = 28
+          Height = 27
+          Top = 14
+          Width = 1101
+          Anchors = [akTop, akLeft, akRight]
+          Caption = 'Load PETSCII directory if tracks (18,19,40 or 53) were fully imported in the database, instead from image file'
+          TabOrder = 0
+        end
+        object lbNibConvLocation1: TLabel
+          Left = 56
+          Height = 23
+          Top = 56
+          Width = 375
+          Caption = 'Not recommended! See Import settings first!'
+          ParentColor = False
+        end
+      end
+      object grbLocations: TGroupBox
+        Left = 7
+        Height = 210
+        Top = 112
+        Width = 1155
+        Caption = 'Locations:'
+        ClientHeight = 182
+        ClientWidth = 1151
+        TabOrder = 2
         object lbVICELocation1: TLabel
-          Left = 8
-          Height = 15
-          Top = 40
-          Width = 95
+          Left = 28
+          Height = 23
+          Top = 14
+          Width = 152
           Caption = 'Temporary folder:'
           ParentColor = False
         end
         object folderTemp: TDirectoryEdit
-          Left = 16
-          Height = 23
-          Top = 64
-          Width = 632
+          Left = 42
+          Height = 31
+          Top = 48
+          Width = 1092
           ShowHidden = False
-          ButtonWidth = 23
+          ButtonWidth = 40
+          NumGlyphs = 1
+          MaxLength = 0
+          TabOrder = 0
+        end
+        object fileNibConv: TFileNameEdit
+          Left = 42
+          Height = 31
+          Top = 120
+          Width = 1092
+          DialogTitle = 'Select NibConv'
+          Filter = 'NibConv|*.exe'
+          FilterIndex = 0
+          DefaultExt = 'exe'
+          HideDirectories = False
+          ButtonWidth = 40
           NumGlyphs = 1
           MaxLength = 0
           TabOrder = 1
         end
-      end
-      object GroupBox1: TGroupBox
-        Left = 0
-        Height = 128
-        Top = 120
-        Width = 666
-        Anchors = [akTop, akLeft, akRight]
-        Caption = 'Directory'
-        ClientHeight = 108
-        ClientWidth = 662
-        TabOrder = 1
-        object cbPETSCIITracks: TCheckBox
-          Left = 16
-          Height = 19
-          Top = 8
-          Width = 517
-          Anchors = [akTop, akLeft, akRight]
-          Caption = 'Load PETSCII directory from database, if tracks (18,19,40 or 53) were imported, instead from file'
-          TabOrder = 0
-        end
-        object clbFont: TColorBox
-          Left = 152
-          Height = 22
-          Top = 40
-          Width = 128
-          DefaultColorColor = 16365429
-          Selected = 16365429
-          Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
-          ItemHeight = 16
-          TabOrder = 1
-        end
-        object Label1: TLabel
-          Left = 16
-          Height = 15
-          Top = 40
-          Width = 57
-          Caption = 'Font color:'
-          ParentColor = False
-        end
-        object Label2: TLabel
-          Left = 16
-          Height = 15
-          Top = 71
-          Width = 97
-          Caption = 'Background color:'
-          ParentColor = False
-        end
-        object clbBackground: TColorBox
-          Left = 152
-          Height = 22
-          Top = 71
-          Width = 128
-          DefaultColorColor = 14368542
-          Selected = 14368542
-          Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
-          DropDownCount = 10
-          ItemHeight = 16
-          TabOrder = 3
-        end
-        object btDefaultFont: TButton
-          Left = 296
+        object lbNibConvLocation: TLabel
+          Left = 28
           Height = 23
-          Top = 40
-          Width = 75
-          Caption = 'Default'
-          TabOrder = 2
-          OnClick = btDefaultFontClick
-        end
-        object btDefaultBackground: TButton
-          Left = 296
-          Height = 23
-          Top = 72
-          Width = 75
-          Caption = 'Default'
-          TabOrder = 4
-          OnClick = btDefaultBackgroundClick
+          Top = 88
+          Width = 76
+          Caption = 'NibConv:'
+          ParentColor = False
         end
       end
     end
     object tbImport: TTabSheet
       Caption = 'Import'
-      ClientHeight = 300
-      ClientWidth = 668
-      object grbImport: TGroupBox
-        Left = 0
-        Height = 80
-        Top = 0
-        Width = 666
+      ClientHeight = 578
+      ClientWidth = 1175
+      object grbImportD64: TGroupBox
+        Left = 7
+        Height = 140
+        Top = 7
+        Width = 1155
         Caption = 'Import D64, G64:'
-        ClientHeight = 60
-        ClientWidth = 662
+        ClientHeight = 112
+        ClientWidth = 1151
         TabOrder = 0
         object cbImportT18T19: TCheckBox
-          Left = 16
-          Height = 19
-          Top = 8
-          Width = 420
+          Left = 28
+          Height = 27
+          Top = 14
+          Width = 674
           Caption = 'Import also track 18/19 to database (fully usage of database without images)'
           TabOrder = 0
         end
         object Label3: TLabel
-          Left = 32
-          Height = 15
-          Top = 32
-          Width = 293
+          Left = 56
+          Height = 23
+          Top = 56
+          Width = 463
           Caption = 'Not recommended! Could go slow, needs more storage'
           ParentColor = False
         end
       end
-      object GroupBox2: TGroupBox
-        Left = 0
-        Height = 81
-        Top = 80
-        Width = 666
+      object grbImportD71: TGroupBox
+        Left = 7
+        Height = 142
+        Top = 154
+        Width = 1155
         Caption = 'Import D71:'
-        ClientHeight = 61
-        ClientWidth = 662
+        ClientHeight = 114
+        ClientWidth = 1151
         TabOrder = 1
         object cbImportT18T53: TCheckBox
-          Left = 16
-          Height = 19
-          Top = 8
-          Width = 420
+          Left = 28
+          Height = 27
+          Top = 14
+          Width = 674
           Caption = 'Import also track 18/53 to database (fully usage of database without images)'
           TabOrder = 0
         end
         object Label4: TLabel
-          Left = 32
-          Height = 15
-          Top = 32
-          Width = 293
+          Left = 56
+          Height = 23
+          Top = 56
+          Width = 463
           Caption = 'Not recommended! Could go slow, needs more storage'
           ParentColor = False
         end
       end
-      object GroupBox3: TGroupBox
-        Left = 0
-        Height = 80
-        Top = 160
-        Width = 666
+      object grbImportD81: TGroupBox
+        Left = 7
+        Height = 140
+        Top = 304
+        Width = 1155
         Caption = 'Import D81:'
-        ClientHeight = 60
-        ClientWidth = 662
+        ClientHeight = 112
+        ClientWidth = 1151
         TabOrder = 2
         object cbImportT40: TCheckBox
-          Left = 16
-          Height = 19
-          Top = 8
-          Width = 403
+          Left = 28
+          Height = 27
+          Top = 14
+          Width = 647
           Caption = 'Import also track 40 to database (fully usage of database without images)'
           TabOrder = 0
         end
         object Label5: TLabel
-          Left = 32
-          Height = 15
-          Top = 32
-          Width = 293
+          Left = 56
+          Height = 23
+          Top = 56
+          Width = 463
           Caption = 'Not recommended! Could go slow, needs more storage'
           ParentColor = False
         end
@@ -233,155 +218,303 @@ object Form4: TForm4
     end
     object tbVICE: TTabSheet
       Caption = 'Open with...'
-      ClientHeight = 300
-      ClientWidth = 668
-      object lbVICELocation: TLabel
-        Left = 8
-        Height = 15
-        Top = 232
-        Width = 25
-        Caption = 'Vice:'
-        ParentColor = False
-      end
-      object fileVICE: TFileNameEdit
-        Left = 16
-        Height = 23
-        Top = 256
-        Width = 632
-        DialogTitle = 'Select VICE'
-        Filter = 'VICE|*.exe'
-        FilterIndex = 0
-        DefaultExt = 'exe'
-        HideDirectories = False
-        ButtonWidth = 23
-        NumGlyphs = 1
-        MaxLength = 0
-        TabOrder = 4
-      end
-      object lblCCS64Location: TLabel
-        Left = 8
-        Height = 15
+      ClientHeight = 578
+      ClientWidth = 1175
+      object grbEmulator: TGroupBox
+        Left = 7
+        Height = 419
         Top = 8
-        Width = 37
-        Caption = 'CCS64:'
-        ParentColor = False
-      end
-      object fileCCS64: TFileNameEdit
-        Left = 16
-        Height = 23
-        Top = 32
-        Width = 632
-        DialogTitle = 'Select CCS64'
-        Filter = 'CCS64|*.exe'
-        FilterIndex = 0
-        DefaultExt = 'exe'
-        HideDirectories = False
-        ButtonWidth = 23
-        NumGlyphs = 1
-        MaxLength = 0
+        Width = 1155
+        Caption = 'Emulator:'
+        ClientHeight = 391
+        ClientWidth = 1151
         TabOrder = 0
+        object lblCCS64Location: TLabel
+          Left = 28
+          Height = 23
+          Top = 14
+          Width = 60
+          Caption = 'CCS64:'
+          ParentColor = False
+        end
+        object fileCCS64: TFileNameEdit
+          Left = 42
+          Height = 31
+          Top = 48
+          Width = 1080
+          DialogTitle = 'Select CCS64'
+          Filter = 'CCS64|*.exe'
+          FilterIndex = 0
+          DefaultExt = 'exe'
+          HideDirectories = False
+          ButtonWidth = 40
+          NumGlyphs = 1
+          MaxLength = 0
+          TabOrder = 0
+        end
+        object lblDenise: TLabel
+          Left = 28
+          Height = 23
+          Top = 84
+          Width = 63
+          Caption = 'Denise:'
+          ParentColor = False
+        end
+        object fileDenise: TFileNameEdit
+          Left = 42
+          Height = 31
+          Top = 119
+          Width = 1080
+          DialogTitle = 'Select CCS64'
+          Filter = 'CCS64|*.exe'
+          FilterIndex = 0
+          DefaultExt = 'exe'
+          HideDirectories = False
+          ButtonWidth = 40
+          NumGlyphs = 1
+          MaxLength = 0
+          TabOrder = 1
+        end
+        object lbHoxs64Location: TLabel
+          Left = 28
+          Height = 23
+          Top = 232
+          Width = 67
+          Caption = 'Hoxs64:'
+          ParentColor = False
+        end
+        object fileHoxs64: TFileNameEdit
+          Left = 42
+          Height = 31
+          Top = 264
+          Width = 1080
+          DialogTitle = 'Select VICE'
+          Filter = 'VICE|*.exe'
+          FilterIndex = 0
+          DefaultExt = 'exe'
+          HideDirectories = False
+          ButtonWidth = 40
+          NumGlyphs = 1
+          MaxLength = 0
+          TabOrder = 3
+        end
+        object lbVICELocation: TLabel
+          Left = 28
+          Height = 23
+          Top = 304
+          Width = 41
+          Caption = 'Vice:'
+          ParentColor = False
+        end
+        object fileVICE: TFileNameEdit
+          Left = 42
+          Height = 31
+          Top = 336
+          Width = 1080
+          DialogTitle = 'Select VICE'
+          Filter = 'VICE|*.exe'
+          FilterIndex = 0
+          DefaultExt = 'exe'
+          HideDirectories = False
+          ButtonWidth = 40
+          NumGlyphs = 1
+          MaxLength = 0
+          TabOrder = 4
+        end
+        object lblEmu64: TLabel
+          Left = 28
+          Height = 23
+          Top = 160
+          Width = 65
+          Caption = 'Emu64:'
+          ParentColor = False
+        end
+        object fileEmu64: TFileNameEdit
+          Left = 42
+          Height = 31
+          Top = 192
+          Width = 1080
+          DialogTitle = 'Select CCS64'
+          Filter = 'CCS64|*.exe'
+          FilterIndex = 0
+          DefaultExt = 'exe'
+          HideDirectories = False
+          ButtonWidth = 40
+          NumGlyphs = 1
+          MaxLength = 0
+          TabOrder = 2
+        end
       end
-      object lblDenise: TLabel
-        Left = 8
-        Height = 15
-        Top = 64
-        Width = 38
-        Caption = 'Denise:'
-        ParentColor = False
-      end
-      object fileDenise: TFileNameEdit
-        Left = 16
-        Height = 23
-        Top = 88
-        Width = 632
-        DialogTitle = 'Select CCS64'
-        Filter = 'CCS64|*.exe'
-        FilterIndex = 0
-        DefaultExt = 'exe'
-        HideDirectories = False
-        ButtonWidth = 23
-        NumGlyphs = 1
-        MaxLength = 0
+      object grbTools: TGroupBox
+        Left = 7
+        Height = 128
+        Top = 432
+        Width = 1155
+        Caption = 'Tools:'
+        ClientHeight = 100
+        ClientWidth = 1151
         TabOrder = 1
-      end
-      object lbHoxs64Location: TLabel
-        Left = 8
-        Height = 15
-        Top = 176
-        Width = 41
-        Caption = 'Hoxs64:'
-        ParentColor = False
-      end
-      object fileHoxs64: TFileNameEdit
-        Left = 16
-        Height = 23
-        Top = 200
-        Width = 632
-        DialogTitle = 'Select VICE'
-        Filter = 'VICE|*.exe'
-        FilterIndex = 0
-        DefaultExt = 'exe'
-        HideDirectories = False
-        ButtonWidth = 23
-        NumGlyphs = 1
-        MaxLength = 0
-        TabOrder = 3
-      end
-      object lblDirMaster: TLabel
-        Left = 8
-        Height = 15
-        Top = 120
-        Width = 54
-        Caption = 'DirMaster:'
-        ParentColor = False
-      end
-      object fileDirMaster: TFileNameEdit
-        Left = 16
-        Height = 23
-        Top = 144
-        Width = 632
-        FilterIndex = 0
-        HideDirectories = False
-        ButtonWidth = 23
-        NumGlyphs = 1
-        MaxLength = 0
-        TabOrder = 2
+        object lblDirMaster: TLabel
+          Left = 14
+          Height = 23
+          Top = 7
+          Width = 87
+          Caption = 'DirMaster:'
+          ParentColor = False
+        end
+        object fileDirMaster: TFileNameEdit
+          Left = 28
+          Height = 31
+          Top = 42
+          Width = 1106
+          FilterIndex = 0
+          HideDirectories = False
+          ButtonWidth = 40
+          NumGlyphs = 1
+          MaxLength = 0
+          TabOrder = 0
+        end
       end
     end
     object TabSheet1: TTabSheet
-      Caption = 'NibTools'
-      ClientHeight = 300
-      ClientWidth = 668
-      object lbNibConvLocation: TLabel
-        Left = 8
-        Height = 15
-        Top = 8
-        Width = 50
-        Caption = 'NibConv:'
-        ParentColor = False
-      end
-      object fileNibConv: TFileNameEdit
-        Left = 16
-        Height = 23
-        Top = 32
-        Width = 632
-        DialogTitle = 'Select NibConv'
-        Filter = 'NibConv|*.exe'
-        FilterIndex = 0
-        DefaultExt = 'exe'
-        HideDirectories = False
-        ButtonWidth = 23
-        NumGlyphs = 1
-        MaxLength = 0
+      Caption = 'PETSCII Font'
+      ClientHeight = 578
+      ClientWidth = 1175
+      object grbFontOptions: TGroupBox
+        Left = 7
+        Height = 203
+        Top = 7
+        Width = 1155
+        Caption = 'Options:'
+        ClientHeight = 175
+        ClientWidth = 1151
         TabOrder = 0
+        object btDefaultFont: TButton
+          Left = 560
+          Height = 40
+          Top = 60
+          Width = 131
+          Caption = 'Default'
+          TabOrder = 3
+          OnClick = btDefaultFontClick
+        end
+        object clbFont: TColorBox
+          Left = 266
+          Height = 31
+          Top = 60
+          Width = 224
+          DefaultColorColor = 16365429
+          Selected = 16365429
+          Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
+          ItemHeight = 28
+          TabOrder = 2
+        end
+        object lblFontColor: TLabel
+          Left = 28
+          Height = 23
+          Top = 60
+          Width = 90
+          Caption = 'Font color:'
+          ParentColor = False
+        end
+        object lblFontBackground: TLabel
+          Left = 28
+          Height = 23
+          Top = 105
+          Width = 153
+          Caption = 'Background color:'
+          ParentColor = False
+        end
+        object clbBackground: TColorBox
+          Left = 266
+          Height = 31
+          Top = 105
+          Width = 224
+          DefaultColorColor = 14368542
+          Selected = 14368542
+          Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
+          DropDownCount = 10
+          ItemHeight = 28
+          TabOrder = 4
+        end
+        object btDefaultBackground: TButton
+          Left = 560
+          Height = 40
+          Top = 105
+          Width = 131
+          Caption = 'Default'
+          TabOrder = 5
+          OnClick = btDefaultBackgroundClick
+        end
+        object lblFontSize: TLabel
+          Left = 28
+          Height = 23
+          Top = 14
+          Width = 173
+          Caption = 'Font size (directory):'
+          ParentColor = False
+        end
+        object spFontSize: TSpinEdit
+          Left = 266
+          Height = 31
+          Top = 14
+          Width = 98
+          MaxValue = 128
+          MinValue = 4
+          TabOrder = 0
+          Value = 12
+        end
+        object btDefaultSize: TButton
+          Left = 560
+          Height = 40
+          Top = 14
+          Width = 131
+          Caption = 'Default'
+          TabOrder = 1
+          OnClick = btDefaultSizeClick
+        end
+      end
+      object grbFontLocation: TGroupBox
+        Left = 7
+        Height = 126
+        Top = 217
+        Width = 1155
+        Caption = 'Location:'
+        ClientHeight = 98
+        ClientWidth = 1151
+        TabOrder = 1
+        object lbFontFolder: TLabel
+          Left = 28
+          Height = 23
+          Top = 14
+          Width = 814
+          Caption = 'Copy ''~APPLICATIONPATH\C64_Pro_Mono-STYLE.ttf'' to default operating system ''~\fonts\'' folder'
+        end
+        object btCopyFont: TButton
+          Left = 980
+          Height = 40
+          Hint = 'Copy the fontfile (ttf) to the default windows "fonts" folder'
+          Top = 28
+          Width = 131
+          Caption = 'Copy2Fonts'
+          TabOrder = 0
+          OnClick = btCopyFontClick
+        end
+        object lbFontFolder2: TLabel
+          Left = 28
+          Height = 23
+          Top = 52
+          Width = 573
+          Caption = 'Needs a restart of the application to make the changes take effect...'
+        end
       end
     end
   end
   object btCancel: TButton
-    Left = 8
-    Height = 25
-    Top = 336
-    Width = 75
+    Left = 12
+    Height = 44
+    Top = 624
+    Width = 131
     Caption = '&Cancel'
     Default = True
     TabOrder = 2
