@@ -34,11 +34,15 @@ Release notes
 # Importing archives (ZIP) takes too much time
 # Clearing temp folder: problems with attribute "readonly"
 
+v0.83 - 2025-06-15
+- Fixes "nibconv.exe" not found
+
 v0.82 - 2025-06-15
++ Database: "sqlite.dll" v3.50.1 2025-05-29
 * Database: v110 Save "Last" date and show now "Last" & "Imported" date
 + Database: Flags "Corrupt" and "Favourite" can now be changed within the grid
-* Menu: Add "Database|Recent opended..."
-* Menu: Add "View"|"Columns" ("Recently opende","Imported", "Location")
+* Menu: Add "Database|Recent opened..."
+* Menu: Add "View"|"Columns" ("Recently opened","Imported", "Location")
 * GUI: New splitter to resize "Tags" & "Notes" panel
 * Emulator: Supports "Emu64" (Mount and Load "*",8,1 available)
 * Options: Select PETSCII fontsize

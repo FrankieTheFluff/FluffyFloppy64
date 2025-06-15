@@ -1,86 +1,87 @@
 object Form2: TForm2
-  Left = -511
-  Height = 265
-  Top = 353
-  Width = 496
+  Left = 1821
+  Height = 464
+  Top = 1096
+  Width = 868
   BorderStyle = bsDialog
   Caption = 'Database'
-  ClientHeight = 265
-  ClientWidth = 496
+  ClientHeight = 464
+  ClientWidth = 868
+  DesignTimePPI = 168
   Position = poMainFormCenter
   LCLVersion = '4.0.0.4'
   OnShow = FormShow
   object grbDBProperties: TGroupBox
-    Left = 8
-    Height = 224
+    Left = 14
+    Height = 392
     Top = 0
-    Width = 480
-    ClientHeight = 206
-    ClientWidth = 476
+    Width = 840
+    ClientHeight = 364
+    ClientWidth = 836
     TabOrder = 0
     object lblVersion: TLabel
-      Left = 8
-      Height = 13
+      Left = 14
+      Height = 23
       Top = 0
-      Width = 41
+      Width = 68
       Caption = 'Version:'
       ParentColor = False
     end
     object lblCreated: TLabel
-      Left = 288
-      Height = 13
+      Left = 504
+      Height = 23
       Top = 0
-      Width = 43
+      Width = 72
       Caption = 'Created:'
       ParentColor = False
     end
     object sTVersion: TStaticText
-      Left = 72
-      Height = 17
+      Left = 126
+      Height = 30
       Top = 0
-      Width = 48
+      Width = 84
       Alignment = taCenter
       BorderStyle = sbsSunken
       TabOrder = 0
     end
     object sTCreated: TStaticText
-      Left = 360
-      Height = 17
+      Left = 630
+      Height = 30
       Top = 0
-      Width = 105
+      Width = 184
       Alignment = taCenter
       BorderStyle = sbsSunken
       TabOrder = 1
     end
     object lblLocation: TLabel
-      Left = 8
-      Height = 13
-      Top = 32
-      Width = 45
+      Left = 14
+      Height = 23
+      Top = 56
+      Width = 76
       Caption = 'Location:'
       ParentColor = False
     end
     object sTLocation: TStaticText
-      Left = 72
-      Height = 58
-      Top = 32
-      Width = 393
+      Left = 126
+      Height = 102
+      Top = 56
+      Width = 688
       BorderStyle = sbsSunken
       TabOrder = 2
     end
     object lblLocation1: TLabel
-      Left = 8
-      Height = 13
-      Top = 104
-      Width = 51
+      Left = 14
+      Height = 23
+      Top = 182
+      Width = 87
       Caption = 'Comment:'
       ParentColor = False
     end
     object memComment: TDBMemo
-      Left = 72
-      Height = 90
-      Top = 104
-      Width = 393
+      Left = 126
+      Height = 158
+      Top = 182
+      Width = 688
       DataField = 'DBComment'
       DataSource = Form1.DataSourceDB
       ScrollBars = ssAutoBoth
@@ -89,10 +90,10 @@ object Form2: TForm2
     end
   end
   object btOK: TButton
-    Left = 413
-    Height = 25
-    Top = 232
-    Width = 75
+    Left = 723
+    Height = 44
+    Top = 406
+    Width = 131
     Caption = 'OK'
     TabOrder = 1
     OnClick = btOKClick

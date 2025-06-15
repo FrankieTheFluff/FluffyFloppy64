@@ -1487,7 +1487,7 @@ begin
  //Check if nibtools available?
  If cbImgG64.Checked = true then
   begin
-   If FileExists(DirCheck(IniFluff.ReadString('NibConv', 'Location', ''))) = false then
+   If FileExists(IniFluff.ReadString('NibConv', 'Location', '')) = false then
     begin
      answer := MessageDlg('G64 cannot be imported because NibConv not found! Please check settings first or deselect G64...',mtWarning, [mbOK], 0);
       if answer = mrOk then

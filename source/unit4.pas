@@ -114,11 +114,12 @@ begin
   IniFluff.WriteBool('Options', 'IncludeT18T19', cbImportT18T19.Checked);
   IniFluff.WriteBool('Options', 'IncludeT18T53', cbImportT18T53.Checked);
   IniFluff.WriteBool('Options', 'IncludeT40', cbImportT40.Checked);
-  IniFluff.WriteString('Options', 'FolderTemp', Dircheck(folderTemp.Directory));
-  IniFluff.WriteString('DirMaster', 'Location', fileDirMaster.FileName);
   IniFluff.WriteInteger('Options', 'DirFontSize', spFontSize.Value);
   IniFluff.WriteString('Options', 'DirFont', ColorToString(clbFont.Selected));
   IniFluff.WriteString('Options', 'DirFontBackground', ColorToString(clbBackground.Selected));
+  IniFluff.WriteString('Options', 'FolderTemp', Dircheck(folderTemp.Directory));
+  IniFluff.WriteString('NibConv', 'Location', fileNibConv.FileName);
+  IniFluff.WriteString('DirMaster', 'Location', fileDirMaster.FileName);
   IniFluff.WriteString('CCS64', 'Location', fileCCS64.FileName);
   IniFluff.WriteString('Denise', 'Location', fileDenise.FileName);
   IniFluff.WriteString('Emu64', 'Location', fileEmu64.FileName);

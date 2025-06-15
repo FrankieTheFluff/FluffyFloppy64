@@ -623,12 +623,17 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.82';
+ sAppVersion := 'v0.83';
  sAppDate    := '2025-06-15';
  Form1.Caption:= sAppCaption + sAppVersion;
  sAppPath := ExtractFilePath(ParamStr(0));
  SQlSearch_Click := false;
  dbGridSorted := 'ASC';
+
+ // Folder
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - Create folders');
+ If DirectoryExists(DirCheck(sAppPath + 'temp')) = false then CreateDir(DirCheck(sAppPath + 'temp'));
+ If DirectoryExists(DirCheck(sAppPath + 'nibtools')) = false then CreateDir(DirCheck(sAppPath + 'nibtools'));
 
  // INI
  if FileExists(sAppPath + 'fluffyfloppy64.ini') = False then
@@ -690,11 +695,6 @@ begin
     AddFontResource(PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
     If Dev_Mode = true then Showmessage('[Dev_Mode] - Font found: ' + chr(13) + PChar(DirCheck(sAppPath))+'C64_Pro_Mono-STYLE.ttf');
    end;
-
- // Folder
- If Dev_Mode = true then Showmessage('[Dev_Mode] - Create folders');
- If DirectoryExists(DirCheck(sAppPath + 'temp')) = false then CreateDir(DirCheck(sAppPath + 'temp'));
- If DirectoryExists(DirCheck(sAppPath + 'nibtools')) = false then CreateDir(DirCheck(sAppPath + 'nibtools'));
 
  If Dev_Mode = true then Showmessage('[Dev_Mode] - ClientWidth & ClientHeight');
  Form1.ClientWidth := IniFluff.ReadInteger('Application', 'ClientWidth', 1000);
