@@ -35,6 +35,7 @@ Release notes
 # Clearing temp folder: problems with attribute "readonly"
 
 v0.82 - 2025-06-15
++ Database: "sqlite.dll" v3.50.1 2025-05-29
 * Database: v110 Save "Last" date and show now "Last" & "Imported" date
 + Database: Flags "Corrupt" and "Favourite" can now be changed within the grid
 * Menu: Add "Database|Recent opened..."
