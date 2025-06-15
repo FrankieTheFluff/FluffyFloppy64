@@ -1,6 +1,6 @@
 -----------------------------------------------------------------
 
-FluffyFloppy64 v0.83 - 2025-05-16
+FluffyFloppy64 v0.83 - 2025-05-15
 -
 
 A Microsoft(r) Windows(r) tool to catalog 
