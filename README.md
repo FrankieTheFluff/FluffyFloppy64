@@ -1,7 +1,7 @@
 -----------------------------------------------------------------
 
+<<<<<<< HEAD
 FluffyFloppy64 v0.84 - 2025-05-25
--
 
 A Microsoft(r) Windows(r) tool to catalog 
 Commodore 64 (C64) floppy disk images (D64, G64, D71, D81, PRG, TAP)
