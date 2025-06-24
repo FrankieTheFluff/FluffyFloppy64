@@ -1,6 +1,5 @@
 -----------------------------------------------------------------
 
-<<<<<<< HEAD
 FluffyFloppy64 v0.84 - 2025-05-25
 
 A Microsoft(r) Windows(r) tool to catalog 
