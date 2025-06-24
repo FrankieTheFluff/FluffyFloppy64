@@ -32,7 +32,7 @@ Release notes
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 
-v0.84 - 2025-06-25
+v0.84 - 2025-06-24
 + Import: Remember recent used import folder
 + Rewritten temp folder handling, should also speed up browsing/importing
 + Error handler in "Unpack_Files" function
