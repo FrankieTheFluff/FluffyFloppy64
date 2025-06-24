@@ -23,11 +23,17 @@ interface
 uses
   Classes, SysUtils, StrUtils, Process, SQLite3Conn, SQLDB, DB, Forms, Controls,
   Graphics, Dialogs, StdCtrls, ComCtrls, Menus, ExtCtrls, Buttons, DBGrids,
-  ShellCtrls, FileUtil, Inifiles, LCLIntf, DBCtrls, LazUTF8, LazFileUtils, windows, Grids;
+  ShellCtrls, FileUtil, Inifiles, LCLIntf, DBCtrls, LazUTF8, LazFileUtils, Windows, Grids;
 
 type
   TByteArr = array of Byte;
-
+  // G64
+  TG64Header = packed record
+  Signature: array[0..7] of Char;
+  Version: Word;
+  NumTracks: Word;
+  TrackOffsets: array[0..83] of Word;
+ end;
   { TForm1 }
 
   TForm1 = class(TForm)
@@ -232,6 +238,7 @@ type
     procedure TgScratchChange(Sender: TObject);
     Procedure OpenDatabase(aFileName : String);
   private
+    nibProcess: TProcess;
     RecentFiles: TStringList;
     procedure AddToRecentFiles(const aFileName: string);
     procedure UpdateRecentFilesMenu;
@@ -523,56 +530,6 @@ begin
   end;
 end;
 
-procedure DeleteDirectoryAndContents(const Dir: string);
-var
-  SearchRec: TSearchRec;
-  PDir: PChar;
-begin
-  PDir := PChar(Dir);  // Umwandlung des Verzeichnispfads in PChar
-
-  try
-    // Suche nach allen Dateien und Verzeichnissen im angegebenen Verzeichnis
-    if FindFirst(PDir + PathDelim + '*', faAnyFile, SearchRec) = 0 then
-    begin
-      repeat
-        // Ausschließen von "." und ".."
-        if (SearchRec.Name <> '.') and (SearchRec.Name <> '..') then
-        begin
-          if (SearchRec.Attr and faDirectory) = faDirectory then
-          begin
-            // Rekursiv in Unterverzeichnisse gehen
-            DeleteDirectoryAndContents(Dir + PathDelim + SearchRec.Name);
-          end
-          else
-          begin
-            // Datei löschen
-            try
-              DeleteFile(PChar(PDir + PathDelim + SearchRec.Name));
-            except
-              on E: Exception do
-                Writeln('Fehler beim Löschen der Datei: ', E.Message);
-            end;
-          end;
-        end;
-      until FindNext(SearchRec) <> 0;
-    end;
-  except
-    on E: Exception do
-    begin
-      // Fehlerbehandlung, falls ein Fehler auftritt (z.B. bei FindFirst oder FindNext)
-      Writeln('Fehler beim Durchsuchen des Verzeichnisses: ', E.Message);
-    end;
-  end;
-
-  try
-    // Verzeichnis löschen
-    RemoveDir(PDir);
-  except
-    on E: Exception do
-      Writeln('Fehler beim Löschen des Verzeichnisses: ', E.Message);
-  end;
-end;
-
 procedure TForm1.UnpackFileFullContainsPipe(aFileFull : String);
 var
  tmpPath : String;
@@ -588,7 +545,7 @@ begin
  If aFileFull.Contains('|') = true then  // check if path locates an archive
   begin
    ImageFileArray := aFileFull.Split('|');
-   tmpPath := DirCheck(IniFluff.ReadString('Options', 'FolderTemp', ''));
+   tmpPath := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
    FileFull := tmpPath + ExtractFileName(ImageFileArray[0]) + ImageFileArray[1]; //location of D64 in tmp folder  "c:\temp\mops.zip\123.d64"
    if fileexists(FileFull) = false then  // check if archive already unpacked
     begin
@@ -623,8 +580,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.83';
- sAppDate    := '2025-06-15';
+ sAppVersion := 'v0.84';
+ sAppDate    := '2025-06-25';
  Form1.Caption:= sAppCaption + sAppVersion;
  sAppPath := ExtractFilePath(ParamStr(0));
  SQlSearch_Click := false;
@@ -632,8 +589,8 @@ begin
 
  // Folder
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Create folders');
- If DirectoryExists(DirCheck(sAppPath + 'temp')) = false then CreateDir(DirCheck(sAppPath + 'temp'));
- If DirectoryExists(DirCheck(sAppPath + 'nibtools')) = false then CreateDir(DirCheck(sAppPath + 'nibtools'));
+ If DirectoryExists(IncludeTrailingPathDelimiter(sAppPath + 'temp')) = false then CreateDir(IncludeTrailingPathDelimiter(sAppPath + 'temp'));
+ If DirectoryExists(IncludeTrailingPathDelimiter(sAppPath + 'nibtools')) = false then CreateDir(IncludeTrailingPathDelimiter(sAppPath + 'nibtools'));
 
  // INI
  if FileExists(sAppPath + 'fluffyfloppy64.ini') = False then
@@ -655,7 +612,7 @@ begin
    IniFluff.WriteBool('Database', 'Column7', true);
    IniFluff.WriteBool('Database', 'Column8', true);
      mnuViewLocation.Checked:=true;
-   IniFluff.WriteString('Options', 'FolderTemp', DirCheck(sAppPath + 'temp\'));
+   IniFluff.WriteString('Options', 'FolderTemp', IncludeTrailingPathDelimiter(sAppPath + 'temp\'));
    IniFluff.WriteBool('Options', 'Scratched', false);
    IniFluff.WriteBool('Options', 'Shifted', false);
    IniFluff.WriteBool('Options', 'IncludeT18T19', false);
@@ -663,7 +620,7 @@ begin
    IniFluff.WriteInteger('Options', 'DirFontSize', 12);
    IniFluff.WriteString('Options', 'DirFont', '$00F9B775');
    IniFluff.WriteString('Options', 'DirFontBackground', '$00DB3F1E');
-   If FileExists(DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe') = true then IniFluff.WriteString('NibConv', 'Location', DirCheck(sAppPath + 'nibtools\') + 'nibconv.exe');
+   If FileExists(IncludeTrailingPathDelimiter(sAppPath + 'nibtools\') + 'nibconv.exe') = true then IniFluff.WriteString('NibConv', 'Location', IncludeTrailingPathDelimiter(sAppPath + 'nibtools\') + 'nibconv.exe');
    IniFluff.WriteInteger('Emulators', 'Select', 2);
    IniFluff.WriteString('CCS64', 'Location', '');
    IniFluff.WriteString('Denise', 'Location', '');
@@ -686,14 +643,14 @@ begin
  If Dev_Mode = true then Form1.Caption:= sAppCaption + sAppVersion + ' [Dev_Mode]';
 
  // Font
- If fileexists(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = false then
+ If fileexists(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = false then
   begin
-   Showmessage('Font not found: ' + chr(13) + PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
+   Showmessage('Font not found: ' + chr(13) + PChar(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
   end
   else
    begin
-    AddFontResource(PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
-    If Dev_Mode = true then Showmessage('[Dev_Mode] - Font found: ' + chr(13) + PChar(DirCheck(sAppPath))+'C64_Pro_Mono-STYLE.ttf');
+    AddFontResource(PChar(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
+    If Dev_Mode = true then Showmessage('[Dev_Mode] - Font found: ' + chr(13) + PChar(IncludeTrailingPathDelimiter(sAppPath))+'C64_Pro_Mono-STYLE.ttf');
    end;
 
  If Dev_Mode = true then Showmessage('[Dev_Mode] - ClientWidth & ClientHeight');
@@ -1261,10 +1218,11 @@ var
   tmpPathArch : TStringList;
   i : Integer;
 begin
+ // Clean tmp folder
  If MessageDlg('Are you sure you want to clear the temporary folder?',mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
    try
-    DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),true)
+    CleanTmp; // Clean tmp folder;
    except
    On E : Exception do
     begin
@@ -1434,8 +1392,6 @@ begin
      //
     end;
    Init_FilePath;
-
-   ATransaction.Active:=false;
    If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - End');
   end;
 end;
@@ -1461,16 +1417,16 @@ end;
 
 procedure TForm1.mnuOpenFileBrowserClick(Sender: TObject);
 begin
- PageControl1.Pages[1].Show;
- ShellTreeView1.Path := SQLQueryDir.FieldByName('FilePath').Text;
- LstBrowse.Refresh;
- LstBrowse.ItemIndex:= SQLQueryDir.RecNo-1;
- LstBrowse.SetFocus;
+ //PageControl1.Pages[1].Show;
+ //ShellTreeView1.Path := SQLQueryDir.FieldByName('FilePath').Text;
+ //LstBrowse.Refresh;
+ //LstBrowse.ItemIndex:= SQLQueryDir.RecNo-1;
+ //LstBrowse.SetFocus;
 end;
 
 procedure TForm1.mnuOpenImageClick(Sender: TObject);
 begin
- OpenDocument(DirCheck(SQLQueryDir.FieldByName('FilePath').DisplayText) + SQLQueryDir.FieldByName('FileName').DisplayText + '.' + SQLQueryDir.FieldByName('FileNameExt').DisplayText);
+ OpenDocument(IncludeTrailingPathDelimiter(SQLQueryDir.FieldByName('FilePath').DisplayText) + SQLQueryDir.FieldByName('FileName').DisplayText + '.' + SQLQueryDir.FieldByName('FileNameExt').DisplayText);
 end;
 
 procedure TForm1.mnuOpenLocationRecClick(Sender: TObject);
@@ -1484,7 +1440,7 @@ end;
 
 procedure TForm1.mnuOpenRecClick(Sender: TObject);
 begin
- if SQLQueryDir.RecordCount > 0 then OpenDocument(DirCheck(SQLQueryDir.FieldByName('FilePath').DisplayText) + SQLQueryDir.FieldByName('FileName').DisplayText + '.' + SQLQueryDir.FieldByName('FileNameExt').DisplayText);
+ if SQLQueryDir.RecordCount > 0 then OpenDocument(IncludeTrailingPathDelimiter(SQLQueryDir.FieldByName('FilePath').DisplayText) + SQLQueryDir.FieldByName('FileName').DisplayText + '.' + SQLQueryDir.FieldByName('FileNameExt').DisplayText);
 end;
 
 procedure TForm1.mnuOptionsClick(Sender: TObject);
@@ -1905,7 +1861,6 @@ end;
 
 procedure TForm1.Convert_G64(aImageName: String);
 var
- Process: TProcess;
  aImageNameD64 : String;
  answer : Integer;
 begin
@@ -1940,19 +1895,18 @@ begin
 
     // NibConv G64 to D64
     aImageNameD64 := ExtractFileName(ChangeFileExt(aImageName,'.d64'));
-    Process := TProcess.Create(nil);
+    nibProcess := TProcess.Create(nil);
     try
-     Process.Executable := '"' + IniFluff.ReadString('NibConv', 'Location', '') + '" ';
-     Process.Parameters.Add('"' + aImageName + '"');
-     Process.Parameters.Add(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')) + aImageNameD64);
-     Process.ShowWindow := swoHide;
-     Process.Options := Process.Options + [poWaitOnExit];
-     Process.Execute;
-     Process.Free;
+     nibProcess.Executable := '"' + IniFluff.ReadString('NibConv', 'Location', '') + '" ';
+     nibProcess.Parameters.Add('"' + aImageName + '"');
+     nibProcess.Parameters.Add(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + aImageNameD64);
+     nibProcess.ShowWindow := swoHide;
+     nibProcess.Options := nibProcess.Options + [poWaitOnExit];
+     nibProcess.Execute;
      except
       on E: Exception do frmImport.memoImportErr.Lines.Add('A convert exception was raised: ' + E.Message + '- File: ' + aImageName);
     end;
-
+    nibProcess.Free;
 end;
 
 procedure TForm1.DBSearch;
@@ -2250,8 +2204,8 @@ begin
       end
      else
       begin
-       if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DateLast, DateImport, DiskName, FilePath, Favourite, Corrupt, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '"';
-       if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DiskName, DateLast, DateImport, FilePath, Favourite, Corrupt, Tags, Info FROM FileImage Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '"';
+       if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DateLast, DateImport, FilePath, Favourite, Corrupt, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '"';
+       if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DateLast, DateImport, FilePath, Favourite, Corrupt, Tags, Info FROM FileImage Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '"';
        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
        else
        If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
@@ -2326,26 +2280,31 @@ end;
 
 procedure TForm1.cbDBFilePathChange(Sender: TObject);
 begin
+ CleanTmp;
  DBFilter;
 end;
 
 procedure TForm1.cbDBFileNameExtChange(Sender: TObject);
 begin
+ CleanTmp;
  DBFilter;
 end;
 
 procedure TForm1.cbFilterCaseChange(Sender: TObject);
 begin
+ CleanTmp;
  DBFilter;
 end;
 
 procedure TForm1.cbFilterCorruptChange(Sender: TObject);
 begin
+ CleanTmp;
  DBFilter;
 end;
 
 procedure TForm1.cbFilterFavChange(Sender: TObject);
 begin
+ CleanTmp;
  DBFilter;
 end;
 
@@ -2424,6 +2383,7 @@ begin
   end;
  if SQLQueryDir.RecordCount > 0 then
   begin
+   CleanTmp;
    LoadDir;
   end;
 end;
@@ -2461,7 +2421,7 @@ Begin
    begin
     Form1.Convert_G64(aFileFull);
     aImageNameD64 := ExtractFileNameOnly(aFileFull)+'.d64';
-    aFileFull := DirCheck(IniFluff.ReadString('Options', 'FolderTemp', ''))+aImageNameD64;
+    aFileFull := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''))+aImageNameD64;
    end; // G64 END
 
   case LowerCase(ExtractFileExt(aFileFull)) of
@@ -2548,7 +2508,7 @@ Begin
       // tmp d64 delete (source was g64 file)
       If aImageNameD64 <>'' then
        begin
-        //aImageName := PChar(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', ''))+ aImageNameD64);
+        //aImageName := PChar(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''))+ aImageNameD64);
         aImageName := PChar(IniFluff.ReadString('Options', 'FolderTemp', '')+ aImageNameD64);
         If fileexists(aImageName) then DeleteFileUtf8(aImageName);
        end;
@@ -3163,6 +3123,7 @@ procedure TForm1.DBGridDirDblClick(Sender: TObject);
 begin
 if SQlQueryDir.RecordCount > 0 then
  begin
+  CleanTmp;
   UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
   If OpenDocument(FileFull) = true then
    begin
@@ -3207,6 +3168,7 @@ begin
       begin
        if SQlQuerySearch.RecordCount > 0 then SQlQuerySearch.Locate('idxSearch', SQLQueryDir.FieldByName('idxImg').Text, []);
       end;
+      CleanTmp;
       LoadDir;
      end;
 end;
@@ -3234,6 +3196,7 @@ begin
      begin
       if SQlQuerySearch.RecordCount > 0 then SQlQuerySearch.Locate('idxSearch', SQLQueryDir.FieldByName('idxImg').Text, []);
      end;
+     CleanTmp;
      LoadDir;
    end;
   end;
@@ -3473,12 +3436,12 @@ begin
  SaveRecentFiles;
  RecentFiles.Free;
  try
-  DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),false)
+  CleanTmp;
  except
  On E : Exception do
   ShowMessage(E.Message + ' - Unable to clear temporary folder! Please check files for "readonly" attribute.');
  end;
- IniFluff.WriteString('Database', 'FilePathLast', DirCheck(cbDBFilePath.Text));
+ IniFluff.WriteString('Database', 'FilePathLast', IncludeTrailingPathDelimiter(cbDBFilePath.Text));
  IniFluff.WriteBool('Options', 'Scratched', TgScratch.Checked);
  IniFluff.WriteBool('Options', 'Shifted', TgCShift.Checked);
  IniFluff.WriteInteger('Application', 'ClientWidth', ClientWidth);
@@ -3504,9 +3467,9 @@ end;
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
   If Dev_Mode = true then Showmessage('[Dev_Mode] - Start RemoveFontRessource procedure');
-  If fileexists(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = true then
+  If fileexists(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = true then
    begin
-    RemoveFontResource(PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
+    RemoveFontResource(PChar(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
    end;
 end;
 

@@ -31,6 +31,7 @@ type
   TfrmImport = class(TForm)
     btClose: TButton;
     btImport: TButton;
+    btCancel: TButton;
     cbImgD64: TCheckBox;
     cbImgD81: TCheckBox;
     cbImgD71: TCheckBox;
@@ -58,31 +59,29 @@ type
     lblImportFound: TStaticText;
     procedure btCloseClick(Sender: TObject);
     procedure btImportClick(Sender: TObject);
-    procedure cbArcZIPChange(Sender: TObject);
-    procedure cbImgD64Change(Sender: TObject);
-    procedure cbImgD71Change(Sender: TObject);
-    procedure cbImgD81Change(Sender: TObject);
-    procedure cbImgG64Change(Sender: TObject);
-    procedure cbImgPRGChange(Sender: TObject);
-    procedure cbImgTAPChange(Sender: TObject);
+    procedure btImportEnter(Sender: TObject);
+    procedure btCancelClick(Sender: TObject);
     procedure DirImportChange(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormShow(Sender: TObject);
     procedure Import;
     procedure Init_DirImport;
-    procedure Init_str_FindAllImages(aFileFull: String; aPathArchive: String);
-    Procedure Init_str_FindAllImagesArchive(aPathArchive: String);
+    procedure FindAllImages(aFileFull: String; aPathArchive: String);
+    Procedure FindAllImagesInArchive(aPathArchive: String);
     procedure Init_str_FindAllImages_Sync;
   private
 
   public
 
   end;
+procedure RemoveReadOnlyRecursive(const aFolder: String);
+procedure CleanTmp;  // Deletes content of tmp folder
 
 var
   frmImport: TfrmImport;
-  str_FindAllImages : TStringList;
-  str_FindAllFilesArchive, str_FindAllImagesArchive : TStringlist;
+  str_AllImages : TStringList;
+  str_AllImagesInArchive, str_FindAllImagesArchive, str_FindAllImagesTmp : TStringlist;
   Terminate : Boolean;
   ImageFileArray : TStringArray; // Needed to check if archive
   ImgAdd, ImageCount, ImageCountA, ImageCountA2, ImgCountErr : Integer;  // Images/archives
@@ -101,7 +100,10 @@ var
  tmpPath, tmpPathArc : String;
  answer : Integer;
 begin
+ // Create tmp folder named like the archive and unpack
  result := false;
+  try
+  try
  // Temp folder
   if IniFluff.ReadString('Options', 'FolderTemp', '') = '' then
    begin
@@ -122,15 +124,23 @@ begin
          end;
       end;
     end;
-  tmpPath := DirCheck(IniFluff.ReadString('Options', 'FolderTemp', ''));
+  tmpPath := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
   tmpPathArc := '';
 
   // ZIP files known image files
   CreateDir(tmpPath + ExtractFileName(aArchiveName));   // Archive unzipped
-  tmpPathArc := DirCheck(tmpPath + ExtractFileName(aArchiveName));
-  UnPackFiles(aArchiveName, '', tmpPathArc); // : Integer;  // result=1 (success)
-  FindAllFiles(str_FindAllImagesArchive, tmpPathArc, '*.d64;*.prg;*.g64;*.d71;*.d81', true);
+  tmpPathArc := IncludeTrailingPathDelimiter(tmpPath + ExtractFileName(aArchiveName));
+  UnPackFiles(aArchiveName, '', tmpPathArc);
   result := true;
+  except
+   on E: Exception do
+    begin
+     Result := False;
+    end;
+  end;
+ finally
+  //
+ end;
 End;
 
 function Database_Ins_D64(aArchiveImage: String; aImageName: String; aImg : Integer): boolean;
@@ -153,7 +163,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -176,8 +186,8 @@ begin
    begin
     BA := LoadByteArray(aImageName);  // g64
     ImageSize := ByteArrayToHexString(BA);
-    BA := LoadByteArray(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64'))); // Vom d64
-    Init_ArrD64(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64')));
+    BA := LoadByteArray(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64'))); // Vom d64
+    Init_ArrD64(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64')));
    end
   else
    begin
@@ -551,7 +561,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -716,7 +726,6 @@ begin
   result := true;
 end;
 
-
 Function Database_Ins_D81(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
 var
   BA : TByteArr;
@@ -833,7 +842,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -991,7 +1000,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -1077,7 +1086,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, DirCheck(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -1138,7 +1147,6 @@ begin
   result := true;
 end;
 
-
 procedure TfrmImport.Import;
 var
   fstream : TFileStream;
@@ -1160,30 +1168,31 @@ begin
   Form1.Statusbar1.Panels[4].Text := '';
   Form1.Statusbar1.Refresh;
 
+  btImport.Enabled := false;
   memoImport.Clear;
+  Terminate := false;
   ImgCount := 0;
   lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
 
  // Images
- if str_FindAllImages.Count > 0 then
+ if str_AllImages.Count > 0 then
   begin
    Form1.SQLQueryDir.Last;
    ImgCount := Form1.SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates
    Form1.SQLQueryDir.Active:=false;
 
    // accept only valid files to stringlist str_Images
-   for img := 0 to str_FindAllImages.count-1 do
+   for img := 0 to str_AllImages.count-1 do
     begin
      try
-     Application.ProcessMessages;
-     memoProgressBar.Position := img+1;
-     ImageFile := str_FindAllImages.Strings[img]; // e.g. ....d64
+     memoProgressBar.Position := memoProgressBar.Position + 1;
+     ImageFile := str_AllImages.Strings[img]; // e.g. ....d64
 
      // Split, check if image is in archive
      If ImageFile.Contains('|')then
       begin
-       ImageFileArray := str_FindAllImages.Strings[img].Split('|');
-       ImageFileA := str_FindAllImages.Strings[img];  // Archive ZIP | Image location inside of archive
+       ImageFileArray := str_AllImages.Strings[img].Split('|');
+       ImageFileA := str_AllImages.Strings[img];  // Archive ZIP | Image location inside of archive
        ImageFile  := ImageFileArray[1];               // image location in tmp folder
       end
      else
@@ -1352,9 +1361,12 @@ begin
        if lowercase(ExtractFileExt(ImageFile)) = '.g64' then
         begin
          btClose.Enabled:=false;
+
+         // Convert
          Form1.Convert_G64(ImageFile);
+
          // Checking if convert failed
-         If filesize(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
+         If filesize(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
           begin
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
@@ -1362,7 +1374,7 @@ begin
           end  // end checking if convert failed
          else
           begin
-          fstream:= TFileStream.Create(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'), fmShareCompat or fmOpenRead);
+          fstream:= TFileStream.Create(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'), fmShareCompat or fmOpenRead);
           if  (fstream.Size = 174848) or  (fstream.Size = 175531) or (fstream.Size = 196608) or  (fstream.Size = 197376) or (fstream.Size = 205312) or  (fstream.Size = 206114) or  (fstream.Size = 210483) then
            begin
             ImgCount := ImgCount + 1;
@@ -1392,8 +1404,8 @@ begin
             fstream.Free;
            end;
            end;
-          DeleteFileUTF8(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
-         end;
+          DeleteFileUTF8(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
+        end;
       end;  // Ende g64
 
      // Commit every e.g. 50 entries (In case of a application crash to avoid database goes corrupt)
@@ -1413,41 +1425,18 @@ begin
       on E: Exception do memoImportErr.Lines.Add(E.Message + '- File: ' + ImageFile);
      end; // accept only valid files to import
 
+    Application.ProcessMessages;
     // Cancel
     if terminate = true then
      begin
-      memoImport.Lines.Add('Import cancelled!');
       if Form1.ATransaction.Active then
        begin
         Form1.ATransaction.Commit;
        end;
-      lblImportFound.Caption:= '0 ';
-      memoImport.Lines.Add('Clearing...');
-      str_FindAllImages.Clear;
-      Form1.SQLQueryDir.SQL.Clear;
-      Form1.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
-      Form1.SQLQueryDir.Active:=true;
-      memoImport.Lines.Add('Done.');
-      Form1.DBGridDir_ReadEntry(Form1.SQLQueryDir.FieldByName('FileFull').Text);
-      Form1.Init_FilePath;
-      btImport.Caption := 'Import';
-      btImport.Enabled := false;
-      btClose.Enabled :=true;
-      btClose.SetFocus;
-      memoProgressBar.Position := ImageCount + ImageCountA2; // 100% progressbar
-      DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),true);
       exit;
      end;
-
    end;  // accept only valid files
-
-   memoProgressBar.Position := ImageCount + ImageCountA2; // 100% progressbar
   end;  // > 0
-
-  btImport.Caption := 'Import';
-  btImport.Enabled := false;
-  btClose.Enabled:=true;
-  btClose.SetFocus;
 end;
 
 procedure TfrmImport.btCloseClick(Sender: TObject);
@@ -1458,10 +1447,10 @@ end;
 
 procedure TfrmImport.btImportClick(Sender: TObject);
 var
-  answer, img, i, j, start, group : integer;
-  GroupImg : TStringList;
+  answer, img : integer;
   dirTmp : String;
 begin
+ // Check if import directory exists
  if (DirImport.Directory = '') or (DirectoryExists(DirImport.Directory) = false) then
   begin
    answer := MessageDlg('Directory not found!',mtWarning, [mbOK], 0);
@@ -1471,9 +1460,8 @@ begin
       exit;
      end;
   end;
-
  // Check if temp directory exists
- dirTmp := DirCheck(IniFluff.ReadString('Options', 'FolderTemp', ''));
+ dirTmp := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
  if (dirTmp = '') or (DirectoryExists(dirTmp) = false) then
  begin
   answer := MessageDlg('Temporary directory not found! Please check settings...',mtWarning, [mbOK], 0);
@@ -1483,7 +1471,6 @@ begin
      exit;
     end;
  end;
-
  //Check if nibtools available?
  If cbImgG64.Checked = true then
   begin
@@ -1498,103 +1485,110 @@ begin
     end;
   end;
 
- // Stop import
- if btImport.Caption = 'Cancel' then
-  begin
-   Terminate := true;
-    answer := MessageDlg('Import cancelled!',mtWarning, [mbOK], 0);
-    if answer = mrOk then
-     begin
-      DirImport.Text := '';
-      memoProgressbar.Position:=1;
-      btImport.Caption:= 'Import';
-      btClose.Enabled:=true;
-      Form1.DBGridDir.DataSource := Form1.DataSourceDir;
-      exit;
-     end;
-   exit;
-  end;
-
  // Start import
- Terminate := false;
- btImport.Caption:= 'Cancel';
+ Init_DirImport;
+ btImport.Enabled:=false;
+ btCancel.Enabled:=true;
+ btClose.Enabled:=false;
+ memoProgressBar.Position := 1;
  Form1.DBGridDir.DataSource := nil;
 
  // Import images (D64...)
- if str_FindAllImages.Count > 0 then
+ if str_AllImages.Count > 0 then
   begin
+   memoProgressBar.Max:=str_AllImages.Count;
+   memoProgressBar.Repaint;
    Import;
   end;
 
  // Import archives (ZIP)
- if str_FindAllFilesArchive.Count > 0 then  // After "select directory": "Init_str_FindAllFilesArchive" collected ZIPs
+ if str_AllImagesInArchive.Count > 0 then  // After "select directory": "Init_str_FindAllFilesArchive" collected ZIPs
   begin
-   for img := 0 to str_FindAllFilesArchive.Count-1 do
+   lblImportfound.Caption := ' Files found in archive:';
+   for img := 0 to str_AllImagesInArchive.Count-1 do
     begin
-     If Unpack_Archive(str_FindAllFilesArchive[img]) = true then  //  one archive after the other...
+     CleanTmp;
+     If Terminate = true then break;
+     If Unpack_Archive(str_AllImagesInArchive[img]) = true then  //  one archive after the other...
       begin
-       lblImportfound.Caption := ' Collecting archive files... Please wait.';
-       Application.ProcessMessages;
-       Init_str_FindAllImages(IniFluff.ReadString('Options', 'FolderTemp', ''),str_FindAllFilesArchive[img]);
+       FindAllImages(IniFluff.ReadString('Options', 'FolderTemp', ''),str_AllImagesInArchive[img]);
+       memoProgressBar.Max:= memoProgressBar.Max + str_AllImages.Count; // Add found images in ZIPs
+       memoProgressBar.Repaint;
        Import;  // Import directory of the image
       end
-     else memoImportErr.Lines.Add('Unable to unpack "' + str_FindAllFilesArchive[img] + '"');
-     DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),true); // Delete unpacked directory
+     else memoImportErr.Lines.Add('Unable to unpack "' + str_AllImagesInArchive[img] + '"');
+     CleanTmp;
     end;
   end;
 
-  str_FindAllFilesArchive.Clear;
-
-  memoImport.Lines.Add('Import finished! (duplicates ignored)');
+  str_AllImages.Clear;
+  str_AllImagesInArchive.Clear;
   memoImport.Lines.Add('Clearing...');
-  str_FindAllImages.Clear;
   Form1.SQLQueryDir.SQL.Clear;
   Form1.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
   Form1.SQLQueryDir.Active:=true;
-  memoImport.Lines.Add('Done.');
+  If Terminate = false then memoImport.Lines.Add('Import finished! (duplicates ignored)');
+  If Terminate = true then memoImport.Lines.Add('Import cancelled! (duplicates ignored)');
+  btImport.Enabled := true;
+  btCancel.Enabled := false;
+  btClose.Enabled := true;
+  memoProgressBar.Position := StrToInt(Trim(lblImportFoundImg.Caption));
+
   Form1.DBGridDir.DataSource := Form1.DataSourceDir;
   Form1.DBGridDir_ReadEntry(Form1.SQLQueryDir.FieldByName('FileFull').Text);
   Form1.Init_FilePath;
-
 end;
 
-procedure TfrmImport.cbArcZIPChange(Sender: TObject);
+procedure RemoveReadOnlyRecursive(const aFolder: String);
+var
+  SR: TSearchRec;
+  FilePath: String;
+begin
+  if FindFirst(IncludeTrailingPathDelimiter(aFolder) + '*', faAnyFile, SR) = 0 then
+  begin
+    repeat
+      if (SR.Name = '.') or (SR.Name = '..') then
+        Continue;
+
+      FilePath := IncludeTrailingPathDelimiter(aFolder) + SR.Name;
+
+      if (SR.Attr and faDirectory) <> 0 then
+        RemoveReadOnlyRecursive(FilePath)
+      else
+        FileSetAttr(FilePath, 0); // Attribute zurücksetzen
+    until FindNext(SR) <> 0;
+    FindClose(SR);
+  end;
+end;
+
+procedure CleanTmp;
+begin
+ // Clean tmp folder
+ RemoveReadOnlyRecursive(IniFluff.ReadString('Options', 'FolderTemp', '')); // In case smth is there
+ DeleteDirectory(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')),true);
+end;
+
+procedure TfrmImport.btImportEnter(Sender: TObject);
 begin
  Init_DirImport;
 end;
 
-procedure TfrmImport.cbImgD64Change(Sender: TObject);
+procedure TfrmImport.btCancelClick(Sender: TObject);
 begin
- Init_DirImport;
-end;
-
-procedure TfrmImport.cbImgD71Change(Sender: TObject);
-begin
- Init_DirImport;
-end;
-
-procedure TfrmImport.cbImgD81Change(Sender: TObject);
-begin
- Init_DirImport;
-end;
-
-procedure TfrmImport.cbImgG64Change(Sender: TObject);
-begin
- Init_DirImport;
-end;
-
-procedure TfrmImport.cbImgPRGChange(Sender: TObject);
-begin
- Init_DirImport;
-end;
-
-procedure TfrmImport.cbImgTAPChange(Sender: TObject);
-begin
- Init_DirImport;
+ // Stop import
+ Terminate := true;
 end;
 
 procedure TfrmImport.DirImportChange(Sender: TObject);
 begin
+  Init_DirImport;
+end;
+
+procedure TfrmImport.FormActivate(Sender: TObject);
+begin
+ Application.ProcessMessages;
+ DirImport.Directory := IniFluff.ReadString('Options', 'FolderImport', '');
+ DirImport.Enabled := true;
  Init_DirImport;
 end;
 
@@ -1609,57 +1603,57 @@ begin
  lblImportFoundArc.Caption := '0 ';
  lblImportCount.Caption := '0 ';
  lblImportCountErr.Caption := '0 ';
- btImport.Caption:= 'Import';
- btImport.Enabled := false;
  Terminate := false;
 
- If DirImport.Directory = '' then exit;
-  // Images
- Init_str_FindAllImages(DirImport.Directory,'');
- // Archives
- If cbArcZIP.Checked = true then Init_str_FindAllImagesArchive(DirImport.Directory);
+ If DirImport.Directory = '' then
+  begin
+   btImport.Enabled := false;
+   btCancel.Enabled := false;
+   btClose.Enabled := true;
+   exit;
+  end;
 
- memoProgressbar.Position:=1;
- memoProgressBar.Max := ImageCount;
- If str_FindAllImages.count > 0 then   btImport.Enabled := true;
- If str_FindAllFilesArchive.count > 0 then btImport.Enabled := true;
- btClose.SetFocus;
+ lblImportfound.Caption := ' Collecting images and archives... Please wait!';
+ CleanTmp;
+
+ // Images
+ FindAllImages(DirImport.Directory,'');
+ // Archives
+ If cbArcZIP.Checked = true then FindAllImagesInArchive(DirImport.Directory);
+
+ lblImportfound.Caption := ' Collect finished';
+ memoProgressbar.Position:=0;
+ If str_AllImages.count > 0 then   btImport.Enabled := true;
+ If str_AllImagesInArchive.count > 0 then btImport.Enabled := true;
 
 end;
 
-procedure TfrmImport.Init_str_FindAllImages(aFileFull : String; aPathArchive : String);
+procedure TfrmImport.FindAllImages(aFileFull : String; aPathArchive : String);
 var
-  str_FindAllImagesTmp : TStringList;
   i : integer;
 begin
  // aFileFull = path to the image e.g. also \temp
  // aPathArchive = path to the archive also ...\temp123.zip
  // ImageCountA2 = found images in archive
 
- str_FindAllImages.Clear;
- str_FindAllImagesTmp := TStringList.Create;
- lblImportfound.Caption := ' Collecting files... Please wait.';
-
- Application.ProcessMessages;
+ str_AllImages.Clear;
  str_FindAllImagesTmp.Clear;
 
  // Known images files without archives
- FindAllFiles(str_FindAllImagesTmp, DirCheck(aFileFull), '*.tap;*.prg;*.d64;*.g64;*d71;*.d81', true);
-
+ FindAllFiles(str_FindAllImagesTmp, IncludeTrailingPathDelimiter(aFileFull), '*.tap;*.prg;*.d64;*.g64;*d71;*.d81', true);
  If aPathArchive = '' then // running this procedure without archives
   begin
-   str_FindAllImages.Text := str_FindAllImagesTmp.Text;
-   ImageCount := str_FindAllImages.Count;
+   str_AllImages.Text := str_FindAllImagesTmp.Text;
+   ImageCount := str_AllImages.Count;
   end;
 
   If aPathArchive <> '' then // running this procedure with archives
    begin
    for i := 0 to str_FindAllImagesTmp.Count-1 do
     begin
-     str_FindAllImages.Add(aPathArchive + '|' + str_FindAllImagesTmp[i]);
+     str_AllImages.Add(aPathArchive + '|' + str_FindAllImagesTmp[i]);
     end;
-   ImageCountA2 := ImageCountA2 + str_FindAllImages.Count; // add all images inside archive(s)
-   memoProgressBar.Max := ImageCount + ImageCountA2; // 100% progressbar
+   ImageCountA2 := ImageCountA2 + str_AllImages.Count; // add all images inside archive(s)
   end;
 
  if (ImageCount + ImageCountA2) = 0 then
@@ -1668,44 +1662,34 @@ begin
     ImageCount  := 0;
    end else memoImport.Lines.Add(IntToStr(ImageCount + ImageCountA2) + ' image(s) found.');
 
-  str_FindAllImagesTmp.Destroy;
   lblImportFoundImg.Caption := ' ' + IntToStr(ImageCount + ImageCountA2) + ' ';
-  lblImportfound.Caption := ' Collect finished';
-
+  Application.ProcessMessages;
 end;
 
-procedure TfrmImport.Init_str_FindAllImagesArchive(aPathArchive : String);
+procedure TfrmImport.FindAllImagesInArchive(aPathArchive : String);
 begin
  // aPathArchive = path to the archive
- str_FindAllFilesArchive.Clear;
- lblImportfound.Caption := ' Collecting archive files... Please wait.';
- Application.ProcessMessages;
+ str_AllImagesInArchive.Clear;
 
  // Known images files
- FindAllFiles(str_FindAllFilesArchive, DirCheck(aPathArchive), '*.zip', true);
- if str_FindAllFilesArchive.Count = 0 then
+ FindAllFiles(str_AllImagesInArchive, IncludeTrailingPathDelimiter(aPathArchive), '*.zip', true);
+ if str_AllImagesInArchive.Count = 0 then
    begin
     ImageCountA := 0;
     lblImportfound.Caption := '0 ';
    end;
- If str_FindAllFilesArchive.Count > 0 then
+ If str_AllImagesInArchive.Count > 0 then
   begin
-   ImageCountA := str_FindAllFilesArchive.Count;
+   ImageCountA := str_AllImagesInArchive.Count;
   end;
-
- // Count images
- ImageCountA := str_FindAllFilesArchive.Count;
  lblImportFoundArc.Caption := ' ' + IntToStr(ImageCountA) + ' ';
- if str_FindAllFilesArchive.Count = 0 then  // pre then "Init_str_FindAllImages" checks also
+ if str_AllImagesInArchive.Count = 0 then  // pre then "Init_str_FindAllImages" checks also
    begin
     memoImport.Lines.Add('No archive(s) to import!');
    end else
    begin
-    memoImport.Lines.Add(IntToStr(str_FindAllFilesArchive.Count) + ' archive(s) found.');
+    memoImport.Lines.Add(IntToStr(str_AllImagesInArchive.Count) + ' archive(s) found.');
    end;
-
- lblImportfound.Caption := ' Collect finished';
-
 end;
 
 procedure TfrmImport.Init_str_FindAllImages_Sync;
@@ -1713,9 +1697,9 @@ var
   ImgCount : Integer;
 begin
  exit; // Sync unfinished
- str_FindAllImages.Clear;
- str_FindAllImages.Add(Form1.SQlQueryDir.FieldByName('FileFull').Text);
- if str_FindAllImages.Count = 1 then
+ str_AllImages.Clear;
+ str_AllImages.Add(Form1.SQlQueryDir.FieldByName('FileFull').Text);
+ if str_AllImages.Count = 1 then
    begin
     // Delete
     DeleteFileUtf8(Form1.SQLQueryDir.FieldByName('FileFull').Text);
@@ -1746,44 +1730,51 @@ begin
     Form1.SQLQueryDir.Active:=false;
     //Showmessage(str_FindAllImages.Strings[0]);
     //Showmessage(IntToStr(ImgCount));
-    if Database_Ins_D64('', str_FindAllImages.Strings[0], ImgCount) = false then
+    if Database_Ins_D64('', str_AllImages.Strings[0], ImgCount) = false then
      begin
       showmessage('buggy');
      end;
    end;
  Form1.SQLQueryDir.ApplyUpdates;
  Form1.ATransaction.CommitRetaining;
- str_FindAllImages.Free;
+ str_AllImages.Free;
 end;
 
 procedure TfrmImport.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
- str_FindAllImages.Free;
+ str_AllImages.Free;
+ str_AllImagesInArchive.Free;
+ str_FindAllImagesTmp.Free;
  str_FindAllImagesArchive.Free;
- str_FindAllFilesArchive.Free;
- DeleteDirectory(DirCheck(IniFluff.ReadString('Options', 'FolderTemp', '')),true);
+ CleanTmp;
+ IniFluff.WriteString('Options', 'FolderImport', DirImport.Directory);
  close;
 end;
 
 procedure TfrmImport.FormShow(Sender: TObject);
 begin
- str_FindAllImages := TStringList.Create;
- str_FindAllImagesArchive := TStringList.Create;
- str_FindAllFilesArchive := TStringList.Create;
- DirImport.Text := '';
- memoProgressbar.Position:=1;
+ ImgAdd := 0;
+ ImageCountA2 := 0;
  memoImport.Clear;
  memoImportErr.Clear;
- memoImport.Lines.Add('Nothing to import!');
  ImgCountErr := 0;
- lblImportCount.Caption := '0 ';
- lblImportFound.Caption := ' No folder selected! ';
  lblImportFoundImg.Caption := '0 ';
  lblImportFoundArc.Caption := '0 ';
+ lblImportCount.Caption := '0 ';
  lblImportCountErr.Caption := '0 ';
- btImport.Caption:= 'Import';
+ memoImport.Lines.Add('Nothing to import!');
+ lblImportFound.Caption := ' No folder selected! ';
  btImport.Enabled := false;
  Terminate := false;
+
+ str_AllImages := TStringList.Create;
+ str_AllImagesInArchive := TStringList.Create;
+ str_FindAllImagesTmp := TStringList.Create;
+ str_FindAllImagesArchive := TStringList.Create;
+
+ memoProgressbar.Position:=0;
+ memoImport.Clear;
+ memoImportErr.Clear;
 end;
 
 end.

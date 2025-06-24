@@ -117,7 +117,7 @@ begin
   IniFluff.WriteInteger('Options', 'DirFontSize', spFontSize.Value);
   IniFluff.WriteString('Options', 'DirFont', ColorToString(clbFont.Selected));
   IniFluff.WriteString('Options', 'DirFontBackground', ColorToString(clbBackground.Selected));
-  IniFluff.WriteString('Options', 'FolderTemp', Dircheck(folderTemp.Directory));
+  IniFluff.WriteString('Options', 'FolderTemp', IncludeTrailingPathDelimiter(folderTemp.Directory));
   IniFluff.WriteString('NibConv', 'Location', fileNibConv.FileName);
   IniFluff.WriteString('DirMaster', 'Location', fileDirMaster.FileName);
   IniFluff.WriteString('CCS64', 'Location', fileCCS64.FileName);
@@ -140,13 +140,13 @@ end;
 
 procedure TForm4.btCopyFontClick(Sender: TObject);
 begin
-  If fileexists(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = false then
+  If fileexists(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = false then
    begin
-    Showmessage('Font not found: ' + chr(13) + PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
+    Showmessage('Font not found: ' + chr(13) + PChar(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
    end
    else
     begin
-     FileUtil.CopyFile(PChar(DirCheck(sAppPath)+'C64_Pro_Mono-STYLE.ttf'), SHGetFolderPathUTF8(20)+'C64_Pro_Mono-STYLE.ttf');
+     FileUtil.CopyFile(PChar(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf'), SHGetFolderPathUTF8(20)+'C64_Pro_Mono-STYLE.ttf');
      Showmessage('Font successfully copied!' + chr(13) + 'Please restart the application to make the changes take effect...');
     end;
 end;

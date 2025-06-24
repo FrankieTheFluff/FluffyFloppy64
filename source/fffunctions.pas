@@ -12,6 +12,8 @@ Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
 Some usefull functions
+v1.01 - 2025-06-22
+
 Parts of it:
 -
 Thank you goes to askingbox.com
@@ -35,13 +37,13 @@ type
 
 function FileWithReadAttr(aFileName : String) : Boolean;
 function HexStrToStr(const HexStr: string): string;
-function DirCheck(const dir:string; add_if_length_is_zero:boolean=false): String;
 function LoadByteArray(const AFileName: string): TByteArr;
 function ByteArrayToHexString(AByteArray: TByteArr; ASep: string = ''): string;
 function HexToString(Hexy: string): string;
 function HexToASCII(mnuHexView:string):string;
 function EndPathCP866ToUTF8(AText:string):string;
-function UnPackFiles(aFilename, aImageFilename, UnPackPath: String): Integer;
+function UnPackFiles(aFilename, aImageFilename, UnPackPath: String): Boolean;
+
 implementation
 uses Unit1;
 
@@ -62,22 +64,6 @@ begin
   if ResultLen > 0 then
     SetLength(Result, HexToBin(Pointer(HexStr), Pointer(Result), ResultLen));
 end;
-
-function DirCheck(const dir:string; add_if_length_is_zero:boolean=false): String;
-  begin
-    result := '';
-    if length(dir)=0 then begin
-      if add_if_length_is_zero then
-        result:='\'
-      else
-        result:='';
-      exit;
-    end;
-    if dir[length(dir)]='\' then
-      result:=dir
-    else
-      result:=dir+'\';
-  end;
 
 function LoadByteArray(const AFileName: string): TByteArr;
 var
@@ -167,49 +153,50 @@ begin
   Result:=s1+s2;
 end;
 
-function UnPackFiles(aFilename, aImageFilename, UnPackPath: String): Integer;
+function UnPackFiles(aFilename, aImageFilename, UnPackPath: String): Boolean;
 var
   UnZipper : TUnZipper; //PasZLib
   UnPackFileDir, ADiskFileName, ANewDiskFileName, AArchiveFileName  :String;
   i : integer;
 begin
-  Result:=-1;
-  if FileExists(aFilename)and DirectoryExists(UnPackPath) then
-  begin
-       UnPackFileDir :=SysUtils.IncludeTrailingPathDelimiter(UnPackPath);
-       UnZipper      :=TUnZipper.Create;
-       try
-          UnZipper.FileName   := aFilename;
-          UnZipper.OutputPath := UnPackPath;
-          UnZipper.Examine;
-          UnZipper.UnZipAllFiles;
-          for i:=UnZipper.Entries.Count-1 downto 0 do
-           begin
-
-             AArchiveFileName:=UnZipper.Entries.Entries[i].ArchiveFileName;
-             AArchiveFileName:=EndPathCP866ToUTF8(AArchiveFileName);
-             AArchiveFileName:=UTF8ToSys(AArchiveFileName);
-             ANewDiskFileName:=UnPackFileDir+AArchiveFileName;
-             ADiskFileName   :=UnPackFileDir+UnZipper.Entries.Entries[i].DiskFileName;
-             if FileExists(ADiskFileName) then
-             begin
-                RenameFile(ADiskFileName, ANewDiskFileName);
-             end
-             else if DirectoryExists(ADiskFileName) then
-             begin
-                ADiskFileName    :=SysUtils.IncludeTrailingPathDelimiter(ADiskFileName);
-                ANewDiskFileName :=SysUtils.IncludeTrailingPathDelimiter(ANewDiskFileName);
-                RenameFile(ADiskFileName, ANewDiskFileName);
-             end;
-
-           end;
-          Result:=1;
-       finally
-          UnZipper.Free;
-       end;
-  end;
+  Result:= false;
+  UnPackFileDir :=SysUtils.IncludeTrailingPathDelimiter(UnPackPath);
+  UnZipper      :=TUnZipper.Create;
+  try
+  try
+   UnZipper.FileName   := aFilename;
+   UnZipper.OutputPath := UnPackPath;
+   UnZipper.Examine;
+   UnZipper.UnZipAllFiles;
+   for i:=UnZipper.Entries.Count-1 downto 0 do
+    begin
+     AArchiveFileName:=UnZipper.Entries.Entries[i].ArchiveFileName;
+     AArchiveFileName:=EndPathCP866ToUTF8(AArchiveFileName);
+     AArchiveFileName:=UTF8ToSys(AArchiveFileName);
+     ANewDiskFileName:=UnPackFileDir+AArchiveFileName;
+     ADiskFileName   :=UnPackFileDir+UnZipper.Entries.Entries[i].DiskFileName;
+     if FileExists(ADiskFileName) then
+      begin
+       RenameFile(ADiskFileName, ANewDiskFileName);
+      end
+     else if DirectoryExists(ADiskFileName) then
+      begin
+       ADiskFileName    :=SysUtils.IncludeTrailingPathDelimiter(ADiskFileName);
+       ANewDiskFileName :=SysUtils.IncludeTrailingPathDelimiter(ANewDiskFileName);
+       RenameFile(ADiskFileName, ANewDiskFileName);
+      end;
+     end;
+     Result:= true;
+   except
+    on E: Exception do
+     begin
+      Result := False;
+     end;
+   end;
+  finally
+   UnZipper.Free;
+ end;
 end;
-
 
 end.
 

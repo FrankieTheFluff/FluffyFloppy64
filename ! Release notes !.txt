@@ -31,8 +31,17 @@ Release notes
 
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
-# Importing archives (ZIP) takes too much time
-# Clearing temp folder: problems with attribute "readonly"
+
+v0.84 - 2025-06-25
++ Import: Remember recent used import folder
++ Rewritten temp folder handling, should also speed up browsing/importing
++ Error handler in "Unpack_Files" function
+* Function "DirCheck" replaced with "IncludeTrailingPathDelimiter"
+- Database: Fixes: "Diskname_1" error message
+- New database: Fixes: crash if directly go to properties
+- Import: Fixes: Images were imported multiple times
+- Import: Fixes: Progressbar behaviour
+- Import: Fixes: "Cancel" the import
 
 v0.83 - 2025-06-15
 - Fixes "nibconv.exe" not found
