@@ -3,7 +3,7 @@ FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
 A Microsoft(r) Windows(r) tool to catalog 
-Commodore 64 (C64) floppy disk images (D64,G64,D71,D81,PRG,TAP)
+Commodore 64 (C64) floppy disk images (D64,G64,NIB, D71,D81,PRG,TAP)
 
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
@@ -31,6 +31,13 @@ Release notes
 
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
+
+v0.85 - 2025-06-26
+* Import: Support "nib" files
+- GUI: Fixes Open recent database crash if file doesn't exit
+- GUI: Fixes some browsing issues (lowercase)
+- Database: Fixes a crash if you open database properties directly after creating a new one
+- Import: Fixed "LastDate" (D71, D81, PRG, TAP) value now also empty and not filled with date of import
 
 v0.84 - 2025-06-24
 + Import: Remember recent used import folder
