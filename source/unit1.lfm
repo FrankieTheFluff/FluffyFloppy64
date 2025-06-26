@@ -422,6 +422,8 @@ object Form1: TForm1
                 'D64'
                 'g64'
                 'G64'
+                'nib'
+                'NIB'
                 'prg'
                 'PRG'
                 'd71'

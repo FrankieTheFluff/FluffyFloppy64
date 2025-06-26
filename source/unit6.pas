@@ -4,7 +4,7 @@ FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
 A Microsoft(r) Windows(r) tool to catalog Commodore 64 (C64)
-floppy disk images (D64, G64, D71, D81, PRG)
+floppy disk images (D64, G64, NIB, D71, D81, PRG, TAP)
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
 (c) 2021-2025 FrankieTheFluff
@@ -38,6 +38,7 @@ type
     cbImgPRG: TCheckBox;
     cbImgG64: TCheckBox;
     cbImgTAP: TCheckBox;
+    cbImgNIB: TCheckBox;
     CheckBox1: TCheckBox;
     CheckBox2: TCheckBox;
     cbArcZIP: TCheckBox;
@@ -174,17 +175,17 @@ begin
    end;
   If aArchiveImage.Contains('|') = false then
    begin
-    FileFullA := aImageName;
-    FilePathA := aImageName;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+   FileFullA := aImageName;
+   FilePathA := aImageName;
+   Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
       ' values('+
       ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
    end;
 
-  // Images read - check if g64
-  If Lowercase(ExtractFileExt(aImageName)) = '.g64' then
+  // Images read - check if g64 or nib
+  If (Lowercase(ExtractFileExt(aImageName)) = '.g64') or (Lowercase(ExtractFileExt(aImageName)) = '.nib') then
    begin
-    BA := LoadByteArray(aImageName);  // g64
+    BA := LoadByteArray(aImageName);  // g64, nib
     ImageSize := ByteArrayToHexString(BA);
     BA := LoadByteArray(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64'))); // Vom d64
     Init_ArrD64(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64')));
@@ -587,7 +588,7 @@ begin
     ' values('+
     ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
     ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateLast
+    ' '''','+                                                                                  //DateLast
     ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
     ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
     ' ''' + ImageExt + ''','+                                                                  //FileNameExt
@@ -869,7 +870,7 @@ begin
    ' values('+
    ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-   ' ''' + DateTimeToStr(now) + ''','+                                                        //DateLast
+   ' '''','+                                                                                  //DateLast
    ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
    ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
    ' ''' + ImageExt + ''','+                                                                  //FileNameExt
@@ -1023,7 +1024,7 @@ begin
     ' values('+
     ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
     ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateLast
+    ' '''','+                                                                                  //DateLast
     ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
     ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
     ' ''' + Img_FileExt + ''','+                                                               //FileNameExt
@@ -1109,7 +1110,7 @@ begin
     ' values('+
     ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
     ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateLast
+        ' '''','+                                                                              //DateLast
     ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
     ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
     ' ''' + Img_FileExt + ''','+                                                               //FileNameExt
@@ -1363,14 +1364,14 @@ begin
          btClose.Enabled:=false;
 
          // Convert
-         Form1.Convert_G64(ImageFile);
+         Form1.Convert_G64NIB(ImageFile);
 
          // Checking if convert failed
          If filesize(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
           begin
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('Convert g64 to d64 failed - not imported: ' + ImageFile);
+           memoImportErr.Lines.Add('Import g64 failed - (e.g. no directory found): ' + ImageFile);
           end  // end checking if convert failed
          else
           begin
@@ -1407,6 +1408,60 @@ begin
           DeleteFileUTF8(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
         end;
       end;  // Ende g64
+
+     // NIB
+     if cbImgNIB.Checked = true then
+      begin
+       if lowercase(ExtractFileExt(ImageFile)) = '.nib' then
+        begin
+         btClose.Enabled:=false;
+
+         // Convert
+         Form1.Convert_G64NIB(ImageFile);
+
+         // Checking if convert failed
+         If filesize(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
+          begin
+           ImgCountErr := ImgCountErr + 1;
+           lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+           memoImportErr.Lines.Add('Import nib failed - (e.g. no directory found): ' + ImageFile);
+          end  // end checking if convert failed
+         else
+          begin
+          fstream:= TFileStream.Create(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'), fmShareCompat or fmOpenRead);
+          if  (fstream.Size = 174848) or  (fstream.Size = 175531) or (fstream.Size = 196608) or  (fstream.Size = 197376) or (fstream.Size = 205312) or  (fstream.Size = 206114) or  (fstream.Size = 210483) then
+           begin
+            ImgCount := ImgCount + 1;
+            fstream.Free;
+            if Database_Ins_D64(ImageFileA, ImageFile, ImgCount) = false then
+             begin
+              ImgCount := ImgCount - 1;
+              ImgCountErr := ImgCountErr + 1;
+              lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+              memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+             end
+            else
+              begin
+               ImgAdd := ImgAdd + 1;
+               lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
+               memoImport.Lines.Clear;
+               memoImport.Lines.Add(ImageFile);
+              end;
+           end
+          else
+           begin
+            If fstream.Size <> 0 then fstream.Free; // If Convert fails
+            ImgCount := ImgCount - 1;
+            ImgCountErr := ImgCountErr + 1;
+            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+            memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
+            fstream.Free;
+           end;
+           end;
+          DeleteFileUTF8(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
+        end;
+      end;  // Ende nib
+
 
      // Commit every e.g. 50 entries (In case of a application crash to avoid database goes corrupt)
      dbMod := IniFluff.ReadInteger('FluffyFloppy64', 'DBModulo', 50); // Default 50
@@ -1477,6 +1532,20 @@ begin
    If FileExists(IniFluff.ReadString('NibConv', 'Location', '')) = false then
     begin
      answer := MessageDlg('G64 cannot be imported because NibConv not found! Please check settings first or deselect G64...',mtWarning, [mbOK], 0);
+      if answer = mrOk then
+       begin
+        btClose.Enabled:=true;
+        exit;
+       end;
+    end;
+  end;
+
+ //Check if nibtools available?
+ If cbImgNIB.Checked = true then
+  begin
+   If FileExists(IniFluff.ReadString('NibConv', 'Location', '')) = false then
+    begin
+     answer := MessageDlg('NIB cannot be imported because NibConv not found! Please check settings first or deselect NIB...',mtWarning, [mbOK], 0);
       if answer = mrOk then
        begin
         btClose.Enabled:=true;
@@ -1640,7 +1709,7 @@ begin
  str_FindAllImagesTmp.Clear;
 
  // Known images files without archives
- FindAllFiles(str_FindAllImagesTmp, IncludeTrailingPathDelimiter(aFileFull), '*.tap;*.prg;*.d64;*.g64;*d71;*.d81', true);
+ FindAllFiles(str_FindAllImagesTmp, IncludeTrailingPathDelimiter(aFileFull), '*.tap;*.prg;*.d64;*.g64;*.nib;*d71;*.d81', true);
  If aPathArchive = '' then // running this procedure without archives
   begin
    str_AllImages.Text := str_FindAllImagesTmp.Text;

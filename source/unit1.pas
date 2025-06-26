@@ -4,7 +4,7 @@ FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
 A Microsoft(r) Windows(r) tool to catalog Commodore 64 (C64)
-floppy disk images (D64, G64, D71, D81, PRG)
+floppy disk images D64, G64, NIB, D71, D81, PRG, TAP)
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
 (c) 2021-2025 FrankieTheFluff
@@ -27,13 +27,7 @@ uses
 
 type
   TByteArr = array of Byte;
-  // G64
-  TG64Header = packed record
-  Signature: array[0..7] of Char;
-  Version: Word;
-  NumTracks: Word;
-  TrackOffsets: array[0..83] of Word;
- end;
+
   { TForm1 }
 
   TForm1 = class(TForm)
@@ -165,7 +159,7 @@ type
     procedure cbSectorChange(Sender: TObject);
     procedure cbSQLSearchChange(Sender: TObject);
     procedure cbTrackChange(Sender: TObject);
-    procedure Convert_G64(aImageName : String);
+    procedure Convert_G64NIB(aImageName : String);
     procedure DBGridDirCellClick(Column: TColumn);
     procedure DBGridDirDblClick(Sender: TObject);
     procedure DBGridDirEnter(Sender: TObject);
@@ -279,6 +273,7 @@ const
   MaxRecentFiles = 5;
 
 { TForm1 }
+
 
 function Init_ArrD64(aImageName : String): Boolean;  // Read D64 image into array
 var
@@ -476,9 +471,22 @@ begin
 end;
 
 procedure TForm1.RecentFileClick(Sender: TObject);
+var
+  answer : Integer;
 begin
   if Sender is TMenuItem then
-   OpenDatabase(TMenuItem(Sender).Caption);
+   if fileexists(TMenuItem(Sender).Caption) = true then
+    begin
+     OpenDatabase(TMenuItem(Sender).Caption);
+    end
+  else
+  begin
+   answer := MessageDlg('Database not found!',mtWarning, [mbOK], 0);
+    if answer = mrOk then
+     begin
+      exit;
+     end;
+  end;
 end;
 
 procedure TForm1.SaveRecentFiles;
@@ -487,8 +495,7 @@ var
 begin
   try
     IniFluff.EraseSection('RecentFiles');
-    for i := 0 to RecentFiles.Count - 1 do
-      IniFluff.WriteString('RecentFiles', 'File' + IntToStr(i), RecentFiles[i]);
+    for i := 0 to RecentFiles.Count - 1 do IniFluff.WriteString('RecentFiles', 'File' + IntToStr(i), RecentFiles[i]);
   finally
 
   end;
@@ -504,8 +511,7 @@ begin
     for i := 0 to MaxRecentFiles - 1 do
     begin
       FileName := IniFluff.ReadString('RecentFiles', 'File' + IntToStr(i), '');
-      if FileName <> '' then
-        RecentFiles.Add(FileName);
+      if FileName <> '' then RecentFiles.Add(FileName);
     end;
   finally
 
@@ -580,8 +586,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.84';
- sAppDate    := '2025-06-25';
+ sAppVersion := 'v0.85';
+ sAppDate    := '2025-06-26';
  Form1.Caption:= sAppCaption + sAppVersion;
  sAppPath := ExtractFilePath(ParamStr(0));
  SQlSearch_Click := false;
@@ -744,12 +750,12 @@ begin
   begin
    // PRG
    If (lowercase(FileNameExt) = 'prg') then LstBAM.Clear;
-   // D64/G64
-   If (FileNameExt = 'd64') or (FileNameExt = 'g64') then LoadBAM_D64(ShellTreeView1.Path + LstBrowse.Selected.caption, FileSizeImg);
+   // D64/G64/NIB
+   If (lowercase(FileNameExt) = 'd64') or (lowercase(FileNameExt) = 'g64') or (lowercase(FileNameExt) = 'nib') then LoadBAM_D64(ShellTreeView1.Path + LstBrowse.Selected.caption, FileSizeImg);
    // D71
-   If FileNameExt = 'd71' then LoadBAM_D71(ShellTreeView1.Path + LstBrowse.Selected.caption);
+   If lowercase(FileNameExt) = 'd71' then LoadBAM_D71(ShellTreeView1.Path + LstBrowse.Selected.caption);
    // D81
-   If FileNameExt = 'd81' then LoadBAM_D81(ShellTreeView1.Path + LstBrowse.Selected.caption);
+   If lowercase(FileNameExt) = 'd81' then LoadBAM_D81(ShellTreeView1.Path + LstBrowse.Selected.caption);
   end;
   if PageControl2.Pages[2].Visible = true then
   begin
@@ -781,6 +787,14 @@ begin
          exit;
         end;
      end;
+     If lowercase(ExtractFileExt(FileFull)) = '.nib' then
+      begin
+       answer := MessageDlg('CCS64 does not support nib images!',mtWarning, [mbOK], 0);
+       if answer = mrOk then
+        begin
+         exit;
+        end;
+      end;
     If lowercase(ExtractFileExt(FileFull)) = '.d81' then
      begin
       answer := MessageDlg('CCS64 does not support d81 images!',mtWarning, [mbOK], 0);
@@ -919,7 +933,15 @@ begin
          exit;
         end;
      end;
-    DBGridDirTxt_ReadEntry;
+   If lowercase(ExtractFileExt(FileFull)) = '.nib' then
+    begin
+     answer := MessageDlg('EMu64 does not support nib images!',mtWarning, [mbOK], 0);
+     if answer = mrOk then
+      begin
+       exit;
+      end;
+    end;
+  DBGridDirTxt_ReadEntry;
     if LstBxDirectoryPETSCII.ItemIndex = 0 then
      begin
       OpenEmu(IniFluff.ReadString('Emu64', 'Location', ''), ' -a "' + FileFull + '"');
@@ -1027,6 +1049,15 @@ begin
          exit;
         end;
      end;
+
+     If lowercase(ExtractFileExt(FileFull)) = '.nib' then
+      begin
+       answer := MessageDlg('VICE does not support nib images!',mtWarning, [mbOK], 0);
+       if answer = mrOk then
+        begin
+         exit;
+        end;
+      end;
 
     // FileBrowser
     If PageControl1.Pages[1].Visible = true then
@@ -1353,7 +1384,6 @@ begin
      if answer = mrOk then
       begin
        ATransaction.Active:=false;
-       exit;
       end;
   end;
 
@@ -1392,6 +1422,10 @@ begin
      //
     end;
    Init_FilePath;
+   if ATransaction.Active then
+    begin
+     ATransaction.Commit;
+    end;
    If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - End');
   end;
 end;
@@ -1400,10 +1434,13 @@ procedure TForm1.mnuOpenClick(Sender: TObject);
 begin
  Database_OpenDialog.Title:='Open database';
  if Database_OpenDialog.Execute then
-   begin
-    OpenDatabase(Database_OpenDialog.FileName);
-    AddToRecentFiles(Database_OpenDialog.FileName);
-   end;
+  begin
+   if fileexists(Database_OpenDialog.FileName) = true then
+    begin
+     OpenDatabase(Database_OpenDialog.FileName);
+     AddToRecentFiles(Database_OpenDialog.FileName);
+    end;
+  end;
 end;
 
 procedure TForm1.mnuOpenExplorerClick(Sender: TObject);
@@ -1610,12 +1647,12 @@ begin
      If (lowercase(FileNameExt) = 'tap') then LstBAM.Clear;
      // PRG
      If (lowercase(FileNameExt) = 'prg') then LstBAM.Clear;
-     // D64/G64
-     If (FileNameExt = 'd64') or (FileNameExt = 'g64') then LoadBAM_D64(FileFull, FileSizeImg);
+     // D64/G64/NIB
+     If (lowercase(FileNameExt) = 'd64') or (lowercase(FileNameExt) = 'g64') or (lowercase(FileNameExt) = 'nib') then LoadBAM_D64(FileFull, FileSizeImg);
      // D71
-     If FileNameExt = 'd71' then LoadBAM_D71(FileFull);
+     If lowercase(FileNameExt) = 'd71' then LoadBAM_D71(FileFull);
      // D81
-     If FileNameExt = 'd81' then LoadBAM_D81(FileFull);
+     If lowercase(FileNameExt) = 'd81' then LoadBAM_D81(FileFull);
     end;
    if PageControl2.Pages[2].Visible = true then
     begin
@@ -1643,8 +1680,8 @@ begin
   //   begin
   //    // PRG
   //    If (lowercase(FileNameExt) = 'prg') then LstBAM.Clear;
-  //    // D64/G64
-  //    If (lowercase(FileNameExt) = 'd64') or (Lowercase(FileNameExt) = 'g64') then LoadBAM_D64(FileFull, FileSizeImg);
+  //    // D64/G64/NIB
+  //    If (lowercase(FileNameExt) = 'd64') or (Lowercase(FileNameExt) = 'g64' or (lowercase(FileNameExt) = 'nib') then LoadBAM_D64(FileFull, FileSizeImg);
   //    // D71
   //    If lowercase(FileNameExt) = 'd71' then LoadBAM_D71(FileFull);
   //    // D81
@@ -1689,8 +1726,8 @@ Begin
      If (lowercase(FileNameExt) = 'tap') then LstBAM.Clear;
      // PRG
      If (lowercase(FileNameExt) = 'prg') then LstBAM.Clear;
-     // D64/G64
-     If (lowercase(FileNameExt) = 'd64') or (lowercase(FileNameExt) = 'g64') then LoadBAM_D64(FileFull, FileSizeImg);
+     // D64/G64/NIB
+     If (lowercase(FileNameExt) = 'd64') or (lowercase(FileNameExt) = 'g64') or (lowercase(FileNameExt) = 'nib') then LoadBAM_D64(FileFull, FileSizeImg);
      // D71
      If lowercase(FileNameExt) = 'd71' then LoadBAM_D71(FileFull);
      // D81
@@ -1859,7 +1896,7 @@ begin
   end;
 end;
 
-procedure TForm1.Convert_G64(aImageName: String);
+procedure TForm1.Convert_G64NIB(aImageName: String);
 var
  aImageNameD64 : String;
  answer : Integer;
@@ -1893,7 +1930,7 @@ begin
        end;
      end;
 
-    // NibConv G64 to D64
+    // NibConv G64 or NIB to D64
     aImageNameD64 := ExtractFileName(ChangeFileExt(aImageName,'.d64'));
     nibProcess := TProcess.Create(nil);
     try
@@ -2416,13 +2453,13 @@ Begin
   Form1.LstBxDirectoryPETSCII.Clear;
   Form1.Statusbar1.Panels[1].text := '';
   aImageNameD64 := '';
-  // Check if g64
-  If Lowercase(ExtractFileExt(aFileFull)) = '.g64' then
+  // Check if g64 or nib
+  If (Lowercase(ExtractFileExt(aFileFull)) = '.g64') or (Lowercase(ExtractFileExt(aFileFull)) = '.nib') then
    begin
-    Form1.Convert_G64(aFileFull);
+    Form1.Convert_G64NIB(aFileFull);
     aImageNameD64 := ExtractFileNameOnly(aFileFull)+'.d64';
     aFileFull := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''))+aImageNameD64;
-   end; // G64 END
+   end; // G64/NIB END
 
   case LowerCase(ExtractFileExt(aFileFull)) of
    '.tap':
@@ -2505,7 +2542,7 @@ Begin
       Init_ArrD64(aFileFull);
       Form1.ReadDirEntries_D64;
 
-      // tmp d64 delete (source was g64 file)
+      // tmp d64 delete (source was g64/nib file)
       If aImageNameD64 <>'' then
        begin
         //aImageName := PChar(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''))+ aImageNameD64);
@@ -4032,8 +4069,8 @@ var
 begin
   a := 1;
 
- // D64 / G64
- if (Lowercase(ExtractFileExt(aImageName)) = '.d64') or (Lowercase(ExtractFileExt(aImageName)) = '.g64') then
+ // D64 / G64 / NIB
+ if (Lowercase(ExtractFileExt(aImageName)) = '.d64') or (Lowercase(ExtractFileExt(aImageName)) = '.g64') or (Lowercase(ExtractFileExt(aImageName)) = '.nib') then
   begin
     cbTrack.Clear;
     for a := 1 to 40 do
@@ -4105,7 +4142,7 @@ begin
    edit1.Text := '';
    for c := 1 to 16 do // 16 Zeichen pro Zeile
     begin
-     if (lowercase(ExtractFileExt(aFileName)) = '.d64') or (lowercase(ExtractFileExt(aFileName)) = '.g64') then
+     if (lowercase(ExtractFileExt(aFileName)) = '.d64') or (lowercase(ExtractFileExt(aFileName)) = '.g64') or (Lowercase(ExtractFileExt(aFileName)) = '.nib') then
       begin
        sec := sec + Copy(arrD64[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2) + ' ';
        edit1.Text := edit1.Text + GetUTF8('$' + Copy(arrD64[StrToInt(cbTrack.Text),StrToInt(cbSector.Text)], b, 2), false, false);
@@ -4167,8 +4204,8 @@ begin
      If (lowercase(FileNameExt) = 'tap') then LstBAM.Clear;
      // PRG
      If (lowercase(FileNameExt) = 'prg') then LstBAM.Clear;
-     // D64/G64
-     If (lowercase(FileNameExt) = 'd64') or (lowercase(FileNameExt) = 'g64') then LoadBAM_D64(FileFull, FileSizeImg);
+     // D64/G64/NIB
+     If (lowercase(FileNameExt) = 'd64') or (lowercase(FileNameExt) = 'g64') or (lowercase(FileNameExt) = 'nib') then LoadBAM_D64(FileFull, FileSizeImg);
      // D71
      If lowercase(FileNameExt) = 'd71' then LoadBAM_D71(FileFull);
      // D81
@@ -4188,8 +4225,8 @@ procedure TForm1.Init_SectorsHexDropDown;
 var
   a, trk : Integer;
 begin
- // D64/G64
- if (lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString) = 'd64') or (lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString) = 'g64') then
+ // D64/G64/NIB
+ if (lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString) = 'd64') or (lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString) = 'g64') or (lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString) = 'nib') then
   begin
    cbSector.Clear;
    trk := StrToInt(cbTrack.Text);

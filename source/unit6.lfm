@@ -25,17 +25,17 @@ object frmImport: TfrmImport
   end
   object grImportProgress: TGroupBox
     Left = 9
-    Height = 546
-    Top = 280
+    Height = 530
+    Top = 296
     Width = 1171
     Caption = 'Progress:'
-    ClientHeight = 518
+    ClientHeight = 502
     ClientWidth = 1167
     TabOrder = 3
     object memoProgressBar: TProgressBar
-      Left = 14
+      Left = 16
       Height = 35
-      Top = 0
+      Top = 8
       Width = 1134
       Min = 1
       Position = 1
@@ -45,15 +45,15 @@ object frmImport: TfrmImport
     object lblFileProgress: TLabel
       Left = 14
       Height = 23
-      Top = 46
+      Top = 56
       Width = 138
       Caption = 'File(s) imported:'
       ParentColor = False
     end
     object memoImport: TMemo
       Left = 14
-      Height = 132
-      Top = 84
+      Height = 100
+      Top = 96
       Width = 1134
       Enabled = False
       ReadOnly = True
@@ -62,15 +62,15 @@ object frmImport: TfrmImport
     object lblImport1: TLabel
       Left = 14
       Height = 23
-      Top = 248
+      Top = 208
       Width = 106
       Caption = 'Hints/Errors:'
       ParentColor = False
     end
     object memoImportErr: TMemo
       Left = 14
-      Height = 216
-      Top = 288
+      Height = 240
+      Top = 248
       Width = 1134
       HideSelection = False
       ReadOnly = True
@@ -81,7 +81,7 @@ object frmImport: TfrmImport
     object lblImportCount: TStaticText
       Left = 196
       Height = 30
-      Top = 46
+      Top = 56
       Width = 105
       Alignment = taRightJustify
       BorderStyle = sbsSunken
@@ -91,7 +91,7 @@ object frmImport: TfrmImport
     object lblImportCountErr: TStaticText
       Left = 196
       Height = 30
-      Top = 248
+      Top = 208
       Width = 105
       Alignment = taRightJustify
       BorderStyle = sbsSunken
@@ -101,11 +101,11 @@ object frmImport: TfrmImport
   end
   object grImportFrom: TGroupBox
     Left = 9
-    Height = 273
+    Height = 289
     Top = 0
     Width = 1171
     Caption = 'Select:'
-    ClientHeight = 245
+    ClientHeight = 261
     ClientWidth = 1167
     TabOrder = 4
     object DirImport: TDirectoryEdit
@@ -151,7 +151,7 @@ object frmImport: TfrmImport
       Width = 380
       BorderStyle = sbsSunken
       Caption = ' No folder selected!'
-      TabOrder = 10
+      TabOrder = 11
     end
     object lblFileSel: TLabel
       Left = 14
@@ -168,7 +168,7 @@ object frmImport: TfrmImport
       Alignment = taRightJustify
       BorderStyle = sbsSunken
       Caption = '0 '
-      TabOrder = 11
+      TabOrder = 12
     end
     object lblImportFoundArc: TStaticText
       Left = 994
@@ -178,7 +178,7 @@ object frmImport: TfrmImport
       Alignment = taRightJustify
       BorderStyle = sbsSunken
       Caption = '0 '
-      TabOrder = 12
+      TabOrder = 13
     end
     object lblFileImg: TLabel
       Left = 644
@@ -202,7 +202,7 @@ object frmImport: TfrmImport
       Caption = '*.ZIP '
       Checked = True
       State = cbChecked
-      TabOrder = 9
+      TabOrder = 10
     end
     object cbImgD64: TCheckBox
       Left = 644
@@ -222,7 +222,7 @@ object frmImport: TfrmImport
       Caption = '*.D71 '
       Checked = True
       State = cbChecked
-      TabOrder = 6
+      TabOrder = 7
     end
     object cbImgD81: TCheckBox
       Left = 752
@@ -232,7 +232,7 @@ object frmImport: TfrmImport
       Caption = '*.D81 '
       Checked = True
       State = cbChecked
-      TabOrder = 7
+      TabOrder = 8
     end
     object cbImgG64: TCheckBox
       Left = 644
@@ -247,12 +247,12 @@ object frmImport: TfrmImport
     object cbImgPRG: TCheckBox
       Left = 644
       Height = 27
-      Top = 182
+      Top = 224
       Width = 85
       Caption = '*.PRG '
       Checked = True
       State = cbChecked
-      TabOrder = 5
+      TabOrder = 6
     end
     object cbImgTAP: TCheckBox
       Left = 752
@@ -262,7 +262,17 @@ object frmImport: TfrmImport
       Caption = '*.TAP '
       Checked = True
       State = cbChecked
-      TabOrder = 8
+      TabOrder = 9
+    end
+    object cbImgNIB: TCheckBox
+      Left = 644
+      Height = 27
+      Top = 182
+      Width = 81
+      Caption = '*.NIB '
+      Checked = True
+      State = cbChecked
+      TabOrder = 5
     end
   end
   object btImport: TButton
