@@ -22,7 +22,7 @@ interface
 
 uses
   Classes, SysUtils, StrUtils, Process, SQLite3Conn, SQLDB, DB, Forms, Controls,
-  Graphics, Dialogs, StdCtrls, ComCtrls, Menus, ExtCtrls, Buttons, DBGrids,
+  Graphics, Dialogs, StdCtrls, ComCtrls, Menus, ExtCtrls, Buttons, DBGrids, Zipper,
   ShellCtrls, FileUtil, Inifiles, LCLIntf, DBCtrls, LazUTF8, LazFileUtils, Windows, Grids;
 
 type
@@ -538,16 +538,10 @@ end;
 
 procedure TForm1.UnpackFileFullContainsPipe(aFileFull : String);
 var
- tmpPath : String;
+ tmpPath, tmpImg : String;
  ImageFileArray : TStringArray;
  i : Integer;
- FileAttrs: Integer;
- FileAttrList : TStringlist;
- FileAttrAnsi : AnsiString;
 begin
- // FileFull = SQLQueryDir.FieldByName('FileFull').Text
- // or
- // FileFull = "....|...." ( = archive )
  If aFileFull.Contains('|') = true then  // check if path locates an archive
   begin
    ImageFileArray := aFileFull.Split('|');
@@ -559,22 +553,8 @@ begin
       begin
        CreateDir(tmpPath + ExtractFileName(ImageFileArray[0])); // folder to temporarly unzip archive
       end;
-     UnPackFiles(ImageFileArray[0], '', tmpPath + ExtractFileName(ImageFileArray[0]));
-
-     // Remove readonly fileattribute for a later delete of temp files
-     //FileAttrList.Create;
-     //FindAllFiles(FileAttrList, tmpPath + ExtractFileName(ImageFileArray[0]));
-     //for i := 0 to FileAttrList.Count - 1 do
-     // begin
-     //  FileAttrs := FileGetAttr(FileAttrList[i]);
-     //  if (FileAttrs and faReadOnly <> 0) then
-     //  begin
-     //    // Entferne das ReadOnly-Attribut
-     //    FileAttrs := FileAttrs and not faReadOnly;
-     //    FileSetAttr(FileName, FileAttrs);  // Attribut ändern
-     //    WriteLn('ReadOnly-Attribut wurde entfernt von: ', FileName);
-     //  end;
-     // end;
+     tmpImg := TrimLeadingBackslash(ImageFileArray[1]);
+     if UnpackFile(ImageFileArray[0], tmpimg, tmpPath + ExtractFileName(ImageFileArray[0])) = false then
     end;
    end
  else FileFull := aFileFull;
@@ -586,8 +566,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.85';
- sAppDate    := '2025-06-26';
+ sAppVersion := 'v0.86';
+ sAppDate    := '2025-06-30';
  Form1.Caption:= sAppCaption + sAppVersion;
  sAppPath := ExtractFilePath(ParamStr(0));
  SQlSearch_Click := false;
@@ -1363,10 +1343,10 @@ begin
     AConnection.ExecuteDirect('CREATE TABLE "Tracks"('+
                 ' "idx" Integer PRIMARY KEY,'+
                 ' "idxTrks" Integer,'+
-                ' "T18" Char(9728),'+
-                ' "T19" Char(9728),'+
-                ' "T40" Char(20780),'+
-                ' "T53" Char(512));');
+                ' "T18" Char(9728),'+   // D64 Dir
+                ' "T19" Char(9728),'+   // D64 Dir extended
+                ' "T40" Char(20780),'+  // D81 Dir
+                ' "T53" Char(512));');  // D71 BAM
     // Table DirectoryTxt
     AConnection.ExecuteDirect('CREATE TABLE "DirectoryTXT"('+
                 ' "idx" Integer PRIMARY KEY,'+
@@ -2446,10 +2426,9 @@ end;
 procedure GetDirectoryImage(aFileFull : String; aScratch : Boolean; aLower: Boolean);
 var
   fstream : TFileStream;
-  s, t18, t19, t53, t40, filesizeImg, aImageNameD64 : String;
+  filesizeImg, aImageNameD64 : String;
   aImageName : PChar;
 Begin
-  s := '';
   Form1.LstBxDirectoryPETSCII.Clear;
   Form1.Statusbar1.Panels[1].text := '';
   aImageNameD64 := '';
@@ -2460,7 +2439,6 @@ Begin
     aImageNameD64 := ExtractFileNameOnly(aFileFull)+'.d64';
     aFileFull := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''))+aImageNameD64;
    end; // G64/NIB END
-
   case LowerCase(ExtractFileExt(aFileFull)) of
    '.tap':
      begin
@@ -2486,10 +2464,11 @@ Begin
       Form1.Statusbar1.Panels[1].text := '';
       Form1.Statusbar1.Panels[2].Text := 'Program file (PRG)';
      end;
+
    '.d64':
      begin
       // Check if T18/T19 from db is needed and available
-      If (IniFluff.ReadBool('Options', 'cbPETSCII1819', false) = true) then
+      If (IniFluff.ReadBool('Options', 'cbPETSCIITracks', false) = true) then
        begin
         Form1.SQLQueryTrks.DataBase := Form1.AConnection;
         Form1.SQLQueryTrks.Close;
@@ -2497,50 +2476,35 @@ Begin
         Form1.SQLQueryTrks.SQL.Add('SELECT * FROM Tracks WHERE idxTrks = ' + Form1.SQLQueryDir.FieldByName('idxImg').Text + '');
         Form1.SQLQueryTrks.Active := True;
         Form1.SQLQueryTrks.First;
-        if (Form1.SQlQueryTrks.RecordCount = 1) then
+        Form1.Statusbar1.Panels[3].Text := 'Database';
+        if (Form1.SQlQueryTrks.RecordCount = 1) then  // Saved in db?
          begin
-          t18 := (Form1.SQLQueryTrks.FieldByName('T18').AsString);
-          t19 := (Form1.SQLQueryTrks.FieldByName('T19').AsString);
-          s := t18 + t19;
+          arrD64[18,0] := Form1.SQLQueryTrks.FieldByName('T18').AsString;
+          arrD64[19,0] := Form1.SQLQueryTrks.FieldByName('T19').AsString;
+          Form1.ReadDirEntries_D64;
           filesizeImg := Form1.SQlQueryDir.FieldByName('filesizeImg').AsString;
-          if  (filesizeImg = '174848') or  (filesizeImg = '175531') or (filesizeImg = '196608') or  (filesizeImg = '197376') or (filesizeImg = '205312') or  (filesizeImg = '206114') then
-           begin
-            case (filesizeImg) of
-             '174848' : Form1.Statusbar1.Panels[1].text := '35 tracks, no error bytes';
-             '175531' : Form1.Statusbar1.Panels[1].text := '35 tracks, 683 error bytes';
-             '196608' : Form1.Statusbar1.Panels[1].text := '40 tracks, no error bytes';
-             '197376' : Form1.Statusbar1.Panels[1].text := '40 tracks, 768 error bytes';
-             '205312' : Form1.Statusbar1.Panels[1].text := '42 tracks, no error bytes';
-             '206114' : Form1.Statusbar1.Panels[1].text := '42 tracks, 802 error bytes';
-            otherwise
-             Form1.Statusbar1.Panels[1].text := 'unknown tracks, unknown error bytes';
-            end;
-           end;
-          Form1.Statusbar1.Panels[3].Text := 'Database';
-          end;
+         end;
         end
       else      // From file
        begin
+        Form1.Statusbar1.Panels[3].Text := 'File';
         fstream:= TFileStream.Create(aFileFull, fmShareCompat or fmOpenRead);
-        if  (fstream.Size = 174848) or  (fstream.Size = 175531) or (fstream.Size = 196608) or  (fstream.Size = 197376) or (fstream.Size = 205312) or  (fstream.Size = 206114) then
-         begin
-          case (FloatToStr(fstream.Size)) of
-           '174848' : Form1.Statusbar1.Panels[1].text := '35 tracks, no error bytes';
-           '175531' : Form1.Statusbar1.Panels[1].text := '35 tracks, 683 error bytes';
-           '196608' : Form1.Statusbar1.Panels[1].text := '40 tracks, no error bytes';
-           '197376' : Form1.Statusbar1.Panels[1].text := '40 tracks, 768 error bytes';
-           '205312' : Form1.Statusbar1.Panels[1].text := '42 tracks, no error bytes';
-           '206114' : Form1.Statusbar1.Panels[1].text := '42 tracks, 802 error bytes';
-          otherwise
-           Form1.Statusbar1.Panels[1].text := 'unknown tracks, unknown error bytes';
-          end;
-          fstream.Free;
-         end;
-        If IniFluff.ReadBool('Options', 'cbPETSCII1819', false) = true then Form1.Statusbar1.Panels[3].Text := 'File (T18/T19 not in database)';
-        If IniFluff.ReadBool('Options', 'cbPETSCII1819', false) = false then Form1.Statusbar1.Panels[3].Text := 'File';
+        filesizeImg := FloatToStr(fstream.Size);
+        fstream.Free;
+        Init_ArrD64(aFileFull);
+        Form1.ReadDirEntries_D64;
        end;
-      Init_ArrD64(aFileFull);
-      Form1.ReadDirEntries_D64;
+      case (filesizeImg) of
+       ''       : Form1.Statusbar1.Panels[1].text := 'Directory not stored in database';
+       '174848' : Form1.Statusbar1.Panels[1].text := '35 tracks, no error bytes';
+       '175531' : Form1.Statusbar1.Panels[1].text := '35 tracks, 683 error bytes';
+       '196608' : Form1.Statusbar1.Panels[1].text := '40 tracks, no error bytes';
+       '197376' : Form1.Statusbar1.Panels[1].text := '40 tracks, 768 error bytes';
+       '205312' : Form1.Statusbar1.Panels[1].text := '42 tracks, no error bytes';
+       '206114' : Form1.Statusbar1.Panels[1].text := '42 tracks, 802 error bytes';
+      otherwise
+       Form1.Statusbar1.Panels[1].text := 'unknown tracks, unknown error bytes';
+      end;
 
       // tmp d64 delete (source was g64/nib file)
       If aImageNameD64 <>'' then
@@ -2550,39 +2514,82 @@ Begin
         If fileexists(aImageName) then DeleteFileUtf8(aImageName);
        end;
      end;
+
    '.d71':
-     begin
-      fstream:= TFileStream.Create(aFileFull, fmShareCompat or fmOpenRead);
-      if (fstream.Size = 349696) or (fstream.Size = 351062) then
-       begin
-        case (FloatToStr(fstream.Size)) of
-         '349696' : Form1.Statusbar1.Panels[1].text := '70 tracks, no error bytes';
-         '351062' : Form1.Statusbar1.Panels[1].text := '70 tracks, 1366 error bytes';
-        otherwise
-         Form1.Statusbar1.Panels[1].text := 'unknown tracks, unknown error bytes';
+      begin
+       // Check if T18/T53 from db is needed and available
+       If (IniFluff.ReadBool('Options', 'cbPETSCIITracks', false) = true) then
+        begin
+         Form1.SQLQueryTrks.DataBase := Form1.AConnection;
+         Form1.SQLQueryTrks.Close;
+         Form1.SQLQueryTrks.SQL.Clear;
+         Form1.SQLQueryTrks.SQL.Add('SELECT * FROM Tracks WHERE idxTrks = ' + Form1.SQLQueryDir.FieldByName('idxImg').Text + '');
+         Form1.SQLQueryTrks.Active := True;
+         Form1.SQLQueryTrks.First;
+         Form1.Statusbar1.Panels[3].Text := 'Database';
+         if (Form1.SQlQueryTrks.RecordCount = 1) then  // Saved in db?
+          begin
+           arrD71[18,0] := Form1.SQLQueryTrks.FieldByName('T18').AsString;
+           arrD71[53,0] := Form1.SQLQueryTrks.FieldByName('T53').AsString;
+           Form1.ReadDirEntries_D64;
+           filesizeImg := Form1.SQlQueryDir.FieldByName('filesizeImg').AsString;
+          end;
+         end
+       else      // From file
+        begin
+         Form1.Statusbar1.Panels[3].Text := 'File';
+         fstream:= TFileStream.Create(aFileFull, fmShareCompat or fmOpenRead);
+         filesizeImg := FloatToStr(fstream.Size);
+         fstream.Free;
+         Init_ArrD71(aFileFull);
+         Form1.ReadDirEntries_D71;
         end;
-        fstream.Free;
+       case (filesizeImg) of
+        ''       : Form1.Statusbar1.Panels[1].text := 'Directory not stored in database';
+        '349696' : Form1.Statusbar1.Panels[1].text := '70 tracks, no error bytes';
+        '351062' : Form1.Statusbar1.Panels[1].text := '70 tracks, 1366 error bytes';
+       otherwise
+        Form1.Statusbar1.Panels[1].text := 'unknown tracks, unknown error bytes';
        end;
-      Init_ArrD71(aFileFull);
-      Form1.ReadDirEntries_D71;
-     end;
+      end;
 
    '.d81':
-     begin
-      fstream:= TFileStream.Create(aFileFull, fmShareCompat or fmOpenRead);
-      if (fstream.Size = 819200) or (fstream.Size = 822400) then
-       begin
-        case (FloatToStr(fstream.Size)) of
-         '819200' : Form1.Statusbar1.Panels[1].text := '80 tracks, no error bytes';
-         '822400' : Form1.Statusbar1.Panels[1].text := '80 tracks, 3200 error bytes';
-        otherwise
-         Form1.Statusbar1.Panels[1].text := 'unknown tracks, unknown error bytes';
+      begin
+       // Check if T40 from db is needed and available
+       If (IniFluff.ReadBool('Options', 'cbPETSCIITracks', false) = true) then
+        begin
+         Form1.SQLQueryTrks.DataBase := Form1.AConnection;
+         Form1.SQLQueryTrks.Close;
+         Form1.SQLQueryTrks.SQL.Clear;
+         Form1.SQLQueryTrks.SQL.Add('SELECT * FROM Tracks WHERE idxTrks = ' + Form1.SQLQueryDir.FieldByName('idxImg').Text + '');
+         Form1.SQLQueryTrks.Active := True;
+         Form1.SQLQueryTrks.First;
+         Form1.Statusbar1.Panels[3].Text := 'Database';
+         if (Form1.SQlQueryTrks.RecordCount = 1) then  // Saved in db?
+          begin
+           arrD81[40,0] := Form1.SQLQueryTrks.FieldByName('T40').AsString;
+           Form1.ReadDirEntries_D81;
+           filesizeImg := Form1.SQlQueryDir.FieldByName('filesizeImg').AsString;
+          end;
+         end
+       else      // From file
+        begin
+         Form1.Statusbar1.Panels[3].Text := 'File';
+         fstream:= TFileStream.Create(aFileFull, fmShareCompat or fmOpenRead);
+         filesizeImg := FloatToStr(fstream.Size);
+         fstream.Free;
+         Init_ArrD81(aFileFull);
+         Form1.ReadDirEntries_D81;
         end;
-        fstream.Free;
+       case (filesizeImg) of
+        ''       : Form1.Statusbar1.Panels[1].text := 'Directory not stored in database';
+        '819200' : Form1.Statusbar1.Panels[1].text := '80 tracks, no error bytes';
+        '822400' : Form1.Statusbar1.Panels[1].text := '80 tracks, 3200 error bytes';
+       otherwise
+        Form1.Statusbar1.Panels[1].text := 'unknown tracks, unknown error bytes';
        end;
-      Init_ArrD81(aFileFull);
-      Form1.ReadDirEntries_D81;        // PETSCII
-     end;
+      end;
+
   end;
 end;
 

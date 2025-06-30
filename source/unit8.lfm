@@ -1,19 +1,19 @@
 object Form5: TForm5
-  Left = 1141
-  Height = 640
-  Top = 812
-  Width = 1246
+  Left = 1395
+  Height = 744
+  Top = 810
+  Width = 1317
   BorderStyle = bsDialog
   Caption = 'Manual'
-  ClientHeight = 640
-  ClientWidth = 1246
+  ClientHeight = 744
+  ClientWidth = 1317
   DesignTimePPI = 168
   Position = poMainFormCenter
   LCLVersion = '4.0.0.4'
   object btClose: TButton
-    Left = 1101
+    Left = 1176
     Height = 44
-    Top = 588
+    Top = 688
     Width = 131
     Caption = 'Close'
     TabOrder = 0
@@ -21,30 +21,58 @@ object Form5: TForm5
   end
   object Memo1: TMemo
     Left = 14
-    Height = 564
+    Height = 666
     Top = 14
-    Width = 1218
-    Enabled = False
+    Width = 1290
     Lines.Strings = (
       'FluffyFloppy64'
       ''
       'A Microsoft(r) Windows(r) tool to catalog Commodore 64 (C64) floppy disk images (D64, G64, D71, D81, PRG, TAP)'
       'and mount or run in emulators...'
       ''
+      '======================================'
+      ''
       'New:'
       'Creates a new database'
+      ''
+      '======================================'
       ''
       'Open:'
       'Opens an existing database'
       ''
+      '======================================'
+      ''
       'Import:'
       'Imports floppy disk images, also contained in ZIP archives, into the already opened database'
+      ''
+      'If import tracks 18, 19, 40, 53 to database is selected in settings then you can read directories without the disk images itself.'
+      ''
+      'If you select in settings: "Load PETSCII directory if tracks (18,19,40 or 53) were fully imported in the database, instead from image file"'
+      'and its not imported then statusbar will show "directory not stored in database". '
+      ''
+      '======================================'
       ''
       'Filter/Search:'
       'Filter and search the content (path or search) of the database. "*" allowed'
       ''
+      '======================================'
       ''
+      'Filesizes:'
+      'D64:'
+      '     ''174848'' = ''35 tracks, no error bytes'''
+      '     ''175531'' = ''35 tracks, 683 error bytes'''
+      '     ''196608'' = ''40 tracks, no error bytes'''
+      '     ''197376'' = ''40 tracks, 768 error bytes'''
+      '     ''205312'' = ''42 tracks, no error bytes'''
+      '     ''206114'' = ''42 tracks, 802 error bytes'''
+      'D71:'
+      '     ''349696'' = ''70 tracks, no error bytes'''
+      '     ''351062'' = ''70 tracks, 1366 error bytes'''
+      'D81:'
+      '     ''819200'' = ''80 tracks, no error bytes'''
+      '     ''822400'' = ''80 tracks, 3200 error bytes'''
     )
+    ReadOnly = True
     ScrollBars = ssAutoVertical
     TabOrder = 1
   end

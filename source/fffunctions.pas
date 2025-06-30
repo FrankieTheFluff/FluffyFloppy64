@@ -12,7 +12,7 @@ Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
 Some usefull functions
-v1.01 - 2025-06-22
+v1.02 - 2025-06-30
 
 Parts of it:
 -
@@ -42,7 +42,9 @@ function ByteArrayToHexString(AByteArray: TByteArr; ASep: string = ''): string;
 function HexToString(Hexy: string): string;
 function HexToASCII(mnuHexView:string):string;
 function EndPathCP866ToUTF8(AText:string):string;
-function UnPackFiles(aFilename, aImageFilename, UnPackPath: String): Boolean;
+function TrimLeadingBackslash(const S: string): string;
+function UnpackFile(const aArchiveName, aImageFile, UnpackPath: string) : Boolean;
+function UnPackFiles(aArchivename, aImageFilename, UnPackPath: String): Boolean;
 
 implementation
 uses Unit1;
@@ -153,9 +155,37 @@ begin
   Result:=s1+s2;
 end;
 
-function UnPackFiles(aFilename, aImageFilename, UnPackPath: String): Boolean;
+function TrimLeadingBackslash(const S: string): string;
+begin
+  if (S <> '') and (S[1] = '\') then
+    Result := Copy(S, 2, Length(S) - 1)
+  else
+    Result := S;
+end;
+
+
+function UnpackFile(const aArchiveName, aImageFile, UnpackPath: string) : Boolean;
 var
-  UnZipper : TUnZipper; //PasZLib
+  UnZipper: TUnZipper;
+begin
+  result := false;
+
+  UnZipper := TUnZipper.Create;
+  try
+    UnZipper.FileName := aArchiveName;
+    UnZipper.OutputPath := IncludeTrailingPathDelimiter(UnpackPath);
+    UnZipper.Files.Clear;
+    UnZipper.Files.Add(aImageFile);
+    UnZipper.UnZipFile(aImageFile);
+  finally
+    UnZipper.Free;
+  end;
+  result := true;
+end;
+
+function UnPackFiles(aArchiveName, aImageFilename, UnPackPath: String): Boolean;
+var
+  UnZipper : TUnZipper;
   UnPackFileDir, ADiskFileName, ANewDiskFileName, AArchiveFileName  :String;
   i : integer;
 begin
@@ -164,10 +194,16 @@ begin
   UnZipper      :=TUnZipper.Create;
   try
   try
-   UnZipper.FileName   := aFilename;
+   UnZipper.FileName   := aArchiveName;
    UnZipper.OutputPath := UnPackPath;
    UnZipper.Examine;
-   UnZipper.UnZipAllFiles;
+
+   if aImageFileName = '' then UnZipper.UnZipAllFiles;  // Alle entpacken
+   if aImageFileName <> '' then
+    begin
+     Unzipper.Unzip(aImageFilename);
+    end;
+
    for i:=UnZipper.Entries.Count-1 downto 0 do
     begin
      AArchiveFileName:=UnZipper.Entries.Entries[i].ArchiveFileName;

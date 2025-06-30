@@ -76,6 +76,7 @@ type
     lblFontSize: TLabel;
     lbNibConvLocation: TLabel;
     lbNibConvLocation1: TLabel;
+    lbNibConvLocation2: TLabel;
     lbVICELocation: TLabel;
     lbVICELocation1: TLabel;
     spFontSize: TSpinEdit;

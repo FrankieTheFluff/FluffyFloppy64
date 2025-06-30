@@ -146,7 +146,7 @@ End;
 
 function Database_Ins_D64(aArchiveImage: String; aImageName: String; aImg : Integer): boolean;
   // aFileName      = Database (sl3)
-  // aImageName     = C:\...\filename.d64 or .g64...
+  // aImageName     = C:\...\filename.d64 or .g64 or .nib
 
 var
   bf, bf2, a, b, z : Integer;
@@ -342,12 +342,6 @@ begin
    SectorNext := 0;
    Repeat
     SectorPos := 0;    // 18.01 1st position of sector 01
-    if Hex2Dec(Copy(arrD64[18,Sector], 1, 2)) = 00 then t := 1; // Track 18  "00"
-    if Hex2Dec(Copy(arrD64[18,Sector], 3, 2)) = 01 then t := 1; // Track 18  "01"  (normal 4)
-    if Hex2Dec(Copy(arrD64[18,Sector], 3, 2)) = 255 then t := 1; // Track 18 "FF"
-    if (Hex2Dec(Copy(arrD64[18,Sector], 3, 2)) > 18) AND (Hex2Dec(Copy(arrD64[18,Sector], 3, 2)) <> 255) then t := 1; // bspw. "52"
-    If SectorNext = 18 then t := 1;// 18 runtimes per track
-
     For x := 1 to 8 do // 8 entries/sector
      Begin
       // FileTypeTXT
@@ -410,8 +404,13 @@ begin
        ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
        ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
       End;
-     // Next sector
+
+    // Next sector
      Sector := Hex2Dec(Copy(arrD64[18,Sector], 3, 2)); // e.g. “04”
+     if Sector = 1 then t := 1; // Track 18  "01"  (normal 4)
+     if Sector = 255 then t := 1; // Track 18 "FF"
+     if (Sector > 18) AND (Sector <> 255) then t := 1; // bspw. "52"
+
      // circular ausschließen
      for z := 0 to 19 do
       begin
@@ -422,7 +421,10 @@ begin
       end;
      SectorNext := SectorNext + 1; // Max 18 Durchgänge dann t := 1 // Track 19 howto?
      arrSec[SectorNext] := Sector;
+     if Hex2Dec(Copy(arrD64[18,1], 1, 2)) <> 18 then t := 1; // Not valid Track 18.1 <> "12 04" Hex12=Dec18
+     If SectorNext = 18 then t := 1;// max 18 per track
     Until t = 1;
+
   // Read T18/T19 into Array ENDE
   Form1.ATransaction.Commit;
   // Write dataset END
@@ -699,9 +701,7 @@ begin
      // Next sector
      TrackNext := Hex2Dec(Copy(arrD71[track,sector], 1, 2)); // 18
      SectorNext := Hex2Dec(Copy(arrD71[track,sector], 3, 2)); // e.g. “04”
-     if TrackNext = 00 then t := 1;   // 00
-     if SectorNext = 255 then t := 1; // FF
-
+     if Hex2Dec(Copy(arrD71[18,1], 1, 2)) <> 18 then t := 1; // Not valid Track 18.1 <> "12 04" Hex12=Dec18
      // circular ausschließen
      if track = 18 then
       begin
@@ -720,6 +720,8 @@ begin
     Track := TrackNext;   // for repeat
     Sector := SectorNext; // for repeat
     SectorCount := SectorCount + 1;  // check if extended
+    if TrackNext = 00 then t := 1;   // 00
+    if SectorNext = 255 then t := 1; // FF
   Until t = 1;
 
   Form1.ATransaction.Commit;
@@ -899,8 +901,6 @@ begin
   SectorNext := 0;
   Repeat
    SectorPos := 0;    // 40.01 1st position of sector 01
-   if Track = 00 then t := 1;
-   if Sector = 255 then t := 1;
    For x := 1 to 8 do // 8 entries/sector
     Begin
      // FileTypeTXT
@@ -967,9 +967,10 @@ begin
     SectorNext := Hex2Dec(Copy(arrD81[track,sector], 3, 2)); // e.g. “04”
     Track := TrackNext;
     Sector := SectorNext;
+    if Track = 0 then t := 1;
+    if Sector = 255 then t := 1;  // FF
    Until t = 1;
- // Read T40 into Array ENDE
-
+  // Read T40 into Array ENDE
   Form1.ATransaction.Commit;
   // Write dataset END
   Form1.ATransaction.Active:=false;
@@ -1151,7 +1152,7 @@ end;
 procedure TfrmImport.Import;
 var
   fstream : TFileStream;
-  ImageFile, ImageFileA : String;
+  filesizeImg, ImageFile, ImageFileA : String;
   ImgCount, img, dbMod : Integer;
 begin
   Form1.cbDBFilePath.ItemIndex:=0;
@@ -1181,7 +1182,6 @@ begin
    Form1.SQLQueryDir.Last;
    ImgCount := Form1.SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates
    Form1.SQLQueryDir.Active:=false;
-
    // accept only valid files to stringlist str_Images
    for img := 0 to str_AllImages.count-1 do
     begin
@@ -1251,16 +1251,24 @@ begin
         end;
       end;
 
-     //D64 - filesize check if valid file
+     //D64
      if cbImgD64.Checked = true then
       begin
        if lowercase(ExtractFileExt(ImageFile)) = '.d64' then
         begin
          fstream:= TFileStream.Create(ImageFile, fmShareCompat or fmOpenRead);
-         if  (fstream.Size = 174848) or  (fstream.Size = 175531) or (fstream.Size = 196608) or  (fstream.Size = 197376) or (fstream.Size = 205312) or  (fstream.Size = 206114) or  (fstream.Size = 210483) then
+         filesizeImg := FloatToStr(fstream.Size);
+         fstream.Free;
+         ImgCount := ImgCount + 1;
+         if filesizeImg = '0' then
           begin
-           ImgCount := ImgCount + 1;
-           fstream.Free;
+           ImgCount := ImgCount - 1;
+           ImgCountErr := ImgCountErr + 1;
+           lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+           memoImportErr.Lines.Add('No import (filesize = "0"): ' + ImageFile);
+          end
+         else
+          begin
            if Database_Ins_D64(ImageFileA, ImageFile, ImgCount) = false then
              begin
               ImgCount := ImgCount - 1;
@@ -1275,85 +1283,80 @@ begin
               memoImport.Lines.Clear;
               memoImport.Lines.Add(ImageFile);
              end;
-          end
-         else
-         begin
-          ImgCountErr := ImgCountErr + 1;
-          lblImportCountErr.Caption := IntToStr(ImgCountErr);
-          memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
-          fstream.Free;
-         end;
-        end;
-      end;
+          end;
+      end; //lowercase d64
+     end;
 
-     //D71 - filesize check if valid file
+     //D71
      if cbImgD71.Checked = true then
       begin
        if lowercase(ExtractFileExt(ImageFile)) = '.d71' then
         begin
-         fstream:= TFileStream.Create(ImageFile, fmShareCompat or fmOpenRead);
-         if  (fstream.Size = 349696) or (fstream.Size = 351062) then
-          begin
-           ImgCount := ImgCount + 1;
-           fstream.Free;
-           if Database_Ins_D71(ImageFileA, ImageFile, ImgCount) = false then
-             begin
-              ImgCount := ImgCount - 1;
-              ImgCountErr := ImgCountErr + 1;
-              lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-              memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
-             end
-           else
-             begin
-              ImgAdd := ImgAdd + 1;
-              lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
-              memoImport.Lines.Clear;
-              memoImport.Lines.Add(ImageFile);
-             end;
-          end
+        fstream:= TFileStream.Create(ImageFile, fmShareCompat or fmOpenRead);
+        filesizeImg := FloatToStr(fstream.Size);
+        fstream.Free;
+        ImgCount := ImgCount + 1;
+        if filesizeImg = '0' then
+         begin
+          ImgCount := ImgCount - 1;
+          ImgCountErr := ImgCountErr + 1;
+          lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+          memoImportErr.Lines.Add('No import (filesize = "0"): ' + ImageFile);
+         end
+        else
+         begin
+         if Database_Ins_D71(ImageFileA, ImageFile, ImgCount) = false then
+           begin
+            ImgCount := ImgCount - 1;
+            ImgCountErr := ImgCountErr + 1;
+            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+            memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+           end
          else
-          begin
-           ImgCountErr := ImgCountErr + 1;
-           lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
-           fstream.Free;
-          end;
+           begin
+            ImgAdd := ImgAdd + 1;
+            lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
+            memoImport.Lines.Clear;
+            memoImport.Lines.Add(ImageFile);
+           end;
+         end;
         end;
       end;
 
-     //D81 - filesize check if valid file
+     //D81
      if cbImgD81.Checked = true then
       begin
        if lowercase(ExtractFileExt(ImageFile)) = '.d81' then
         begin
-         fstream:= TFileStream.Create(ImageFile, fmShareCompat or fmOpenRead);
-         if  (fstream.Size = 819200) or (fstream.Size = 822400) then
+        fstream:= TFileStream.Create(ImageFile, fmShareCompat or fmOpenRead);
+        filesizeImg := FloatToStr(fstream.Size);
+        fstream.Free;
+        ImgCount := ImgCount + 1;
+        if filesizeImg = '0' then
+         begin
+          ImgCount := ImgCount - 1;
+          ImgCountErr := ImgCountErr + 1;
+          lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+          memoImportErr.Lines.Add('No import (filesize = "0"): ' + ImageFile);
+         end
+        else
+         begin
+         if Database_Ins_D81(ImageFileA, ImageFile, ImgCount) = false then
           begin
-           ImgCount := ImgCount + 1;
-           fstream.Free;
-           if Database_Ins_D81(ImageFileA, ImageFile, ImgCount) = false then
-            begin
-             ImgCount := ImgCount - 1;
-             ImgCountErr := ImgCountErr + 1;
-             lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-             memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
-            end
-           else
-             begin
-              ImgAdd := ImgAdd + 1;
-              lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
-              memoImport.Lines.Clear;
-              memoImport.Lines.Add(ImageFile);
-             end;
-          end
-         else
-          begin
+           ImgCount := ImgCount - 1;
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
-           fstream.Free;
-          end;
+           memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+          end
+         else
+           begin
+            ImgAdd := ImgAdd + 1;
+            lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
+            memoImport.Lines.Clear;
+            memoImport.Lines.Add(ImageFile);
+           end;
         end;
+       end;
       end;
 
      // G64
@@ -1362,48 +1365,32 @@ begin
        if lowercase(ExtractFileExt(ImageFile)) = '.g64' then
         begin
          btClose.Enabled:=false;
-
+         ImgCount := ImgCount + 1;
          // Convert
          Form1.Convert_G64NIB(ImageFile);
-
          // Checking if convert failed
          If filesize(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
           begin
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('Import g64 failed - (e.g. no directory found): ' + ImageFile);
+           memoImportErr.Lines.Add('Import "g64" failed (directory sector not found): ' + ImageFile);
           end  // end checking if convert failed
          else
           begin
-          fstream:= TFileStream.Create(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'), fmShareCompat or fmOpenRead);
-          if  (fstream.Size = 174848) or  (fstream.Size = 175531) or (fstream.Size = 196608) or  (fstream.Size = 197376) or (fstream.Size = 205312) or  (fstream.Size = 206114) or  (fstream.Size = 210483) then
-           begin
-            ImgCount := ImgCount + 1;
-            fstream.Free;
-            if Database_Ins_D64(ImageFileA, ImageFile, ImgCount) = false then
-             begin
-              ImgCount := ImgCount - 1;
-              ImgCountErr := ImgCountErr + 1;
-              lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-              memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
-             end
-            else
-              begin
-               ImgAdd := ImgAdd + 1;
-               lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
-               memoImport.Lines.Clear;
-               memoImport.Lines.Add(ImageFile);
-              end;
-           end
-          else
-           begin
-            If fstream.Size <> 0 then fstream.Free; // If Convert fails
-            ImgCount := ImgCount - 1;
-            ImgCountErr := ImgCountErr + 1;
-            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-            memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
-            fstream.Free;
-           end;
+           if Database_Ins_D64(ImageFileA, ImageFile, ImgCount) = false then
+            begin
+             ImgCount := ImgCount - 1;
+             ImgCountErr := ImgCountErr + 1;
+             lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+             memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+            end
+           else
+            begin
+             ImgAdd := ImgAdd + 1;
+             lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
+             memoImport.Lines.Clear;
+             memoImport.Lines.Add(ImageFile);
+            end;
            end;
           DeleteFileUTF8(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
         end;
@@ -1415,53 +1402,36 @@ begin
        if lowercase(ExtractFileExt(ImageFile)) = '.nib' then
         begin
          btClose.Enabled:=false;
-
+         ImgCount := ImgCount + 1;
          // Convert
          Form1.Convert_G64NIB(ImageFile);
-
          // Checking if convert failed
          If filesize(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
           begin
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('Import nib failed - (e.g. no directory found): ' + ImageFile);
+           memoImportErr.Lines.Add('Import "nib" failed (directory sector not found): ' + ImageFile);
           end  // end checking if convert failed
          else
           begin
-          fstream:= TFileStream.Create(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'), fmShareCompat or fmOpenRead);
-          if  (fstream.Size = 174848) or  (fstream.Size = 175531) or (fstream.Size = 196608) or  (fstream.Size = 197376) or (fstream.Size = 205312) or  (fstream.Size = 206114) or  (fstream.Size = 210483) then
-           begin
-            ImgCount := ImgCount + 1;
-            fstream.Free;
-            if Database_Ins_D64(ImageFileA, ImageFile, ImgCount) = false then
-             begin
-              ImgCount := ImgCount - 1;
-              ImgCountErr := ImgCountErr + 1;
-              lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-              memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
-             end
-            else
-              begin
-               ImgAdd := ImgAdd + 1;
-               lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
-               memoImport.Lines.Clear;
-               memoImport.Lines.Add(ImageFile);
-              end;
-           end
-          else
-           begin
-            If fstream.Size <> 0 then fstream.Free; // If Convert fails
-            ImgCount := ImgCount - 1;
-            ImgCountErr := ImgCountErr + 1;
-            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-            memoImportErr.Lines.Add('Not a valid file (wrong filesize: ' + IntToStr(fstream.Size) + ') ' + ImageFile);
-            fstream.Free;
-           end;
+           if Database_Ins_D64(ImageFileA, ImageFile, ImgCount) = false then
+            begin
+             ImgCount := ImgCount - 1;
+             ImgCountErr := ImgCountErr + 1;
+             lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+             memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+            end
+           else
+            begin
+             ImgAdd := ImgAdd + 1;
+             lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
+             memoImport.Lines.Clear;
+             memoImport.Lines.Add(ImageFile);
+            end;
            end;
           DeleteFileUTF8(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
         end;
       end;  // Ende nib
-
 
      // Commit every e.g. 50 entries (In case of a application crash to avoid database goes corrupt)
      dbMod := IniFluff.ReadInteger('FluffyFloppy64', 'DBModulo', 50); // Default 50
@@ -1477,7 +1447,7 @@ begin
         end;
       end;
      except
-      on E: Exception do memoImportErr.Lines.Add(E.Message + '- File: ' + ImageFile);
+      memoImportErr.Lines.Add('Import failed: ' + ImageFile);
      end; // accept only valid files to import
 
     Application.ProcessMessages;
@@ -1561,6 +1531,7 @@ begin
  btClose.Enabled:=false;
  memoProgressBar.Position := 1;
  Form1.DBGridDir.DataSource := nil;
+ Form1.PageControl2.ActivePage.Visible:=false;
 
  // Import images (D64...)
  if str_AllImages.Count > 0 then
@@ -1602,10 +1573,10 @@ begin
   btCancel.Enabled := false;
   btClose.Enabled := true;
   memoProgressBar.Position := StrToInt(Trim(lblImportFoundImg.Caption));
-
   Form1.DBGridDir.DataSource := Form1.DataSourceDir;
   Form1.DBGridDir_ReadEntry(Form1.SQLQueryDir.FieldByName('FileFull').Text);
   Form1.Init_FilePath;
+  Form1.PageControl2.ActivePage.Visible:=true;
 end;
 
 procedure RemoveReadOnlyRecursive(const aFolder: String);

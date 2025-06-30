@@ -54,12 +54,12 @@ object Form4: TForm4
       end
       object grbDatabase: TGroupBox
         Left = 7
-        Height = 133
+        Height = 159
         Top = 329
         Width = 1161
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Database:'
-        ClientHeight = 105
+        ClientHeight = 131
         ClientWidth = 1157
         TabOrder = 1
         object cbPETSCIITracks: TCheckBox
@@ -68,13 +68,21 @@ object Form4: TForm4
           Top = 14
           Width = 1101
           Anchors = [akTop, akLeft, akRight]
-          Caption = 'Load PETSCII directory if tracks (18,19,40 or 53) were fully imported in the database, instead from image file'
+          Caption = 'Load PETSCII directory if tracks (18,19,40 or 53) were fully imported into database, instead from image file'
           TabOrder = 0
         end
         object lbNibConvLocation1: TLabel
           Left = 56
           Height = 23
           Top = 56
+          Width = 995
+          Caption = 'HINT: If checked but not stored in database you will not see it - Statusbar will show "Directory not stored in database"'
+          ParentColor = False
+        end
+        object lbNibConvLocation2: TLabel
+          Left = 56
+          Height = 23
+          Top = 96
           Width = 375
           Caption = 'Not recommended! See Import settings first!'
           ParentColor = False

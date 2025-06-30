@@ -32,6 +32,15 @@ Release notes
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 
+v0.86 - 2025-06-30
++ GUI: Speedup browsing ZIP archives
++ Import: Removed the filesize limitations
++ Import: Rewritten routines for optional import of tracks 18,19,40,53
+- Import: Fixes D64 error message: "$" is an invalid integer
+- Import: Fixes D81 error message: "$" is an invalid integer
+- Import: Fixes D81 wrong last sector of the directory
++ Database: "sqlite.dll" v3.50.2 2025-06-28
+
 v0.85 - 2025-06-26
 * Import: Support "nib" files
 - GUI: Fixes Open recent database crash if file doesn't exit
