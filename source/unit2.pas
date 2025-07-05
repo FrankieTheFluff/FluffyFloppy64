@@ -40,7 +40,7 @@ type
     sTVersion: TStaticText;
     sTCreated: TStaticText;
     procedure btOKClick(Sender: TObject);
-    procedure FormShow(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
     procedure memCommentEditingDone(Sender: TObject);
   private
 
@@ -65,7 +65,7 @@ begin
   close;
 end;
 
-procedure TForm2.FormShow(Sender: TObject);
+procedure TForm2.FormActivate(Sender: TObject);
 begin
   Form1.SQLQueryDB.Active:=true;
   sTVersion.Caption := Form1.SQLQueryDB.FieldByName('DBVersion').AsString + ' ';

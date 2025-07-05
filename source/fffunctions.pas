@@ -43,7 +43,7 @@ function HexToString(Hexy: string): string;
 function HexToASCII(mnuHexView:string):string;
 function EndPathCP866ToUTF8(AText:string):string;
 function TrimLeadingBackslash(const S: string): string;
-function UnpackFile(const aArchiveName, aImageFile, UnpackPath: string) : Boolean;
+function Unpackfile(const aArchiveName, aImageFile, UnpackPath: string): boolean;
 function UnPackFiles(aArchivename, aImageFilename, UnPackPath: String): Boolean;
 
 implementation
@@ -163,25 +163,25 @@ begin
     Result := S;
 end;
 
-
 function UnpackFile(const aArchiveName, aImageFile, UnpackPath: string) : Boolean;
 var
   UnZipper: TUnZipper;
 begin
   result := false;
-
   UnZipper := TUnZipper.Create;
   try
     UnZipper.FileName := aArchiveName;
     UnZipper.OutputPath := IncludeTrailingPathDelimiter(UnpackPath);
     UnZipper.Files.Clear;
     UnZipper.Files.Add(aImageFile);
-    UnZipper.UnZipFile(aImageFile);
+    Unzipper.Examine;
+    UnZipper.UnZipAllFiles;
   finally
     UnZipper.Free;
   end;
   result := true;
 end;
+
 
 function UnPackFiles(aArchiveName, aImageFilename, UnPackPath: String): Boolean;
 var

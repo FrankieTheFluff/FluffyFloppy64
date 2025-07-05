@@ -11,7 +11,6 @@ object Form1: TForm1
   Menu = MainMenu1
   Position = poScreenCenter
   LCLVersion = '4.0.0.4'
-  OnActivate = FormActivate
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -731,7 +730,7 @@ object Form1: TForm1
               end>
             DataSource = DataSourceDir
             FixedCols = 0
-            Options = [dgEditing, dgTitles, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgDblClickAutoSize]
+            Options = [dgEditing, dgTitles, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgDisableInsert, dgDblClickAutoSize]
             ParentFont = False
             PopupMenu = mnuKontextDBGridDir
             TabOrder = 2

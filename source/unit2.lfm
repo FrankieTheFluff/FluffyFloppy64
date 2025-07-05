@@ -10,7 +10,7 @@ object Form2: TForm2
   DesignTimePPI = 168
   Position = poMainFormCenter
   LCLVersion = '4.0.0.4'
-  OnShow = FormShow
+  OnActivate = FormActivate
   object grbDBProperties: TGroupBox
     Left = 14
     Height = 392

@@ -177,7 +177,6 @@ type
     procedure DBGridDirTxtTitleClick(Column: TColumn);
     procedure EdSQLSearchChange(Sender: TObject);
     procedure edTagsEditingDone(Sender: TObject);
-    procedure FormActivate(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -539,6 +538,7 @@ end;
 procedure TForm1.UnpackFileFullContainsPipe(aFileFull : String);
 var
  tmpPath, tmpImg : String;
+ ArchivePath1, ArchivePath2 : String;
  ImageFileArray : TStringArray;
  i : Integer;
 begin
@@ -547,14 +547,25 @@ begin
    ImageFileArray := aFileFull.Split('|');
    tmpPath := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
    FileFull := tmpPath + ExtractFileName(ImageFileArray[0]) + ImageFileArray[1]; //location of D64 in tmp folder  "c:\temp\mops.zip\123.d64"
-   if fileexists(FileFull) = false then  // check if archive already unpacked
+   // check if zip archive exists
+   if fileexists(ImageFileArray[0]) = false then
+    begin
+     exit;
+    end;
+   // check if archive already unpacked
+   if fileexists(FileFull) = false then
     begin
      If DirectoryExists(tmpPath + ExtractFileName(ImageFileArray[0])) = false then
       begin
        CreateDir(tmpPath + ExtractFileName(ImageFileArray[0])); // folder to temporarly unzip archive
       end;
-     tmpImg := TrimLeadingBackslash(ImageFileArray[1]);
-     if UnpackFile(ImageFileArray[0], tmpimg, tmpPath + ExtractFileName(ImageFileArray[0])) = false then
+     tmpImg := ExtractFileName(ImageFileArray[1]);
+     ArchivePath1 := TrimLeadingBackslash(ImageFileArray[1]);
+     ArchivePath2 := StringReplace(ArchivePath1, PathDelim, '/', [rfReplaceAll]);
+     if UnpackFile(ImageFileArray[0], ArchivePath2, tmpPath + ExtractFileName(ImageFileArray[0])) = false then
+      begin
+       exit;
+      end;
     end;
    end
  else FileFull := aFileFull;
@@ -566,8 +577,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.86';
- sAppDate    := '2025-06-30';
+ sAppVersion := 'v0.87';
+ sAppDate    := '2025-07-05';
  Form1.Caption:= sAppCaption + sAppVersion;
  sAppPath := ExtractFilePath(ParamStr(0));
  SQlSearch_Click := false;
@@ -685,7 +696,6 @@ begin
        begin
         LstBxDirectoryPETSCII.Clear;
         LstBxDirectoryPETSCII.Items.Add('File not found!');
-        Statusbar1.Panels[4].Text := 'Cannot load directory from image. File not found!';
        end;
 
       // Columns
@@ -1551,9 +1561,7 @@ begin
    edTags.Enabled:=false;
    memInfo.Enabled:=false;
   end;
-
   frmImport.Showmodal;
-
 end;
 
 Procedure TForm1.Init_FilePath;
@@ -1821,8 +1829,12 @@ begin
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Database filter');
  DBFilter;
 
+ // Last
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Start Init_FilePath procedure');
+ If aFileName <> IniFluff.ReadString('Database', 'Location', '') then IniFluff.ReadString('Database', 'FilePathLast', '');
  Init_FilePath;
+ CleanTmp;
+ DBFilter;
 
  Form1.Caption:= sAppCaption + sAppVersion + ' - [' + ExtractFileName(aFileName) + ']';
  If Dev_Mode = true then
@@ -2044,21 +2056,9 @@ begin
         DBGridDirTxt.Visible:=true;
         DBGridSplitter.Visible:=true;
 
-        If SQLQueryDir.RecordCount > 0 then
-         begin
-          SQLQueryDir.First;
-          LoadDir;
-          Statusbar1.Panels[0].Text := ' ' + IntToStr(Form1.SQLQueryDir.RecNo) + '/' + IntToStr(Form1.SQLQueryDir.RecordCount);
-          Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
-         end;
-        If Form1.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
-         begin
-          LstBxDirectoryPETSCII.Clear;
-          Statusbar1.Panels[0].Text := ' 0/0';
-          Statusbar1.Panels[1].Text := 'No entries found';
-          Statusbar1.Panels[2].Text := '';
-          Statusbar1.Panels[3].Text := '';
-         end;
+        If SQLQueryDir.RecordCount > 0 then SQLQueryDir.First;
+        LoadDir;
+
         exit;
      end;
     end;
@@ -2100,6 +2100,7 @@ begin
           Statusbar1.Panels[1].Text := 'No entries found';
           Statusbar1.Panels[2].Text := '';
           Statusbar1.Panels[3].Text := '';
+          Statusbar1.Panels[4].Text := '';
          end;
         exit;
        end;
@@ -2142,6 +2143,7 @@ begin
           Statusbar1.Panels[1].Text := 'No entries found';
           Statusbar1.Panels[2].Text := '';
           Statusbar1.Panels[3].Text := '';
+          Statusbar1.Panels[4].Text := '';
          end;
         exit;
        end;
@@ -2184,6 +2186,7 @@ begin
           Statusbar1.Panels[1].Text := 'No entries found';
           Statusbar1.Panels[2].Text := '';
           Statusbar1.Panels[3].Text := '';
+          Statusbar1.Panels[4].Text := '';
          end;
         exit;
        end;
@@ -2201,7 +2204,7 @@ procedure TForm1.DBFilter;
 var
  StrSQL : String;
 begin
-
+ StrSQL := '';
  SQLQueryDir.Close;
  SQLQueryDir.DataBase := AConnection;
  SQLQueryDir.SQL.Clear;
@@ -2232,15 +2235,6 @@ begin
      SQlQueryDir.SQL.Add(StrSQL);
      SQLQueryDir.Active:=true;
      LoadDir;
-     IF SQlQueryDir.RecordCount < 1 then
-      begin
-       Statusbar1.Panels[1].Text := '';
-       Statusbar1.Panels[2].Text := '';
-       Statusbar1.Panels[3].Text := '';
-       Statusbar1.Panels[4].Text := '';
-      end;
-     Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
-     Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
      exit;
     end;
 
@@ -2400,6 +2394,10 @@ begin
   end;
  if SQLQueryDir.RecordCount > 0 then
   begin
+   if ATransaction.Active then
+    begin
+     SQlQueryDir.ApplyUpdates;
+    end;
    CleanTmp;
    LoadDir;
   end;
@@ -3206,15 +3204,18 @@ end;
 procedure TForm1.DBGridDirKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-    if (Key = VK_DOWN) or (Key = VK_UP) then
+  if (Key = VK_DOWN) or (Key = VK_UP) or (Key = VK_NEXT) or (Key = VK_PRIOR) or (Key = VK_HOME) or (Key = VK_END) then
+   begin
+    if SQLQueryDir.RecordCount > 0 then
      begin
       if DBGridDirTxt.Visible = true then
-      begin
-       if SQlQuerySearch.RecordCount > 0 then SQlQuerySearch.Locate('idxSearch', SQLQueryDir.FieldByName('idxImg').Text, []);
-      end;
+       begin
+        if SQlQuerySearch.RecordCount > 0 then SQlQuerySearch.Locate('idxSearch', SQLQueryDir.FieldByName('idxImg').Text, []);
+       end;
       CleanTmp;
       LoadDir;
      end;
+   end;
 end;
 function GetNumScrollLines: Integer;
 begin
@@ -3279,8 +3280,6 @@ begin
    begin
     SQlQueryDir.Locate('idxImg', SQLQuerySearch.FieldByName('idxSearch').Text, []);
     LoadDir;
-    Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
-    Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
    end;
 end;
 
@@ -3290,8 +3289,6 @@ begin
    begin
     SQlQueryDir.Locate('idxImg', SQLQuerySearch.FieldByName('idxSearch').Text, []);
     LoadDir;
-    Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
-    Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
    end;
 end;
 
@@ -3317,12 +3314,14 @@ end;
 procedure TForm1.DBGridDirTxtKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-  if SQLQueryDir.RecordCount > 0 then
+  if (Key = VK_DOWN) or (Key = VK_UP) or (Key = VK_NEXT) or (Key = VK_PRIOR) or (Key = VK_HOME) or (Key = VK_END) then
    begin
-    SQlQueryDir.Locate('idxImg', SQLQuerySearch.FieldByName('idxSearch').Text, []);
-    LoadDir;
-    Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
-    Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
+    if SQLQueryDir.RecordCount > 0 then
+     begin
+      SQlQueryDir.Locate('idxImg', SQLQuerySearch.FieldByName('idxSearch').Text, []);
+      CleanTmp;
+      LoadDir;
+     end;
    end;
 end;
 
@@ -3347,9 +3346,6 @@ begin
     if SQLQueryDir.RecordCount > 0 then
      begin
       SQlQueryDir.Locate('idxImg', SQLQuerySearch.FieldByName('idxSearch').Text, []);
-      LoadDir;
-      Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
-      Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
      end;
     end;
     LoadDir;
@@ -3427,8 +3423,6 @@ begin
     SQLQueryDir.Active := True;
     SQLQueryDir.First;
     LoadDir;
-    Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
-    Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
     exit;
    end;
 
@@ -3464,15 +3458,6 @@ begin
      SQlQueryDir.Post;
      SQlQueryDir.ApplyUpdates;
    end;
-end;
-
-procedure TForm1.FormActivate(Sender: TObject);
-begin
- // Get first database entry / show directory of image
- If SQLQueryDir.RecordCount > 0 then
-  begin
-   DBFilter;
-  end;
 end;
 
 procedure TForm1.FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -3567,7 +3552,7 @@ begin
       TgScratch.Enabled:=false;
       TgCShift.Enabled:=false;
       LstBxDirectoryPETSCII.Clear;
-      LstBxDirectoryPETSCII.Items.Add('File not found!');
+      LstBxDirectoryPETSCII.Items.Add('File or archive not found!');
       memInfo.Enabled:=false;
       Statusbar1.Panels[0].Text := ' 0/0';
       Statusbar1.Panels[1].Text := 'No entries found';
@@ -3586,8 +3571,7 @@ begin
       else
       begin
        LstBxDirectoryPETSCII.Clear;
-       LstBxDirectoryPETSCII.Items.Add('File not found!');
-       Statusbar1.Panels[4].Text := 'Cannot load directory from image. File not found!';
+       LstBxDirectoryPETSCII.Items.Add('File or archive not found!');
       end;
      EdSQLSearch.Enabled:=true;
      cbSQLSearch.Enabled:=true;
@@ -4118,31 +4102,14 @@ var
 begin
  lstBoxSectors.Clear;
  lstBoxPETSCII.Clear;
-
- if lowercase(ExtractFileExt(aFileName)) = '.prg' then exit;
-
- if SQLQueryDir.RecordCount < 1 then
-  begin
-   EdSQLSearch.Enabled:=false;
-   cbSQLSearch.Enabled:=false;
-   TgScratch.Enabled:=false;
-   TgCShift.Enabled:=false;
-   LstBxDirectoryPETSCII.Clear;
-   memInfo.Enabled:=false;
-   Statusbar1.Panels[0].Text := ' 0/0';
-   Statusbar1.Panels[1].Text := 'No entries found';
-   Statusbar1.Panels[2].Text := '';
-   Statusbar1.Panels[3].Text := '';
-   Statusbar1.Panels[4].Text := '';
-   exit;
-  end;
-
- b := 1;
  lstBoxSectors.Lines.Add('     00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F');
  lstBoxSectors.Lines.Add('     -----------------------------------------------');
  lstBoxPETSCII.Lines.Add('');
  lstBoxPETSCII.Lines.Add('----------------');
 
+ if lowercase(ExtractFileExt(aFileName)) = '.prg' then exit;
+
+ b := 1;
  for a := 1 to 16 do // 16 Zeilen
   begin
    sec := '';
@@ -4194,17 +4161,37 @@ procedure TForm1.LoadDir;
 var
  FileNameExt, FileSizeImg : String;
 begin
+ if SQLQueryDir.RecordCount < 1 then
+  begin
+   EdSQLSearch.Enabled:=false;
+   cbSQLSearch.Enabled:=false;
+   TgScratch.Enabled:=false;
+   TgCShift.Enabled:=false;
+   LstBxDirectoryPETSCII.Clear;
+   memInfo.Enabled:=false;
+   Statusbar1.Panels[0].Text := ' 0/0';
+   Statusbar1.Panels[1].Text := 'No entries found';
+   Statusbar1.Panels[2].Text := '';
+   Statusbar1.Panels[3].Text := '';
+   Statusbar1.Panels[4].Text := '';
+   exit;
+  end;
  if SQLQueryDir.RecordCount > 0 then
   begin
+   Statusbar1.Panels[0].Text := ' ' + IntToStr(Form1.SQLQueryDir.RecNo) + '/' + IntToStr(Form1.SQLQueryDir.RecordCount);
+   Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
+
    try
     UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text); // FileFull
    finally
    end;
+
    FileSizeImg := SQLQueryDir.FieldByName('FileSizeImg').Text;
    FileNameExt := lowercase(SQLQueryDir.FieldByName('FileNameExt').AsString);
 
    // Read directory
    DBGridDir_ReadEntry(FileFull);
+
    if PageControl2.Pages[1].Visible = true then
     begin
      // TAP

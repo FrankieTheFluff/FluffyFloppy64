@@ -32,6 +32,13 @@ Release notes
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 
+v0.87 - 2025-07-05
++ Adds missing "PageUp", "PageDown", "HOME", "END" navigation
+- Fixes: Sometimes the "favorite" or "corrupt" flags are not stored in the database
+- Fixes: Browsing failed if zip archive contains subfolders
+- Fixes: Better error handling if archive not found
+- Fixes: Change database didn't reset selected path to "All"
+
 v0.86 - 2025-06-30
 + GUI: Speedup browsing ZIP archives
 + Import: Removed the filesize limitations
