@@ -11,7 +11,7 @@ License: GNU General Public License v2.0
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
-Import/Sync
+Import
 -----------------------------------------------------------------
 }
 unit unit6;
@@ -49,7 +49,7 @@ type
     lblFileSel: TLabel;
     lblFileProgress: TLabel;
     lblFileImg: TLabel;
-    lblImport1: TLabel;
+    lblImportHintsErrors: TLabel;
     lblImportCount: TStaticText;
     lblImportCountErr: TStaticText;
     lblImportFoundImg: TStaticText;
@@ -76,15 +76,13 @@ type
   public
 
   end;
-procedure RemoveReadOnlyRecursive(const aFolder: String);
-procedure CleanTmp;  // Deletes content of tmp folder
 
 var
   frmImport: TfrmImport;
   str_AllImages : TStringList;
   str_AllImagesInArchive, str_FindAllImagesArchive, str_FindAllImagesTmp : TStringlist;
   Terminate : Boolean;
-  ImageFileArray : TStringArray; // Needed to check if archive
+  tmpDir : String;
   ImgAdd, ImageCount, ImageCountA, ImageCountA2, ImgCountErr : Integer;  // Images/archives
 
 implementation
@@ -96,1079 +94,37 @@ uses
 
 { TfrmImport }
 
-function Unpack_Archive(aArchiveName : String):boolean;
-var
- tmpPath, tmpPathArc : String;
- answer : Integer;
-begin
- // Create tmp folder named like the archive and unpack
- result := false;
-  try
-  try
- // Temp folder
-  if IniFluff.ReadString('Options', 'FolderTemp', '') = '' then
-   begin
-    answer := MessageDlg('Temporary folder not defined! Please go to settings...',mtWarning, [mbOK], 0);
-     if answer = mrOk then
-      begin
-       exit;
-      end;
-   end;
-   if IniFluff.ReadString('Options', 'FolderTemp', '') <> '' then
-    begin
-     if DirectoryExists(IniFluff.ReadString('Options', 'FolderTemp', '')) = false then
-      begin
-       answer := MessageDlg('Defined temporary folder does not exist! Please go to settings...',mtWarning, [mbOK], 0);
-        if answer = mrOk then
-         begin
-          exit;
-         end;
-      end;
-    end;
-  tmpPath := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
-  tmpPathArc := '';
-
-  // ZIP files known image files
-  CreateDir(tmpPath + ExtractFileName(aArchiveName));   // Archive unzipped
-  tmpPathArc := IncludeTrailingPathDelimiter(tmpPath + ExtractFileName(aArchiveName));
-  UnPackFiles(aArchiveName, '', tmpPathArc);
-  result := true;
-  except
-   on E: Exception do
-    begin
-     Result := False;
-    end;
-  end;
- finally
-  //
- end;
-End;
-
-function Database_Ins_D64(aArchiveImage: String; aImageName: String; aImg : Integer): boolean;
-  // aFileName      = Database (sl3)
-  // aImageName     = C:\...\filename.d64 or .g64 or .nib
-
-var
-  bf, bf2, a, b, z : Integer;
-  BA : TByteArr;
-  sb, t18, t19 : String;
-  DiskNameTxt, DiskIDTxt, DosTypeTxt, ImageSize, ImageExt, ImgBlocksFree : String;
-  arrSec: array[0..19] of Byte;
-  t, x, Sector, SectorNext, SectorPos : Integer;
-  FileSizeTXT, FileNameTXT, FileTypeTXT, FileFullA, FilePathA, sp, FileArchType : String;
-begin
-  Form1.ATransaction.Active:=false;
-  Form1.ATransaction.StartTransaction;
-
-  // Write FilePath (for dropdown) and flag if archive
-  FileArchType := '';
-  If aArchiveImage.Contains('|') then
-   begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
-    FilePathA := ImageFileArray[0];    // location of archive
-    sp := ExtractFileExt(ImageFileArray[0]);
-    while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
-    FileArchType := sp;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
-   end;
-  If aArchiveImage.Contains('|') = false then
-   begin
-   FileFullA := aImageName;
-   FilePathA := aImageName;
-   Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
-   end;
-
-  // Images read - check if g64 or nib
-  If (Lowercase(ExtractFileExt(aImageName)) = '.g64') or (Lowercase(ExtractFileExt(aImageName)) = '.nib') then
-   begin
-    BA := LoadByteArray(aImageName);  // g64, nib
-    ImageSize := ByteArrayToHexString(BA);
-    BA := LoadByteArray(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64'))); // Vom d64
-    Init_ArrD64(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64')));
-   end
-  else
-   begin
-    BA := LoadByteArray(aImageName);
-    ImageSize := ByteArrayToHexString(BA);
-    Init_ArrD64(aImageName);
-   end;
-  ImageExt := ExtractFileExt(aImageName);
-
-  // Blocks free
-  ImgBlocksFree := '';
-  bf := 0; // blocksfree
-  sb := Copy(arrD64[18,0],9,280+1); // 35x8=280
-  a := 1;
-  for z := 1 to 35 do
-  begin
-    bf2 := Hex2Dec(Copy(sb, a, 2));  // a beginning position 9
-    If z <> 18 then bf := bf + bf2;
-    a := a + 8;
-   end;
-  ImgBlocksFree := ImgBlocksFree + IntToStr(bf);
-  // Blocks free ENDE
-
-  // Directory title floppy
-  sb := Copy(arrD64[18,0], 289, 32);
-  DiskNameTxt := '';
-  a := 1;
-  for z := 1 to 16 do
-    begin
-     case Copy(sb, a, 2) of
-      '00':
-         DiskNameTxt := DiskNameTxt + '@';
-      '27':
-         DiskNameTxt := DiskNameTxt + '''';    // Hochkomma !!
-      'A0':
-         DiskNameTxt := DiskNameTxt + '';      // Leer
-      else
-        DiskNameTxt := DiskNameTxt + HexToString(Copy(sb, a, 2));
-     end;
-    a := a + 2;
-    end;
-  // Directory title floppy ENDE
-
-  // Directory DiskID // 20
-  sb := Copy(arrD64[18,0], 325, 6);
-  DiskIDTxt := '';
-  a := 1;
-  for z := 1 to 3 do
-    begin
-     case Copy(sb, a, 2) of
-      '00':
-         DiskIDTxt := DiskIDTxt + '@';
-      '27':
-         DiskIDTxt := DiskIDTxt + '''';    // Hochkomma !!
-      'A0':
-         DiskIDTxt := DiskIDTxt + '';      // Leer
-      else
-        DiskIDTxt := DiskIDTxt + HexToString(Copy(sb, a, 2));
-     end;
-     a := a +2;
-    end;
-  // Directory DiskID // 20
-
-  // Directory DOSType // 2A
-  sb := Copy(arrD64[18,0], 331, 4);
-  DosTypeTxt := '';
-  a := 1;
-  for z := 1 to 2 do
-    begin
-     case Copy(sb, a, 2) of
-      '00':
-         DosTypeTxt := DosTypeTxt + '@';
-      '27':
-         DosTypeTxt := DosTypeTxt + '''';    // Hochkomma !!
-      'A0':
-         DosTypeTxt := DosTypeTxt + '';      // Leer
-      else
-        DosTypeTxt := DosTypeTxt + HexToString(Copy(sb, a, 2));
-     end;
-     a := a +2;
-    end;
-  // Directory DOSType // 2A
-
-  // Read T18/T19 into Array
-  t18 := '';
-  t19 := '';
-  for z := 0 to 18 do
-    begin
-     t18 := t18 + arrD64[18,z];
-    end;
-  for z := 0 to 18 do
-    begin
-     t19 := t19 + arrD64[19,z];
-    end;
-
-  if IniFluff.ReadBool('Options', 'IncludeT18T19', false) = true then
-   begin
-    Form1.AConnection.ExecuteDirect('insert into Tracks (idxTrks, T18, T19)'+
-    ' values('+
-    ' ''' + IntToStr(aImg) + ''','+  //IdxTrks;
-    ' ''' + t18 + ''','+             //Track 18
-    ' ''' + t19 + ''');');           //Track 19
-   end;
-
-  // Write table FileImage
-  if (length(ImageExt)>0) and (ImageExt[1]='.') then delete(ImageExt,1,1); // d64 ohne Punkt
-
-  try
-   Form1.AConnection.ExecuteDirect('insert into FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeIMG, FileDateTime, FileFull, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt)'+
-    ' values('+
-    ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
-    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-    ' '''','+                                                                                  //DateLast
-    ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
-    ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
-    ' ''' + ImageExt + ''','+                                                                  //FileNameExt
-    ' ''' + IntToStr(length(ImageSize) div 2) + ''','+                                         //FileSizeImg
-    ' ''' + DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))) + ''','+                //FileDateTime
-    ' ' + QuotedStr(FileFullA) + ','+                                                          //FileFull
-    ' ' + QuotedStr(FileArchType) + ','+                                                       //FileArchType
-    ' ' + QuotedStr(DiskNameTxt) + ','+                                                        //DiskName
-    ' ' + QuotedStr(DiskIDTxt) + ','+                                                          //DiskIDTxt
-    ' ' + QuotedStr(DosTypeTxt) + ','+                                                         //DOSTypeTxt
-    ' ''' + BoolToStr(false) + ''','+                                                          //Favourite
-    ' ''' + BoolToStr(false) + ''','+                                                          //Corrupt
-    ' '''','+                                                                                  //Tags
-    ' '''','+                                                                                  //Info
-    ' ''' + ImgBlocksFree + ''');');                                                           //BlocksFreeTxt
-  except
-   Form1.ATransaction.Active:=false;
-   result := false;
-   exit;
-   // Check if file exists and Sync is active
-   If (FileExists(aImageName) = true) then
-    begin
-     //showmessage(DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))));
-    end;
-   //Form1.AConnection.close;
-  end;
-
-  for z := 0 to 19 do // Init arrSec
-   begin
-    arrSec[z] := 0;
-   end;
-
-  aImageName := '';
-
-   // Write table DirectoryTXT
-   t := 0;
-   Sector := 1;
-   SectorNext := 0;
-   Repeat
-    SectorPos := 0;    // 18.01 1st position of sector 01
-    For x := 1 to 8 do // 8 entries/sector
-     Begin
-      // FileTypeTXT
-      sb := Copy(arrD64[18,Sector], SectorPos + 5, 2);    // e.g. ‘82’ = PRG
-      FileTypeTXT := ' ??? ';
-      if sb = '00' then FileTypeTXT := '*DEL ';
-      if sb = '01' then FileTypeTXT := '*SEQ ';
-      if sb = '02' then FileTypeTXT := '*PRG ';
-      if sb = '03' then FileTypeTXT := '*USR ';
-      if sb = '04' then FileTypeTXT := '*REL ';
-      if sb = '40' then FileTypeTXT := '*DEL<';
-      if sb = '41' then FileTypeTXT := '*SEQ<';
-      if sb = '42' then FileTypeTXT := '*PRG<';
-      if sb = '43' then FileTypeTXT := '*USR<';
-      if sb = '44' then FileTypeTXT := '*REL<';
-      if sb = '80' then FileTypeTXT := ' DEL ';
-      if sb = '81' then FileTypeTXT := ' SEQ ';
-      if sb = '82' then FileTypeTXT := ' PRG ';
-      if sb = '83' then FileTypeTXT := ' USR ';
-      if sb = '84' then FileTypeTXT := ' REL ';
-      if sb = 'C0' then FileTypeTXT := ' DEL<';
-      if sb = 'C1' then FileTypeTXT := ' SEQ<';
-      if sb = 'C2' then FileTypeTXT := ' PRG<';
-      if sb = 'C3' then FileTypeTXT := ' USR<';
-      if sb = 'C4' then FileTypeTXT := ' REL<';
-      // FileNameTXT
-      sb := Copy(arrD64[18,Sector], SectorPos + 11, 32);  // 16 character filename (in PETASCII, padded with $A0)
-      a := 1;
-      FileNameTXT := '';
-      for z := 1 to 16 do
-       begin
-          case Copy(sb, a, 2) of
-           '00':
-              FileNameTXT := FileNameTXT + '@';
-           '27':
-              FileNameTXT := FileNameTXT + '''';    // Hochkomma !!
-           'A0':
-              FileNameTXT := FileNameTXT + '';      // Leer
-           else
-             FileNameTXT := FileNameTXT + HexToString(Copy(sb, a, 2));
-          end;
-        a := a + 2;
-       end;
-
-       // FileSizeTXT (blocks)
-       sb := Copy(arrD64[18,Sector], SectorPos + 61, 4);   // 1E-1F: File size in sectors, low/high byte  order  ($1E+$1F*256).
-       a := 1;
-       b := 0;
-       for z := 1 to 2 do
-        begin
-         b := b + Hex2Dec(Copy(sb, a, 2));
-         a := a + 2;
-        end;
-       SectorPos := SectorPos + 64; // 20-3F: Second dir entry - 40-5F: Third dir entry
-       FileSizeTxt := IntToStr(b);
-       Form1.AConnection.ExecuteDirect('insert into DirectoryTXT (idxTxt, FileSizeTxt, FileNameTxt, FileTypeTxt)'+
-       ' values('+
-       ' ''' + IntToStr(aImg) + ''','+         //IdxTXT;
-       ' ''' + FileSizeTxt + ''','+            //FileSizeTxt
-       ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
-       ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
-      End;
-
-    // Next sector
-     Sector := Hex2Dec(Copy(arrD64[18,Sector], 3, 2)); // e.g. “04”
-     if Sector = 1 then t := 1; // Track 18  "01"  (normal 4)
-     if Sector = 255 then t := 1; // Track 18 "FF"
-     if (Sector > 18) AND (Sector <> 255) then t := 1; // bspw. "52"
-
-     // circular ausschließen
-     for z := 0 to 19 do
-      begin
-       if arrSec[z] <> 0 then
-        begin
-         if arrSec[z] = Sector then t := 1;
-        end;
-      end;
-     SectorNext := SectorNext + 1; // Max 18 Durchgänge dann t := 1 // Track 19 howto?
-     arrSec[SectorNext] := Sector;
-     if Hex2Dec(Copy(arrD64[18,1], 1, 2)) <> 18 then t := 1; // Not valid Track 18.1 <> "12 04" Hex12=Dec18
-     If SectorNext = 18 then t := 1;// max 18 per track
-    Until t = 1;
-
-  // Read T18/T19 into Array ENDE
-  Form1.ATransaction.Commit;
-  // Write dataset END
-  Form1.ATransaction.Active:=false;
-  result := true;
-end;
-
-function Database_Ins_D71(aArchiveImage: String; aImageName: String; aImg : Integer): boolean;
-  // aFileName      = Database (sl3)
-  // aImageName     = C:\...\filename.d71
-var
-  bf, bf2, a, b, z : Integer;
-  BA : TByteArr;
-  sb, t18, t19, t53 : String;
-  DiskNameTxt, DiskIDTxt, DosTypeTxt, ImageSize, ImageExt, ImgBlocksFree : String;
-  arrSec: array[0..19] of Byte;
-  t, x, Track, Sector, TrackNext, SectorNext, SectorPos, SectorCount, repeated : Integer;
-  FileSizeTXT, FileNameTXT, FileTypeTXT, FileFullA, FilePathA, sp, FileArchType : String;
-begin
-  Form1.ATransaction.Active:=false;
-  Form1.ATransaction.StartTransaction;
-
-  BA := LoadByteArray(aImageName);
-  ImageSize := ByteArrayToHexString(BA);
-  Init_ArrD71(aImageName);
-  ImageExt := ExtractFileExt(aImageName);
-
-  // Blocks free
-  ImgBlocksFree := '';
-  bf := 0; // blocksfree
-  sb := Copy(arrD71[18,0],9,280+1); // 35x8=280
-  a := 1;
-  for z := 1 to 35 do
-  begin
-    bf2 := Hex2Dec(Copy(sb, a, 2));  // a beginning position 9
-    If z <> 18 then bf := bf + bf2;
-    a := a + 8;
-   end;
-  a := 1;
-  sb := Copy(arrD71[18,0], 443, 70);
-  for z := 1 to 35 do
-    begin
-     bf2 := Hex2Dec(Copy(sb, a, 2));
-     bf := bf + bf2;
-     a := a + 2;
-    end;
-  ImgBlocksFree := ImgBlocksFree + IntToStr(bf);
-  // Blocks free ENDE
-
-  // Directory title floppy
-  sb := Copy(arrD71[18,0], 289, 32);
-  DiskNameTxt := '';
-  a := 1;
-  for z := 1 to 16 do
-    begin
-     case Copy(sb, a, 2) of
-      '00':
-         DiskNameTxt := DiskNameTxt + '@';
-      '27':
-         DiskNameTxt := DiskNameTxt + '''';    // Hochkomma !!
-      'A0':
-         DiskNameTxt := DiskNameTxt + '';      // Leer
-      else
-        DiskNameTxt := DiskNameTxt + HexToString(Copy(sb, a, 2));
-     end;
-    a := a + 2;
-    end;
-  // Directory title floppy ENDE
-
-  // Directory DiskID // 20
-  sb := Copy(arrD71[18,0], 325, 6);
-  DiskIDTxt := '';
-  a := 1;
-  for z := 1 to 3 do
-    begin
-     case Copy(sb, a, 2) of
-      '00':
-         DiskIDTxt := DiskIDTxt + '@';
-      '27':
-         DiskIDTxt := DiskIDTxt + '''';    // Hochkomma !!
-      'A0':
-         DiskIDTxt := DiskIDTxt + '';      // Leer
-      else
-        DiskIDTxt := DiskIDTxt + HexToString(Copy(sb, a, 2));
-     end;
-     a := a +2;
-    end;
-  // Directory DiskID // 20
-
-  // Directory DOSType // 2A
-  sb := Copy(arrD71[18,0], 331, 4);
-  DosTypeTxt := '';
-  a := 1;
-  for z := 1 to 2 do
-    begin
-     case Copy(sb, a, 2) of
-      '00':
-         DosTypeTxt := DosTypeTxt + '@';
-      '27':
-         DosTypeTxt := DosTypeTxt + '''';    // Hochkomma !!
-      'A0':
-         DosTypeTxt := DosTypeTxt + '';      // Leer
-      else
-        DosTypeTxt := DosTypeTxt + HexToString(Copy(sb, a, 2));
-     end;
-     a := a +2;
-    end;
-  // Directory DOSType // 2A
-
-  // Read T18/T19/T53 into Array
-  t18 := '';
-  t19 := '';
-  t53 := '';
-  for z := 0 to 18 do
-    begin
-     t18 := t18 + arrD71[18,z];
-    end;
-  for z := 0 to 18 do
-    begin
-     t19 := t19 + arrD71[19,z];
-    end;
-  for z := 0 to 18 do
-    begin
-     t53 := t53 + arrD71[53,z];
-    end;
-
-  if IniFluff.ReadBool('Options', 'IncludeT18T53', false) = true then
-   begin
-    Form1.AConnection.ExecuteDirect('insert into Tracks (idxTrks, T18, T53)'+
-    ' values('+
-    ' ''' + IntToStr(aImg) + ''','+  //IdxTrks;
-    ' ''' + t18 + ''','+             //Track 18
-    ' ''' + t53 + ''');');           //Track 53
-   end;
-
-  // Write FilePath (for dropdown) and flag if archive
-  FileArchType := '';
-  If aArchiveImage.Contains('|') then
-   begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
-    FilePathA := ImageFileArray[0];    // location of archive
-    sp := ExtractFileExt(ImageFileArray[0]);
-    while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
-    FileArchType := sp;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
-   end;
-  If aArchiveImage.Contains('|') = false then
-   begin
-    FileFullA := aImageName;
-    FilePathA := aImageName;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
-   end;
-
-  // Write table FileImage
-  if (length(ImageExt)>0) and (ImageExt[1]='.') then delete(ImageExt,1,1); // d71 ohne Punkt
-
-  try
-   Form1.AConnection.ExecuteDirect('insert into FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeIMG, FileDateTime, FileFull, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt)'+
-    ' values('+
-    ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
-    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-    ' '''','+                                                                                  //DateLast
-    ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
-    ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
-    ' ''' + ImageExt + ''','+                                                                  //FileNameExt
-    ' ''' + IntToStr(length(ImageSize) div 2) + ''','+                                         //FileSizeImg
-    ' ''' + DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))) + ''','+                //FileDateTime
-    ' ' + QuotedStr(FileFullA) + ','+                                                          //FileFull
-    ' ' + QuotedStr(FileArchType) + ','+                                                       //FileArchType
-    ' ' + QuotedStr(DiskNameTxt) + ','+                                                        //DiskName
-    ' ' + QuotedStr(DiskIDTxt) + ','+                                                          //DiskIDTxt
-    ' ' + QuotedStr(DosTypeTxt) + ','+                                                         //DOSTypeTxt
-    ' ''' + BoolToStr(false) + ''','+                                                          //Favourite
-    ' ''' + BoolToStr(false) + ''','+                                                          //Corrupt
-    ' '''','+                                                                                  //Tags
-    ' '''','+                                                                                  //Info
-    ' ''' + ImgBlocksFree + ''');');                                                           //BlocksFreeTxt
-  except
-   Form1.ATransaction.Active:=false;
-   result := false;
-   exit;
-   // Check if file exists and Sync is active
-   If (FileExists(aImageName) = true) then
-    begin
-     //showmessage(DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))));
-    end;
-  end;
-
-  for z := 0 to 19 do // Init arrSec
-   begin
-    arrSec[z] := 0;
-   end;
-
-  aImageName := '';
-
-   // Write table DirectoryTXT
-   t := 0;       // Repeat until t = 1
-   track := 18;
-   sector := 1;
-   SectorCount := 1;
-   repeated := 0;
-   arrSec[repeated] := sector;   // 0=1
-   Repeat  // #################################################################
-    SectorPos := 0;    // 18.01 1st position of sector 01
-    if (Hex2Dec(Copy(arrD71[track,sector], 3, 2)) > 18) AND (Hex2Dec(Copy(arrD71[track,sector], 3, 2)) <> 255) then t := 1; // bspw. "52"
-    For x := 1 to 8 do // 8 entries/sector
-     Begin
-      // FileType
-      sb := Copy(arrD71[track,Sector], SectorPos + 5, 2);    // e.g. ‘82’ = PRG
-      FileTypeTXT := ' ??? ';
-      if sb = '00' then FileTypeTXT := '*DEL ';
-      if sb = '01' then FileTypeTXT := '*SEQ ';
-      if sb = '02' then FileTypeTXT := '*PRG ';
-      if sb = '03' then FileTypeTXT := '*USR ';
-      if sb = '04' then FileTypeTXT := '*REL ';
-      if sb = '40' then FileTypeTXT := '*DEL<';
-      if sb = '41' then FileTypeTXT := '*SEQ<';
-      if sb = '42' then FileTypeTXT := '*PRG<';
-      if sb = '43' then FileTypeTXT := '*USR<';
-      if sb = '44' then FileTypeTXT := '*REL<';
-      if sb = '80' then FileTypeTXT := ' DEL ';
-      if sb = '81' then FileTypeTXT := ' SEQ ';
-      if sb = '82' then FileTypeTXT := ' PRG ';
-      if sb = '83' then FileTypeTXT := ' USR ';
-      if sb = '84' then FileTypeTXT := ' REL ';
-      if sb = 'C0' then FileTypeTXT := ' DEL<';
-      if sb = 'C1' then FileTypeTXT := ' SEQ<';
-      if sb = 'C2' then FileTypeTXT := ' PRG<';
-      if sb = 'C3' then FileTypeTXT := ' USR<';
-      if sb = 'C4' then FileTypeTXT := ' REL<';
-      // FileNameTXT
-      sb := Copy(arrD71[track,Sector], SectorPos + 11, 32);  // 16 character filename (in PETASCII, padded with $A0)
-      a := 1;
-      FileNameTXT := '';
-      for z := 1 to 16 do
-       begin
-          case Copy(sb, a, 2) of
-           '00':
-              FileNameTXT := FileNameTXT + '@';
-           '27':
-              FileNameTXT := FileNameTXT + '''';    // Hochkomma !!
-           'A0':
-              FileNameTXT := FileNameTXT + '';      // Leer
-           else
-             FileNameTXT := FileNameTXT + HexToString(Copy(sb, a, 2));
-          end;
-        a := a + 2;
-       end;
-
-       // FileSizeTXT (blocks)
-       sb := Copy(arrD71[track,Sector], SectorPos + 61, 4);   // 1E-1F: File size in sectors, low/high byte  order  ($1E+$1F*256).
-       a := 1;
-       b := 0;
-       for z := 1 to 2 do
-        begin
-         b := b + Hex2Dec(Copy(sb, a, 2));
-         a := a + 2;
-        end;
-       SectorPos := SectorPos + 64; // 20-3F: Second dir entry - 40-5F: Third dir entry
-       FileSizeTxt := IntToStr(b);
-
-       Form1.AConnection.ExecuteDirect('insert into DirectoryTXT (idxTxt, FileSizeTxt, FileNameTxt, FileTypeTxt)'+
-       ' values('+
-       ' ''' + IntToStr(aImg) + ''','+         //IdxTXT;
-       ' ''' + FileSizeTxt + ''','+            //FileSizeTxt
-       ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
-       ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
-      End;
-
-     // Next sector
-     TrackNext := Hex2Dec(Copy(arrD71[track,sector], 1, 2)); // 18
-     SectorNext := Hex2Dec(Copy(arrD71[track,sector], 3, 2)); // e.g. “04”
-     if Hex2Dec(Copy(arrD71[18,1], 1, 2)) <> 18 then t := 1; // Not valid Track 18.1 <> "12 04" Hex12=Dec18
-     // circular ausschließen
-     if track = 18 then
-      begin
-       If repeated = 18 then t := 1; // Max 18 Durchgänge im track 18 dann t := 1 // Track 19 howto?
-       for z := 0 to 19 do
-        begin
-         if arrSec[z] <> 0 then
-          begin
-           if arrSec[z] = SectorNext then t := 1;
-          end;
-        end;
-      end;
-
-    repeated := repeated + 1;
-    arrSec[repeated] := SectorNext;  // 1 = e.g. 4
-    Track := TrackNext;   // for repeat
-    Sector := SectorNext; // for repeat
-    SectorCount := SectorCount + 1;  // check if extended
-    if TrackNext = 00 then t := 1;   // 00
-    if SectorNext = 255 then t := 1; // FF
-  Until t = 1;
-
-  Form1.ATransaction.Commit;
-  Form1.ATransaction.Active:=false;
-  result := true;
-end;
-
-Function Database_Ins_D81(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
-var
-  BA : TByteArr;
-  sb, t40, ImageSize, FileFullA, FilePathA, sp, FileArchType : String;
-  blocksfree, DiskNameTxt, DiskIDTxt, DosTypeTxt, ImageExt, FileSizeTxt, FileNameTXT, FileTypeTXT : String;
-  a, b, z, bf, bf2, t, x, track, sector, sectorpos, TrackNext, SectorNext : Integer;
-begin
-  Form1.ATransaction.Active:=false;
-  Form1.ATransaction.StartTransaction;
-
-  Init_ArrD81(aImageName);   // Image to array
-  BA := LoadByteArray(aImageName);
-  ImageSize := ByteArrayToHexString(BA);
-  ImageExt := ExtractFileExt(aImageName);
-
-  // Blocks free
-  bf := 0;
-  bf2 := 0;
-  a := 1;
-  for z := 1 to 39 do
-   begin
-    bf2 := Hex2Dec(Copy(arrD81[40,1],a+32,2)); // 40.1 + 32 Stellen, da 10-15 BAM entry for track 1
-    bf := bf + bf2;
-    a := a + 12;
-   end;
-  a := 1;
-  for z := 41 to 80 do
-   begin
-    bf2 := Hex2Dec(Copy(arrD81[40,2],a+32,2)); // 40.2 + 32 Stellen, da 10-15 BAM entry for track 1
-    bf := bf + bf2;
-    a := a + 12;
-   end;
-   blocksfree := IntToStr(bf);
-   bf := 0;
-   bf2 := 0;
-   // Blocks free ENDE
-
-  // Directory title floppy
-  a := 1;
-  sb := Copy(arrD81[40,0],a+8,32);
-  DiskNameTxt := '';
-  a := 1;
-  for z := 1 to 16 do
-    begin
-     case Copy(sb, a, 2) of
-      '00':
-         DiskNameTxt := DiskNameTxt + '@';
-      '27':
-         DiskNameTxt := DiskNameTxt + '''';    // Hochkomma !!
-      'A0':
-         DiskNameTxt := DiskNameTxt + '';      // Leer
-      else
-        DiskNameTxt := DiskNameTxt + HexToString(Copy(sb, a, 2));
-     end;
-    a := a + 2;
-    end;
-  // Directory title floppy ENDE
-
-  // Directory DiskID
-  sb := Copy(arrD81[40,0],1+36,6);
-  DiskIDTxt := '';
-  a := 1;
-  for z := 1 to 3 do
-    begin
-     case Copy(sb, a, 2) of
-      '00':
-         DiskIDTxt := DiskIDTxt + '@';
-      '27':
-         DiskIDTxt := DiskIDTxt + '''';    // Hochkomma !!
-      'A0':
-         DiskIDTxt := DiskIDTxt + '';      // Leer
-      else
-         DiskIDTxt := DiskIDTxt + HexToString(Copy(sb, a, 2));
-     end;
-     a := a + 2;
-    end;
-  // Directory DiskID
-
-  // Directory DOSType
-  sb := Copy(arrD81[40,0],1+42,4);
-  DosTypeTxt := '';
-  a := 1;
-  for z := 1 to 2 do
-    begin
-     case Copy(sb, a, 2) of
-      '00':
-         DosTypeTxt := DosTypeTxt + '@';
-      '27':
-         DosTypeTxt := DosTypeTxt + '''';    // Hochkomma !!
-      'A0':
-         DosTypeTxt := DosTypeTxt + '';      // Leer
-      else
-        DosTypeTxt := DosTypeTxt + HexToString(Copy(sb, a, 2));
-     end;
-     a := a + 2;
-    end;
-
-  // Read T40 into Array
-  if IniFluff.ReadBool('Options', 'IncludeT40', false) = true then
-   begin
-    t40 := '';
-    for z := 0 to 39 do
-      begin
-       t40 := t40 + Copy(arrD81[40,z],1,512);
-      end;
-    Form1.AConnection.ExecuteDirect('insert into Tracks (idxTrks, T40)'+
-    ' values('+
-    ' ''' + IntToStr(aImg) + ''','+  //IdxTrks;
-    ' ''' + t40 + ''');');           //Track 40
-    t40 := '';
-   end;
-
-  // Write FilePath (for dropdown) and flag if archive
-  FileArchType := '';
-  If aArchiveImage.Contains('|') then
-   begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
-    FilePathA := ImageFileArray[0];    // location of archive
-    sp := ExtractFileExt(ImageFileArray[0]);
-    while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
-    FileArchType := sp;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
-   end;
-  If aArchiveImage.Contains('|') = false then
-   begin
-    FileFullA := aImageName;
-    FilePathA := aImageName;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
-   end;
-
-  // Write table FileImage
-  if (length(ImageExt)>0) and (ImageExt[1]='.') then delete(ImageExt,1,1); // d81 ohne Punkt
-
-  // --------------------------
-  Try
-  Form1.AConnection.ExecuteDirect('insert into FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeIMG, FileDateTime, FileFull, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt)'+
-   ' values('+
-   ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
-   ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-   ' '''','+                                                                                  //DateLast
-   ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
-   ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
-   ' ''' + ImageExt + ''','+                                                                  //FileNameExt
-   ' ''' + IntToStr(length(ImageSize) div 2) + ''','+                                         //FileSizeImg
-   ' ''' + DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))) + ''','+                //FileDateTime
-   ' ' + QuotedStr(FileFullA) + ','+                                                          //FileFull
-   ' ' + QuotedStr(FileArchType) + ','+                                                       //FileArchType
-   ' ' + QuotedStr(DiskNameTxt) + ','+                                                        //DiskName
-   ' ' + QuotedStr(DiskIDTxt) + ','+                                                          //DiskIDTxt
-   ' ' + QuotedStr(DosTypeTxt) + ','+                                                         //DOSTypeTxt
-   ' ''' + BoolToStr(false) + ''','+                                                          //Favourite
-   ' ''' + BoolToStr(false) + ''','+                                                          //Corrupt
-   ' '''','+                                                                                  //Tags
-   ' '''','+                                                                                  //Info
-   ' ''' + blocksfree + ''');');                                                              //BlocksFreeTxt
-  except
-   Form1.ATransaction.Active:=false;
-   result := false;
-   exit;
-  end;
-
-  // Write table DirectoryTXT
-  t := 0;
-  track := 40;
-  Sector := 3; // Hex2Dec(Copy(sectors_t40[1], 3, 2));  // bspw. "01" - “12 01”
-  SectorNext := 0;
-  Repeat
-   SectorPos := 0;    // 40.01 1st position of sector 01
-   For x := 1 to 8 do // 8 entries/sector
-    Begin
-     // FileTypeTXT
-     sb := Copy(arrD81[track,sector], SectorPos + 5, 2);    // e.g. ‘82’ = PRG
-     FileTypeTXT := ' ??? ';
-     if sb = '00' then FileTypeTXT := '*DEL ';
-     if sb = '01' then FileTypeTXT := '*SEQ ';
-     if sb = '02' then FileTypeTXT := '*PRG ';
-     if sb = '03' then FileTypeTXT := '*USR ';
-     if sb = '04' then FileTypeTXT := '*REL ';
-     if sb = '40' then FileTypeTXT := '*DEL<';
-     if sb = '41' then FileTypeTXT := '*SEQ<';
-     if sb = '42' then FileTypeTXT := '*PRG<';
-     if sb = '43' then FileTypeTXT := '*USR<';
-     if sb = '44' then FileTypeTXT := '*REL<';
-     if sb = '80' then FileTypeTXT := ' DEL ';
-     if sb = '81' then FileTypeTXT := ' SEQ ';
-     if sb = '82' then FileTypeTXT := ' PRG ';
-     if sb = '83' then FileTypeTXT := ' USR ';
-     if sb = '84' then FileTypeTXT := ' REL ';
-     if sb = 'C0' then FileTypeTXT := ' DEL<';
-     if sb = 'C1' then FileTypeTXT := ' SEQ<';
-     if sb = 'C2' then FileTypeTXT := ' PRG<';
-     if sb = 'C3' then FileTypeTXT := ' USR<';
-     if sb = 'C4' then FileTypeTXT := ' REL<';
-     // FileNameTXT
-     sb := Copy(arrD81[track,sector], SectorPos + 11, 32);  // 16 character filename (in PETASCII, padded with $A0)
-     a := 1;
-     FileNameTXT := '';
-     for z := 1 to 16 do
-      begin
-         case Copy(sb, a, 2) of
-          '00':
-             FileNameTXT := FileNameTXT + '@';
-          '27':
-             FileNameTXT := FileNameTXT + '''';    // Hochkomma !!
-          'A0':
-             FileNameTXT := FileNameTXT + '';      // Leer
-          else
-            FileNameTXT := FileNameTXT + HexToString(Copy(sb, a, 2));
-         end;
-       a := a + 2;
-      end;
-      // FileSizeTXT (blocks)
-      sb := Copy(arrD81[track,sector], SectorPos + 61, 4);   // 1E-1F: File size in sectors, low/high byte  order  ($1E+$1F*256).
-      a := 1;
-      b := 0;
-      for z := 1 to 2 do
-       begin
-        b := b + Hex2Dec(Copy(sb, a, 2));
-        a := a + 2;
-       end;
-      SectorPos := SectorPos + 64; // 20-3F: Second dir entry - 40-5F: Third dir entry
-      FileSizeTxt := IntToStr(b);
-      Form1.AConnection.ExecuteDirect('insert into DirectoryTXT (idxTxt, FileSizeTxt, FileNameTxt, FileTypeTxt)'+
-      ' values('+
-      ' ''' + IntToStr(aImg) + ''','+         //IdxTXT;
-      ' ''' + FileSizeTxt + ''','+            //FileSizeTxt
-      ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
-      ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
-     End;
-    // Next track/sector
-    TrackNext := Hex2Dec(Copy(arrD81[track,sector], 1, 2)); // 40
-    SectorNext := Hex2Dec(Copy(arrD81[track,sector], 3, 2)); // e.g. “04”
-    Track := TrackNext;
-    Sector := SectorNext;
-    if Track = 0 then t := 1;
-    if Sector = 255 then t := 1;  // FF
-   Until t = 1;
-  // Read T40 into Array ENDE
-  Form1.ATransaction.Commit;
-  // Write dataset END
-  Form1.ATransaction.Active:=false;
-  result := true;
-end;
-
-Function Database_Ins_PRG(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
-var
-  BA : TByteArr;
-  s, Img_FileExt : String;
-  fstream : TFileStream;
-  blocksfree, DiskNameTxt, DiskIDTxt, DosTypeTxt : String;
-  FileSizeTXT, FileNameTXT, FileTypeTXT, FileFullA, FilePathA, sp, FileArchType : String;
-begin
-  Form1.ATransaction.Active:=false;
-  Form1.ATransaction.StartTransaction;
-
-  // PRG
-  BA := LoadByteArray('"' + aImageName + '"');
-  s := ByteArrayToHexString(BA);
-  Img_FileExt := ExtractFileExt(aImageName);
-  if (length(Img_FileExt)>0) and (Img_FileExt[1]='.') then delete(Img_FileExt,1,1); // d64 ohne Punkt
-  DiskNameTxt := '';
-  DiskIDTxt := '';
-  DosTypeTxt := '';
-  blocksfree := IntToStr(length(s) div 2);
-
-  // Write FilePath (for dropdown) and flag if archive
-  FileArchType := '';
-  If aArchiveImage.Contains('|') then
-   begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
-    FilePathA := ImageFileArray[0];    // location of archive
-    sp := ExtractFileExt(ImageFileArray[0]);
-    while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
-    FileArchType := sp;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
-   end;
-  If aArchiveImage.Contains('|') = false then
-   begin
-    FileFullA := aImageName;
-    FilePathA := aImageName;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
-   end;
-
-  Try
-   Form1.AConnection.ExecuteDirect('insert into FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeIMG, FileDateTime, FileFull, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt)'+
-    ' values('+
-    ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
-    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-    ' '''','+                                                                                  //DateLast
-    ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
-    ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
-    ' ''' + Img_FileExt + ''','+                                                               //FileNameExt
-    ' ''' + IntToStr(FileSize(aImageName)) + ''','+                                            //FileSizeImg
-    ' ''' + DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))) + ''','+                //FileDateTime
-    ' ' + QuotedStr(FileFullA) + ','+                                                          //FileFull
-    ' ' + QuotedStr(FileArchType) + ','+                                                       //FileArchType
-    ' ' + QuotedStr(DiskNameTxt) + ','+                                                        //DiskName
-    ' ' + QuotedStr(DiskIDTxt) + ','+                                                          //DiskIDTxt
-    ' ' + QuotedStr(DosTypeTxt) + ','+                                                         //DOSTypeTxt
-    ' ''' + BoolToStr(false) + ''','+                                                          //Favourite
-    ' ''' + BoolToStr(false) + ''','+                                                          //Corrupt
-    ' '''','+                                                                                  //Tags
-    ' '''','+                                                                                  //Info
-    ' ''' + blocksfree + ''');');                                                              //BlocksFreeTxt
-  except
-   Form1.ATransaction.Active:=false;
-   result := false;
-   exit;
-  end;
-
-  fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
-  FileSizeTxt := IntToStr(fstream.Size div 252);
-  FileNameTXT := ExtractFileName(aImageName);
-  FileTypeTXT := 'PRG';
-  Form1.AConnection.ExecuteDirect('insert into DirectoryTXT (idxTxt, FileSizeTxt, FileNameTxt, FileTypeTxt)'+
-  ' values('+
-  ' ''' + IntToStr(aImg) + ''','+         //idxTxt (Index manuell)
-  ' ''' + FileSizeTxt + ''','+            //FileSizeTxt
-  ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
-  ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
-  fstream.Free;
-  Form1.ATransaction.Commit;
-  Form1.ATransaction.Active:=false;
-  result := true;
-end;
-
-Function Database_Ins_TAP(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
-var
-  BA : TByteArr;
-  s, Img_FileExt : String;
-  fstream : TFileStream;
-  blocksfree, DiskNameTxt, DiskIDTxt, DosTypeTxt : String;
-  FileSizeTXT, FileNameTXT, FileTypeTXT, FileFullA, FilePathA, sp, FileArchType : String;
-begin
-  Form1.ATransaction.Active:=false;
-  Form1.ATransaction.StartTransaction;
-
-  // TAP
-  BA := LoadByteArray('"' + aImageName + '"');
-  s := ByteArrayToHexString(BA);
-  Img_FileExt := ExtractFileExt(aImageName);
-  if (length(Img_FileExt)>0) and (Img_FileExt[1]='.') then delete(Img_FileExt,1,1); // d64 ohne Punkt
-  DiskNameTxt := '';
-  DiskIDTxt := '';
-  DosTypeTxt := '';
-  blocksfree := IntToStr(length(s) div 2);
-
-  // Write FilePath (for dropdown) and flag if archive
-  FileArchType := '';
-  If aArchiveImage.Contains('|') then
-   begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
-    FilePathA := ImageFileArray[0];    // location of archive
-    sp := ExtractFileExt(ImageFileArray[0]);
-    while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
-    FileArchType := sp;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
-   end;
-  If aArchiveImage.Contains('|') = false then
-   begin
-    FileFullA := aImageName;
-    FilePathA := aImageName;
-    Form1.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
-      ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
-   end;
-
-  Try
-   Form1.AConnection.ExecuteDirect('insert into FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeIMG, FileDateTime, FileFull, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt)'+
-    ' values('+
-    ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
-    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
-        ' '''','+                                                                              //DateLast
-    ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
-    ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
-    ' ''' + Img_FileExt + ''','+                                                               //FileNameExt
-    ' ''' + IntToStr(FileSize(aImageName)) + ''','+                                            //FileSizeImg
-    ' ''' + DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))) + ''','+                //FileDateTime
-    ' ' + QuotedStr(FileFullA) + ','+                                                          //FileFull
-    ' ' + QuotedStr(FileArchType) + ','+                                                       //FileArchType
-    ' ' + QuotedStr(DiskNameTxt) + ','+                                                        //DiskName
-    ' ' + QuotedStr(DiskIDTxt) + ','+                                                          //DiskIDTxt
-    ' ' + QuotedStr(DosTypeTxt) + ','+                                                         //DOSTypeTxt
-    ' ''' + BoolToStr(false) + ''','+                                                          //Favourite
-    ' ''' + BoolToStr(false) + ''','+                                                          //Corrupt
-    ' '''','+                                                                                  //Tags
-    ' '''','+                                                                                  //Info
-    ' ''' + blocksfree + ''');');                                                              //BlocksFreeTxt
-  except
-   Form1.ATransaction.Active:=false;
-   result := false;
-   exit;
-  end;
-
-  fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
-  FileSizeTxt := IntToStr(fstream.Size div 252);
-  FileNameTXT := ExtractFileName(aImageName);
-  FileTypeTXT := 'TAP';
-  Form1.AConnection.ExecuteDirect('insert into DirectoryTXT (idxTxt, FileSizeTxt, FileNameTxt, FileTypeTxt)'+
-  ' values('+
-  ' ''' + IntToStr(aImg) + ''','+         //idxTxt (Index manuell)
-  ' ''' + FileSizeTxt + ''','+            //FileSizeTxt
-  ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
-  ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
-  fstream.Free;
-  Form1.ATransaction.Commit;
-  Form1.ATransaction.Active:=false;
-  result := true;
-end;
-
 procedure TfrmImport.Import;
 var
   fstream : TFileStream;
   filesizeImg, ImageFile, ImageFileA : String;
   ImgCount, img, dbMod : Integer;
+  msgImp01, msgImp02, msgImp03, msgImp04, msgImp05, msgImp06  : String;
 begin
-  Form1.cbDBFilePath.ItemIndex:=0;
-  Form1.cbDBFileNameExt.ItemIndex:=0;
-  Form1.DBFilter;
-  Form1.LstBxDirectoryPETSCII.Clear;
-  Form1.LstBAM.Clear;
-  Form1.lstBoxSectors.Clear;
-  Form1.lstBoxPETSCII.Clear;
-  Form1.LstBxDirectoryTXT.Clear;
-  Form1.MemoBAMHint.Clear;
-  Form1.StatusBar1.Panels[1].Text:= 'Importing...';
-  Form1.Statusbar1.Panels[2].Text := '';
-  Form1.Statusbar1.Panels[3].Text := '';
-  Form1.Statusbar1.Panels[4].Text := '';
-  Form1.Statusbar1.Refresh;
+
+  // Lng
+  msgImp01 := IniLng.ReadString('MSG', 'msgImp01', 'Importing...');
+  msgImp02 := IniLng.ReadString('MSG', 'msgImp02', 'No import (already exists):');
+  msgImp03 := IniLng.ReadString('MSG', 'msgImp03', 'No import (filesize = "0"):');
+  msgImp04 := IniLng.ReadString('MSG', 'msgImp04', 'Import "G64" failed (directory sector not found):');
+  msgImp05 := IniLng.ReadString('MSG', 'msgImp05', 'Import "NIB" failed (directory sector not found):');
+  msgImp06 := IniLng.ReadString('MSG', 'msgImp06', 'Import failed:');
+
+
+  frmMain.cbDBFilePath.ItemIndex:=0;
+  frmMain.cbDBFileNameExt.ItemIndex:=0;
+  frmMain.DBFilter;
+  frmMain.LstBxDirectoryPETSCII.Clear;
+  frmMain.LstBAM.Clear;
+  frmMain.lstBoxSectors.Clear;
+  frmMain.lstBoxPETSCII.Clear;
+  frmMain.LstBxDirectoryTXT.Clear;
+  frmMain.MemoBAMHint.Clear;
+  frmMain.StatusBar1.Panels[1].Text:= msgImp01;
+  frmMain.Statusbar1.Panels[2].Text := '';
+  frmMain.Statusbar1.Panels[3].Text := '';
+  frmMain.Statusbar1.Panels[4].Text := '';
+  frmMain.Statusbar1.Refresh;
 
   btImport.Enabled := false;
   memoImport.Clear;
@@ -1179,9 +135,9 @@ begin
  // Images
  if str_AllImages.Count > 0 then
   begin
-   Form1.SQLQueryDir.Last;
-   ImgCount := Form1.SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates
-   Form1.SQLQueryDir.Active:=false;
+   frmMain.SQLQueryDir.Last;
+   ImgCount := frmMain.SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates
+   frmMain.SQLQueryDir.Active:=false;
    // accept only valid files to stringlist str_Images
    for img := 0 to str_AllImages.count-1 do
     begin
@@ -1213,7 +169,7 @@ begin
            ImgCount := ImgCount - 1;
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+           memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
           end
         else
           begin
@@ -1238,7 +194,7 @@ begin
             ImgCount := ImgCount - 1;
             ImgCountErr := ImgCountErr + 1;
             lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-            memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+            memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
            end
          else
            begin
@@ -1265,7 +221,7 @@ begin
            ImgCount := ImgCount - 1;
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('No import (filesize = "0"): ' + ImageFile);
+           memoImportErr.Lines.Add(msgImp03 + ' ' + ImageFile);
           end
          else
           begin
@@ -1274,7 +230,7 @@ begin
               ImgCount := ImgCount - 1;
               ImgCountErr := ImgCountErr + 1;
               lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-              memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+              memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
              end
            else
              begin
@@ -1301,7 +257,7 @@ begin
           ImgCount := ImgCount - 1;
           ImgCountErr := ImgCountErr + 1;
           lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-          memoImportErr.Lines.Add('No import (filesize = "0"): ' + ImageFile);
+          memoImportErr.Lines.Add(msgImp03 + ' ' + ImageFile);
          end
         else
          begin
@@ -1310,7 +266,7 @@ begin
             ImgCount := ImgCount - 1;
             ImgCountErr := ImgCountErr + 1;
             lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-            memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+            memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
            end
          else
            begin
@@ -1337,7 +293,7 @@ begin
           ImgCount := ImgCount - 1;
           ImgCountErr := ImgCountErr + 1;
           lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-          memoImportErr.Lines.Add('No import (filesize = "0"): ' + ImageFile);
+          memoImportErr.Lines.Add(msgImp03 + ' ' + ImageFile);
          end
         else
          begin
@@ -1346,7 +302,7 @@ begin
            ImgCount := ImgCount - 1;
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+           memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
           end
          else
            begin
@@ -1367,13 +323,13 @@ begin
          btClose.Enabled:=false;
          ImgCount := ImgCount + 1;
          // Convert
-         Form1.Convert_G64NIB(ImageFile);
+         frmMain.Convert_G64NIB(ImageFile);
          // Checking if convert failed
-         If filesize(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
+         If filesize(IncludeTrailingPathDelimiter(tmpDir) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
           begin
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('Import "g64" failed (directory sector not found): ' + ImageFile);
+           memoImportErr.Lines.Add(msgImp04 + ' ' + ImageFile);
           end  // end checking if convert failed
          else
           begin
@@ -1382,7 +338,7 @@ begin
              ImgCount := ImgCount - 1;
              ImgCountErr := ImgCountErr + 1;
              lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-             memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+             memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
             end
            else
             begin
@@ -1392,7 +348,7 @@ begin
              memoImport.Lines.Add(ImageFile);
             end;
            end;
-          DeleteFileUTF8(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
+          DeleteFileUTF8(IncludeTrailingPathDelimiter(tmpDir) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
         end;
       end;  // Ende g64
 
@@ -1404,13 +360,13 @@ begin
          btClose.Enabled:=false;
          ImgCount := ImgCount + 1;
          // Convert
-         Form1.Convert_G64NIB(ImageFile);
+         frmMain.Convert_G64NIB(ImageFile);
          // Checking if convert failed
-         If filesize(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
+         If filesize(IncludeTrailingPathDelimiter(tmpDir) + ChangeFileExt(ExtractFileName(ImageFile),'.d64')) = 0 then
           begin
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add('Import "nib" failed (directory sector not found): ' + ImageFile);
+           memoImportErr.Lines.Add(msgImp05 + ' ' + ImageFile);
           end  // end checking if convert failed
          else
           begin
@@ -1419,7 +375,7 @@ begin
              ImgCount := ImgCount - 1;
              ImgCountErr := ImgCountErr + 1;
              lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-             memoImportErr.Lines.Add('No import (already exists): ' + ImageFile);
+             memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
             end
            else
             begin
@@ -1429,7 +385,7 @@ begin
              memoImport.Lines.Add(ImageFile);
             end;
            end;
-          DeleteFileUTF8(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
+          DeleteFileUTF8(IncludeTrailingPathDelimiter(tmpDir) + ChangeFileExt(ExtractFileName(ImageFile),'.d64'));
         end;
       end;  // Ende nib
 
@@ -1440,23 +396,23 @@ begin
        if (ImgAdd mod dbMod = 0) then
         begin
          If Dev_Mode = true then Showmessage('[Dev_Mode] - DBModula: ' + IntToStr(ImgAdd));
-         if Form1.ATransaction.Active then
+         if frmMain.ATransaction.Active then
           begin
-           Form1.ATransaction.Commit;
+           frmMain.ATransaction.Commit;
           end;
         end;
       end;
      except
-      memoImportErr.Lines.Add('Import failed: ' + ImageFile);
+      memoImportErr.Lines.Add(msgImp06 + ' ' + ImageFile);
      end; // accept only valid files to import
 
     Application.ProcessMessages;
     // Cancel
     if terminate = true then
      begin
-      if Form1.ATransaction.Active then
+      if frmMain.ATransaction.Active then
        begin
-        Form1.ATransaction.Commit;
+        frmMain.ATransaction.Commit;
        end;
       exit;
      end;
@@ -1466,42 +422,53 @@ end;
 
 procedure TfrmImport.btCloseClick(Sender: TObject);
 begin
- Form1.DBFilter;
+ frmMain.DBFilter;
  close;
 end;
 
 procedure TfrmImport.btImportClick(Sender: TObject);
 var
   answer, img : integer;
-  dirTmp : String;
+  msgImp07, msgImp08, msgImp09, msgImp10, msgImp11, msgImp12, msgImp13 : String;
 begin
+
+ // Lng
+ msgImp07 := IniLng.ReadString('MSG', 'msgImp07', 'Directory not found!');
+ msgImp08 := IniLng.ReadString('MSG', 'msgImp08', 'Temporary directory not found! Please check settings...');
+ msgImp09 := IniLng.ReadString('MSG', 'msgImp09', 'G64 cannot be imported because NibConv not found! Please check settings first or deselect G64...');
+ msgImp10 := IniLng.ReadString('MSG', 'msgImp10', 'NIB cannot be imported because NibConv not found! Please check settings first or deselect NIB...');
+ msgImp11 := IniLng.ReadString('MSG', 'msgImp11', 'Files found in archive');
+ msgImp12 := IniLng.ReadString('MSG', 'msgImp12', 'Unable to unpack');
+ msgImp13 := IniLng.ReadString('MSG', 'msgImp13', 'Clearing...');
+
  // Check if import directory exists
  if (DirImport.Directory = '') or (DirectoryExists(DirImport.Directory) = false) then
   begin
-   answer := MessageDlg('Directory not found!',mtWarning, [mbOK], 0);
+   answer := MessageDlg(msgImp07,mtWarning, [mbOK], 0);
     if answer = mrOk then
      begin
       btClose.Enabled:=true;
       exit;
      end;
   end;
+
  // Check if temp directory exists
- dirTmp := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
- if (dirTmp = '') or (DirectoryExists(dirTmp) = false) then
+ if (tmpDir = '') or (DirectoryExists(tmpDir) = false) then
  begin
-  answer := MessageDlg('Temporary directory not found! Please check settings...',mtWarning, [mbOK], 0);
+  answer := MessageDlg(msgImp08, mtWarning, [mbOK], 0);
    if answer = mrOk then
     begin
      btClose.Enabled:=true;
      exit;
     end;
  end;
+
  //Check if nibtools available?
  If cbImgG64.Checked = true then
   begin
    If FileExists(IniFluff.ReadString('NibConv', 'Location', '')) = false then
     begin
-     answer := MessageDlg('G64 cannot be imported because NibConv not found! Please check settings first or deselect G64...',mtWarning, [mbOK], 0);
+     answer := MessageDlg(msgImp09, mtWarning, [mbOK], 0);
       if answer = mrOk then
        begin
         btClose.Enabled:=true;
@@ -1515,7 +482,7 @@ begin
   begin
    If FileExists(IniFluff.ReadString('NibConv', 'Location', '')) = false then
     begin
-     answer := MessageDlg('NIB cannot be imported because NibConv not found! Please check settings first or deselect NIB...',mtWarning, [mbOK], 0);
+     answer := MessageDlg(msgImp10, mtWarning, [mbOK], 0);
       if answer = mrOk then
        begin
         btClose.Enabled:=true;
@@ -1530,8 +497,8 @@ begin
  btCancel.Enabled:=true;
  btClose.Enabled:=false;
  memoProgressBar.Position := 1;
- Form1.DBGridDir.DataSource := nil;
- Form1.PageControl2.ActivePage.Visible:=false;
+ frmMain.DBGridDir.DataSource := nil;
+ frmMain.PC2.ActivePage.Visible:=false;
 
  // Import images (D64...)
  if str_AllImages.Count > 0 then
@@ -1544,69 +511,42 @@ begin
  // Import archives (ZIP)
  if str_AllImagesInArchive.Count > 0 then  // After "select directory": "Init_str_FindAllFilesArchive" collected ZIPs
   begin
-   lblImportfound.Caption := ' Files found in archive:';
+   lblImportfound.Caption := ' ' + msgImp11;
    for img := 0 to str_AllImagesInArchive.Count-1 do
     begin
-     CleanTmp;
+     CleanTmp(tmpDir);
      If Terminate = true then break;
-     If Unpack_Archive(str_AllImagesInArchive[img]) = true then  //  one archive after the other...
+     If UnpackArchive(str_AllImagesInArchive[img], tmpDir) = true then  //  one archive after the other...
       begin
-       FindAllImages(IniFluff.ReadString('Options', 'FolderTemp', ''),str_AllImagesInArchive[img]);
+       FindAllImages(tmpDir,str_AllImagesInArchive[img]);
        memoProgressBar.Max:= memoProgressBar.Max + str_AllImages.Count; // Add found images in ZIPs
        memoProgressBar.Repaint;
        Import;  // Import directory of the image
       end
-     else memoImportErr.Lines.Add('Unable to unpack "' + str_AllImagesInArchive[img] + '"');
-     CleanTmp;
+     else memoImportErr.Lines.Add(msgImp12 + ' "' + str_AllImagesInArchive[img] + '"');
+     CleanTmp(tmpDir);
     end;
   end;
 
   str_AllImages.Clear;
   str_AllImagesInArchive.Clear;
-  memoImport.Lines.Add('Clearing...');
-  Form1.SQLQueryDir.SQL.Clear;
-  Form1.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
-  Form1.SQLQueryDir.Active:=true;
+  memoImport.Lines.Add(msgImp13);
+  frmMain.SQLQueryDir.SQL.Clear;
+  frmMain.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
+  frmMain.SQLQueryDir.Active:=true;
   If Terminate = false then memoImport.Lines.Add('Import finished! (duplicates ignored)');
   If Terminate = true then memoImport.Lines.Add('Import cancelled! (duplicates ignored)');
   btImport.Enabled := true;
   btCancel.Enabled := false;
   btClose.Enabled := true;
   memoProgressBar.Position := StrToInt(Trim(lblImportFoundImg.Caption));
-  Form1.DBGridDir.DataSource := Form1.DataSourceDir;
-  Form1.DBGridDir_ReadEntry(Form1.SQLQueryDir.FieldByName('FileFull').Text);
-  Form1.Init_FilePath;
-  Form1.PageControl2.ActivePage.Visible:=true;
+  frmMain.DBGridDir.DataSource := frmMain.DataSourceDir;
+  frmMain.DBGridDir_ReadEntry(frmMain.SQLQueryDir.FieldByName('FileFull').Text);
+  frmMain.Init_FilePath;
+  frmMain.PC2.ActivePage.Visible:=true;
 end;
 
-procedure RemoveReadOnlyRecursive(const aFolder: String);
-var
-  SR: TSearchRec;
-  FilePath: String;
-begin
-  if FindFirst(IncludeTrailingPathDelimiter(aFolder) + '*', faAnyFile, SR) = 0 then
-  begin
-    repeat
-      if (SR.Name = '.') or (SR.Name = '..') then
-        Continue;
 
-      FilePath := IncludeTrailingPathDelimiter(aFolder) + SR.Name;
-
-      if (SR.Attr and faDirectory) <> 0 then
-        RemoveReadOnlyRecursive(FilePath)
-      else
-        FileSetAttr(FilePath, 0); // Attribute zurücksetzen
-    until FindNext(SR) <> 0;
-    FindClose(SR);
-  end;
-end;
-
-procedure CleanTmp;
-begin
- // Clean tmp folder
- RemoveReadOnlyRecursive(IniFluff.ReadString('Options', 'FolderTemp', '')); // In case smth is there
- DeleteDirectory(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')),true);
-end;
 
 procedure TfrmImport.btImportEnter(Sender: TObject);
 begin
@@ -1633,7 +573,13 @@ begin
 end;
 
 procedure TfrmImport.Init_DirImport;
+var
+ msgImp14, msgImp15 : String;
 begin
+ // Lng
+ msgImp14 := IniLng.ReadString('MSG', 'msgImp14', 'Collecting images and archives... Please wait!');
+ msgImp15 := IniLng.ReadString('MSG', 'msgImp15', 'Collect finished');
+
  ImgAdd := 0;
  ImageCountA2 := 0;
  memoImport.Clear;
@@ -1653,15 +599,15 @@ begin
    exit;
   end;
 
- lblImportfound.Caption := ' Collecting images and archives... Please wait!';
- CleanTmp;
+ lblImportfound.Caption := ' ' + msgImp14;
+ CleanTmp(tmpDir);
 
  // Images
  FindAllImages(DirImport.Directory,'');
  // Archives
  If cbArcZIP.Checked = true then FindAllImagesInArchive(DirImport.Directory);
 
- lblImportfound.Caption := ' Collect finished';
+ lblImportfound.Caption := ' ' + msgImp15;
  memoProgressbar.Position:=0;
  If str_AllImages.count > 0 then   btImport.Enabled := true;
  If str_AllImagesInArchive.count > 0 then btImport.Enabled := true;
@@ -1671,10 +617,15 @@ end;
 procedure TfrmImport.FindAllImages(aFileFull : String; aPathArchive : String);
 var
   i : integer;
+  msgImp16, msgImp17 : String;
 begin
  // aFileFull = path to the image e.g. also \temp
  // aPathArchive = path to the archive also ...\temp123.zip
  // ImageCountA2 = found images in archive
+
+ // Lng
+ msgImp16 := IniLng.ReadString('MSG', 'msgImp16', 'No image(s) to import!');
+ msgImp17 := IniLng.ReadString('MSG', 'msgImp17', 'image(s) found.');
 
  str_AllImages.Clear;
  str_FindAllImagesTmp.Clear;
@@ -1698,16 +649,22 @@ begin
 
  if (ImageCount + ImageCountA2) = 0 then
    begin
-    memoImport.Lines.Add('No image(s) to import!');
+    memoImport.Lines.Add(msgImp16);
     ImageCount  := 0;
-   end else memoImport.Lines.Add(IntToStr(ImageCount + ImageCountA2) + ' image(s) found.');
+   end else memoImport.Lines.Add(IntToStr(ImageCount + ImageCountA2) + ' ' + msgImp17);
 
   lblImportFoundImg.Caption := ' ' + IntToStr(ImageCount + ImageCountA2) + ' ';
   Application.ProcessMessages;
 end;
 
 procedure TfrmImport.FindAllImagesInArchive(aPathArchive : String);
+var
+  msgImp18 : String;
 begin
+
+ // Lng
+ msgImp18 := IniLng.ReadString('MSG', 'msgImp18', 'archive(s) found.');
+
  // aPathArchive = path to the archive
  str_AllImagesInArchive.Clear;
 
@@ -1728,7 +685,7 @@ begin
     memoImport.Lines.Add('No archive(s) to import!');
    end else
    begin
-    memoImport.Lines.Add(IntToStr(str_AllImagesInArchive.Count) + ' archive(s) found.');
+    memoImport.Lines.Add(IntToStr(str_AllImagesInArchive.Count) + ' ' + msgImp18);
    end;
 end;
 
@@ -1738,16 +695,16 @@ var
 begin
  exit; // Sync unfinished
  str_AllImages.Clear;
- str_AllImages.Add(Form1.SQlQueryDir.FieldByName('FileFull').Text);
+ str_AllImages.Add(frmMain.SQlQueryDir.FieldByName('FileFull').Text);
  if str_AllImages.Count = 1 then
    begin
     // Delete
-    DeleteFileUtf8(Form1.SQLQueryDir.FieldByName('FileFull').Text);
-    Form1.AConnection.ExecuteDirect('DELETE from DirectoryTXT WHERE idxTXT = ' + Form1.SQLQueryDir.FieldByName('idxImg').Text + '');
-    Form1.AConnection.ExecuteDirect('DELETE from Tracks WHERE idxTrks = ' + Form1.SQLQueryDir.FieldByName('idxImg').Text + '');
-    Form1.SQLQueryDir.Delete;
-    Form1.SQLQueryDir.ApplyUpdates;
-    Form1.ATransaction.CommitRetaining;
+    DeleteFileUtf8(frmMain.SQLQueryDir.FieldByName('FileFull').Text);
+    frmMain.AConnection.ExecuteDirect('DELETE from DirectoryTXT WHERE idxTXT = ' + frmMain.SQLQueryDir.FieldByName('idxImg').Text + '');
+    frmMain.AConnection.ExecuteDirect('DELETE from Tracks WHERE idxTrks = ' + frmMain.SQLQueryDir.FieldByName('idxImg').Text + '');
+    frmMain.SQLQueryDir.Delete;
+    frmMain.SQLQueryDir.ApplyUpdates;
+    frmMain.ATransaction.CommitRetaining;
 
    //if Form1.DBGridDirTxt.Visible = true then
    // begin
@@ -1759,15 +716,15 @@ begin
     //Form1.LoadTS(Form1.SQLQueryDir.FieldByName('FileFull').Text);
 
     // Sync
-    Form1.SQLQueryDir.SQL.Clear;
-    Form1.SQLQueryDir.SQL.Add('SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage');
-    Form1.SQLQueryDir.Active := True;
-    Form1.SQLQueryDir.Last;
+    frmMain.SQLQueryDir.SQL.Clear;
+    frmMain.SQLQueryDir.SQL.Add('SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage');
+    frmMain.SQLQueryDir.Active := True;
+    frmMain.SQLQueryDir.Last;
 
     //ImgCount := Form1.SQLQueryDir.FieldByName('idxImg').AsInteger;  // idxImg, idxTxt Zähler
-    ImgCount := Form1.SQLQueryDir.RecNo;
+    ImgCount := frmMain.SQLQueryDir.RecNo;
 
-    Form1.SQLQueryDir.Active:=false;
+    frmMain.SQLQueryDir.Active:=false;
     //Showmessage(str_FindAllImages.Strings[0]);
     //Showmessage(IntToStr(ImgCount));
     if Database_Ins_D64('', str_AllImages.Strings[0], ImgCount) = false then
@@ -1775,8 +732,8 @@ begin
       showmessage('buggy');
      end;
    end;
- Form1.SQLQueryDir.ApplyUpdates;
- Form1.ATransaction.CommitRetaining;
+ frmMain.SQLQueryDir.ApplyUpdates;
+ frmMain.ATransaction.CommitRetaining;
  str_AllImages.Free;
 end;
 
@@ -1786,13 +743,19 @@ begin
  str_AllImagesInArchive.Free;
  str_FindAllImagesTmp.Free;
  str_FindAllImagesArchive.Free;
- CleanTmp;
+ CleanTmp(tmpDir);
  IniFluff.WriteString('Options', 'FolderImport', DirImport.Directory);
  close;
 end;
 
 procedure TfrmImport.FormShow(Sender: TObject);
+var
+ msgImp19, msgImp20 : String;
 begin
+ // Lng
+ msgImp19 := IniLng.ReadString('MSG', 'msgImp19', 'Nothing to import!');
+ msgImp20 := IniLng.ReadString('MSG', 'msgImp20', 'No folder selected!');
+
  ImgAdd := 0;
  ImageCountA2 := 0;
  memoImport.Clear;
@@ -1802,8 +765,8 @@ begin
  lblImportFoundArc.Caption := '0 ';
  lblImportCount.Caption := '0 ';
  lblImportCountErr.Caption := '0 ';
- memoImport.Lines.Add('Nothing to import!');
- lblImportFound.Caption := ' No folder selected! ';
+ memoImport.Lines.Add(msgImp19);
+ lblImportFound.Caption := ' ' + msgImp20 + ' ';
  btImport.Enabled := false;
  Terminate := false;
 
@@ -1811,7 +774,7 @@ begin
  str_AllImagesInArchive := TStringList.Create;
  str_FindAllImagesTmp := TStringList.Create;
  str_FindAllImagesArchive := TStringList.Create;
-
+ tmpDir := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
  memoProgressbar.Position:=0;
  memoImport.Clear;
  memoImportErr.Clear;

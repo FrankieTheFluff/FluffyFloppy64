@@ -19,7 +19,7 @@
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
-      <MinorVersionNr Value="87"/>
+      <MinorVersionNr Value="88"/>
       <StringTable Comments="FREEWARE" CompanyName="FrankieTheFluff" FileDescription="FluffyFloppy64" LegalCopyright="(c) 2021-2025 FrankieTheFluff" ProductName="FluffyFloppy64" ProductVersion="1.00"/>
     </VersionInfo>
     <BuildModes>
@@ -52,7 +52,7 @@
       <Unit>
         <Filename Value="unit1.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="Form1"/>
+        <ComponentName Value="frmMain"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit1"/>
@@ -60,7 +60,7 @@
       <Unit>
         <Filename Value="unit2.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="Form2"/>
+        <ComponentName Value="frmDB"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit2"/>
@@ -73,7 +73,7 @@
       <Unit>
         <Filename Value="unit3.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="Form3"/>
+        <ComponentName Value="frmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit3"/>
@@ -109,7 +109,7 @@
       <Unit>
         <Filename Value="unit8.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="Form5"/>
+        <ComponentName Value="frmManual"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit8"/>

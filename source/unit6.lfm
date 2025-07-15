@@ -1,10 +1,10 @@
 object frmImport: TfrmImport
-  Left = 1027
+  Left = 1764
   Height = 894
-  Top = 497
+  Top = 512
   Width = 1192
   BorderStyle = bsDialog
-  Caption = 'Import/Sync'
+  Caption = 'Import'
   ClientHeight = 894
   ClientWidth = 1192
   DesignTimePPI = 168
@@ -59,7 +59,7 @@ object frmImport: TfrmImport
       ReadOnly = True
       TabOrder = 1
     end
-    object lblImport1: TLabel
+    object lblImportHintsErrors: TLabel
       Left = 14
       Height = 23
       Top = 208

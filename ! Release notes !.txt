@@ -32,6 +32,11 @@ Release notes
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 
+v0.88 - 2025-07-15
+* Multilanguage (english and german included), new folder \lng\*.ini)
++ Reorganized functions in unit "ffunctions"
++ Optimized checking if temp folder is available
+
 v0.87 - 2025-07-05
 + Adds missing "PageUp", "PageDown", "HOME", "END" navigation
 - Fixes: Sometimes the "favorite" or "corrupt" flags are not stored in the database

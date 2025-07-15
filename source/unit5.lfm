@@ -101,7 +101,7 @@ object frmDel: TfrmDel
       00000049454E44AE426082
     }
   end
-  object Label1: TLabel
+  object lblDel: TLabel
     Left = 110
     Height = 23
     Top = 14

@@ -25,24 +25,24 @@ uses
 
 type
 
-  { TForm3 }
+  { TfrmAbout }
 
-  TForm3 = class(TForm)
+  TfrmAbout = class(TForm)
     btOK: TButton;
-    Label1: TLabel;
+    lblFree: TLabel;
     Label10: TLabel;
     lblNibtools: TLabel;
     Label12: TLabel;
-    Label13: TLabel;
+    lblDB: TLabel;
     lblSQLite: TLabel;
-    Label15: TLabel;
+    lblFont: TLabel;
     lblStyle64: TLabel;
-    Label2: TLabel;
+    lblLiability: TLabel;
     Label3: TLabel;
     lblWebsite: TLabel;
     lblLicense: TLabel;
-    Label6: TLabel;
-    Label7: TLabel;
+    lblLic: TLabel;
+    lblUses: TLabel;
     Label8: TLabel;
     Label9: TLabel;
     lblApp: TLabel;
@@ -62,40 +62,40 @@ type
   end;
 
 var
-  Form3: TForm3;
+  frmAbout: TfrmAbout;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm3 }
+{ TfrmAbout }
 
-procedure TForm3.btOKClick(Sender: TObject);
+procedure TfrmAbout.btOKClick(Sender: TObject);
 begin
   Close;
 end;
 
-procedure TForm3.lblNibtoolsClick(Sender: TObject);
+procedure TfrmAbout.lblNibtoolsClick(Sender: TObject);
 begin
   OpenURL('https://github.com/rittwage/nibtools');
 end;
 
-procedure TForm3.lblSQLiteClick(Sender: TObject);
+procedure TfrmAbout.lblSQLiteClick(Sender: TObject);
 begin
   OpenURL('https://www.sqlite.org/index.html');
 end;
 
-procedure TForm3.lblStyle64Click(Sender: TObject);
+procedure TfrmAbout.lblStyle64Click(Sender: TObject);
 begin
   OpenURL('https://style64.org/c64-truetype');
 end;
 
-procedure TForm3.lblWebsiteClick(Sender: TObject);
+procedure TfrmAbout.lblWebsiteClick(Sender: TObject);
 begin
   OpenURL('https://github.com/FrankieTheFluff/FluffyFloppy64');
 end;
 
-procedure TForm3.lblLicenseClick(Sender: TObject);
+procedure TfrmAbout.lblLicenseClick(Sender: TObject);
 begin
   OpenURL('https://www.gnu.org/licenses/old-licenses/gpl-2.0.html');
 end;

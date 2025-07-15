@@ -1,4 +1,4 @@
-object Form3: TForm3
+object frmAbout: TfrmAbout
   Left = 1350
   Height = 700
   Top = 635
@@ -76,7 +76,7 @@ object Form3: TForm3
       ParentColor = False
       ParentFont = False
     end
-    object Label1: TLabel
+    object lblFree: TLabel
       Left = 28
       Height = 23
       Top = 280
@@ -89,7 +89,7 @@ object Form3: TForm3
       ParentColor = False
       ParentFont = False
     end
-    object Label2: TLabel
+    object lblLiability: TLabel
       Left = 28
       Height = 23
       Top = 308
@@ -136,7 +136,7 @@ object Form3: TForm3
       ParentFont = False
       OnClick = lblLicenseClick
     end
-    object Label6: TLabel
+    object lblLic: TLabel
       Left = 28
       Height = 23
       Top = 220
@@ -146,10 +146,10 @@ object Form3: TForm3
       ParentColor = False
       ParentFont = False
     end
-    object Label7: TLabel
+    object lblUses: TLabel
       Left = 28
       Height = 23
-      Top = 364
+      Top = 360
       Width = 45
       Caption = 'Uses:'
       Font.Color = 16365429
@@ -208,7 +208,7 @@ object Form3: TForm3
       ParentColor = False
       ParentFont = False
     end
-    object Label13: TLabel
+    object lblDB: TLabel
       Left = 35
       Height = 23
       Top = 462
@@ -230,7 +230,7 @@ object Form3: TForm3
       ParentFont = False
       OnClick = lblSQLiteClick
     end
-    object Label15: TLabel
+    object lblFont: TLabel
       Left = 35
       Height = 23
       Top = 532

@@ -1,7 +1,7 @@
-object Form2: TForm2
-  Left = 1821
+object frmDB: TfrmDB
+  Left = 1328
   Height = 464
-  Top = 1096
+  Top = 679
   Width = 868
   BorderStyle = bsDialog
   Caption = 'Database'
@@ -69,7 +69,7 @@ object Form2: TForm2
       BorderStyle = sbsSunken
       TabOrder = 2
     end
-    object lblLocation1: TLabel
+    object lblComment: TLabel
       Left = 14
       Height = 23
       Top = 182

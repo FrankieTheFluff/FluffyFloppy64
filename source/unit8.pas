@@ -25,12 +25,12 @@ uses
 
 type
 
-  { TForm5 }
+  { TfrmManual }
 
-  TForm5 = class(TForm)
-    btClose: TButton;
-    Memo1: TMemo;
-    procedure btCloseClick(Sender: TObject);
+  TfrmManual = class(TForm)
+    btOK: TButton;
+    memManual: TMemo;
+    procedure btOKClick(Sender: TObject);
   private
 
   public
@@ -38,15 +38,15 @@ type
   end;
 
 var
-  Form5: TForm5;
+  frmManual: TfrmManual;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm5 }
+{ TfrmManual }
 
-procedure TForm5.btCloseClick(Sender: TObject);
+procedure TfrmManual.btOKClick(Sender: TObject);
 begin
   close;
 end;

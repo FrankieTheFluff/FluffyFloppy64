@@ -1,9 +1,9 @@
-object Form1: TForm1
-  Left = 848
+object frmMain: TfrmMain
+  Left = 1787
   Height = 1125
-  Top = 630
+  Top = 340
   Width = 1818
-  Caption = 'Form1'
+  Caption = 'frmMain'
   ClientHeight = 1125
   ClientWidth = 1818
   DesignTimePPI = 168
@@ -47,18 +47,18 @@ object Form1: TForm1
     ClientHeight = 1079
     ClientWidth = 822
     TabOrder = 1
-    object PageControl2: TPageControl
+    object PC2: TPageControl
       Left = 1
       Height = 1077
       Top = 1
       Width = 820
-      ActivePage = TabSheet3
+      ActivePage = tbDir
       Align = alClient
       ParentFont = False
       TabIndex = 0
       TabOrder = 0
-      OnChange = PageControl2Change
-      object TabSheet3: TTabSheet
+      OnChange = PC2Change
+      object tbDir: TTabSheet
         Caption = 'Directory'
         ClientHeight = 1041
         ClientWidth = 812
@@ -70,16 +70,21 @@ object Form1: TForm1
           Width = 131
           Caption = 'Scratched'
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 0
           OnChange = TgScratchChange
         end
         object TgCShift: TToggleBox
           Left = 168
           Height = 40
+          Hint = 'Show shifted'
           Top = 14
           Width = 131
           Caption = 'C=-Shift'
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 1
           OnChange = TgCShiftChange
         end
@@ -100,7 +105,7 @@ object Form1: TForm1
           TabOrder = 2
           OnDblClick = LstBxDirectoryPETSCIIDblClick
         end
-        object Label1: TLabel
+        object lblBAMInfo: TLabel
           Left = 10
           Height = 23
           Top = 911
@@ -128,6 +133,7 @@ object Form1: TForm1
         object cbEmulator: TComboBox
           Left = 537
           Height = 31
+          Hint = 'Select emulator'
           Top = 14
           Width = 261
           Anchors = [akTop, akRight]
@@ -136,18 +142,20 @@ object Form1: TForm1
           ItemIndex = 0
           Items.Strings = (
             'CCS64'
-            'CCS64 (mount only)'
+            'CCS64 (mount)'
             'Denise'
-            'Denise (mount only)'
+            'Denise (mount)'
             'Emu64 ("*")'
-            'Emu64 (mount only)'
+            'Emu64 (mount)'
             'Hoxs64'
-            'Hoxs64 (mount only)'
+            'Hoxs64 (mount)'
             'Vice'
-            'Vice (mount only)'
+            'Vice (mount)'
             'DirMaster'
           )
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           Style = csDropDownList
           TabOrder = 4
           Text = 'CCS64'
@@ -163,11 +171,11 @@ object Form1: TForm1
           ParentFont = False
         end
       end
-      object TabSheet5: TTabSheet
+      object tbBAM: TTabSheet
         Caption = 'BAM'
         ClientHeight = 1041
         ClientWidth = 812
-        object Label2: TLabel
+        object lblBAM: TLabel
           Left = 10
           Height = 23
           Top = 14
@@ -196,7 +204,7 @@ object Form1: TForm1
           WordWrap = False
         end
       end
-      object TabSheet6: TTabSheet
+      object tbSectors: TTabSheet
         Caption = 'Sectors (Hex)'
         ClientHeight = 1041
         ClientWidth = 812
@@ -314,7 +322,7 @@ object Form1: TForm1
           WordWrap = False
         end
       end
-      object TabSheet4: TTabSheet
+      object tbText: TTabSheet
         Caption = 'Text'
         ClientHeight = 1041
         ClientWidth = 812
@@ -330,7 +338,7 @@ object Form1: TForm1
           TabOrder = 0
           OnDblClick = LstBxDirectoryPETSCIIDblClick
         end
-        object Label4: TLabel
+        object lblText: TLabel
           Left = 10
           Height = 23
           Top = 14
@@ -348,21 +356,20 @@ object Form1: TForm1
     Width = 987
     Align = alClient
     Anchors = []
-    Caption = 'pnDBView'
     ClientHeight = 1079
     ClientWidth = 987
     TabOrder = 2
-    object PageControl1: TPageControl
+    object PC1: TPageControl
       Left = 1
       Height = 1077
       Top = 1
       Width = 985
-      ActivePage = TabSheet1
+      ActivePage = tbDB
       Align = alClient
       TabIndex = 0
       TabOrder = 0
-      OnChange = PageControl1Change
-      object TabSheet1: TTabSheet
+      OnChange = PC1Change
+      object tbDB: TTabSheet
         Caption = 'Database'
         ClientHeight = 1041
         ClientWidth = 977
@@ -376,7 +383,7 @@ object Form1: TForm1
           ClientHeight = 182
           ClientWidth = 977
           TabOrder = 0
-          object GroupBox1: TGroupBox
+          object grbFilterSearch: TGroupBox
             Left = 0
             Height = 182
             Top = 0
@@ -387,11 +394,11 @@ object Form1: TForm1
             ClientWidth = 963
             TabOrder = 0
             object cbDBFilePath: TComboBox
-              Left = 126
+              Left = 140
               Height = 31
               Hint = 'Filter: Path to the images'
               Top = 0
-              Width = 825
+              Width = 811
               Anchors = [akTop, akLeft, akRight]
               DropDownCount = 20
               ItemHeight = 23
@@ -407,11 +414,11 @@ object Form1: TForm1
               OnChange = cbDBFilePathChange
             end
             object cbDBFileNameExt: TComboBox
-              Left = 126
+              Left = 140
               Height = 31
               Hint = 'Filter: File extensions'
-              Top = 56
-              Width = 138
+              Top = 49
+              Width = 122
               Anchors = [akLeft]
               ItemHeight = 23
               ItemIndex = 0
@@ -442,11 +449,11 @@ object Form1: TForm1
               OnChange = cbDBFileNameExtChange
             end
             object EdSQLSearch: TEdit
-              Left = 126
+              Left = 140
               Height = 31
               Hint = 'Search database...'
-              Top = 109
-              Width = 342
+              Top = 98
+              Width = 326
               Anchors = [akLeft, akRight]
               Enabled = False
               ParentShowHint = False
@@ -508,7 +515,7 @@ object Form1: TForm1
               OnChange = cbFilterFavChange
             end
             object cbFilterCorrupt: TCheckBox
-              Left = 823
+              Left = 810
               Height = 27
               Hint = 'Filter: Show corrupt'
               Top = 49
@@ -909,40 +916,47 @@ object Form1: TForm1
     end
     object mnuRecord: TMenuItem
       Caption = '&Record'
-      object mnuOpenRec: TMenuItem
+      object mnuRecOpen: TMenuItem
         Caption = '&Open'
         Enabled = False
         ShortCut = 24655
-        OnClick = mnuOpenRecClick
+        OnClick = mnuRecOpenClick
       end
-      object mnuOpenLocationRec: TMenuItem
+      object mnuRecOpenLocation: TMenuItem
         Caption = '&Open location'
         Enabled = False
-        OnClick = mnuOpenLocationRecClick
+        OnClick = mnuRecOpenLocationClick
       end
       object Separator6: TMenuItem
         Caption = '-'
       end
-      object mnuFavouriteRec: TMenuItem
+      object mnuRecRefresh: TMenuItem
+        Caption = '&Refresh'
+        OnClick = mnuRecRefreshClick
+      end
+      object Separator13: TMenuItem
+        Caption = '-'
+      end
+      object mnuRecFavourite: TMenuItem
         Caption = 'Mark as favourite'
         Enabled = False
         ShortCut = 24646
-        OnClick = mnuFavouriteRecClick
+        OnClick = mnuRecFavouriteClick
       end
-      object mnuCorruptRec: TMenuItem
+      object mnuRecCorrupt: TMenuItem
         Caption = 'Mark as corrupt'
         Enabled = False
         ShortCut = 24643
-        OnClick = mnuCorruptRecClick
+        OnClick = mnuRecCorruptClick
       end
       object Separator7: TMenuItem
         Caption = '-'
       end
-      object mnuDeleteRec: TMenuItem
+      object mnuRecDelete: TMenuItem
         Caption = 'Delete'
         Enabled = False
         ShortCut = 46
-        OnClick = mnuDeleteRecClick
+        OnClick = mnuRecDeleteClick
       end
     end
     object mnuView: TMenuItem
@@ -1133,10 +1147,9 @@ object Form1: TForm1
     object Separator5: TMenuItem
       Caption = '-'
     end
-    object mnuSync: TMenuItem
-      Caption = 'Sync entry'
+    object mnuRefresh: TMenuItem
+      Caption = 'Refresh'
       Enabled = False
-      OnClick = mnuSyncClick
     end
     object Separator10: TMenuItem
       Caption = '-'

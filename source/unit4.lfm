@@ -1,7 +1,7 @@
 object Form4: TForm4
-  Left = 1150
+  Left = 1700
   Height = 679
-  Top = 639
+  Top = 654
   Width = 1183
   BorderStyle = bsDialog
   Caption = 'Options'
@@ -37,11 +37,11 @@ object Form4: TForm4
         Left = 7
         Height = 98
         Top = 7
-        Width = 1161
+        Width = 575
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Start:'
         ClientHeight = 70
-        ClientWidth = 1157
+        ClientWidth = 571
         TabOrder = 0
         object cbStartOpenDB: TCheckBox
           Left = 28
@@ -56,22 +56,22 @@ object Form4: TForm4
         Left = 7
         Height = 159
         Top = 329
-        Width = 1161
+        Width = 1160
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Database:'
         ClientHeight = 131
-        ClientWidth = 1157
-        TabOrder = 1
+        ClientWidth = 1156
+        TabOrder = 3
         object cbPETSCIITracks: TCheckBox
           Left = 28
           Height = 27
           Top = 14
-          Width = 1101
+          Width = 1100
           Anchors = [akTop, akLeft, akRight]
           Caption = 'Load PETSCII directory if tracks (18,19,40 or 53) were fully imported into database, instead from image file'
           TabOrder = 0
         end
-        object lbNibConvLocation1: TLabel
+        object lbNibConvHint1: TLabel
           Left = 56
           Height = 23
           Top = 56
@@ -79,7 +79,7 @@ object Form4: TForm4
           Caption = 'HINT: If checked but not stored in database you will not see it - Statusbar will show "Directory not stored in database"'
           ParentColor = False
         end
-        object lbNibConvLocation2: TLabel
+        object lbNibConvHint2: TLabel
           Left = 56
           Height = 23
           Top = 96
@@ -92,12 +92,12 @@ object Form4: TForm4
         Left = 7
         Height = 210
         Top = 112
-        Width = 1155
+        Width = 1160
         Caption = 'Locations:'
         ClientHeight = 182
-        ClientWidth = 1151
+        ClientWidth = 1156
         TabOrder = 2
-        object lbVICELocation1: TLabel
+        object lblTempFolder: TLabel
           Left = 28
           Height = 23
           Top = 14
@@ -109,7 +109,7 @@ object Form4: TForm4
           Left = 42
           Height = 31
           Top = 48
-          Width = 1092
+          Width = 1090
           ShowHidden = False
           ButtonWidth = 40
           NumGlyphs = 1
@@ -120,8 +120,8 @@ object Form4: TForm4
           Left = 42
           Height = 31
           Top = 120
-          Width = 1092
-          DialogTitle = 'Select NibConv'
+          Width = 1090
+          DialogTitle = 'NibConv'
           Filter = 'NibConv|*.exe'
           FilterIndex = 0
           DefaultExt = 'exe'
@@ -131,13 +131,37 @@ object Form4: TForm4
           MaxLength = 0
           TabOrder = 1
         end
-        object lbNibConvLocation: TLabel
+        object lblNibConv: TLabel
           Left = 28
           Height = 23
           Top = 88
           Width = 76
           Caption = 'NibConv:'
           ParentColor = False
+        end
+      end
+      object grbLng: TGroupBox
+        Left = 592
+        Height = 98
+        Top = 7
+        Width = 575
+        Caption = 'Language:'
+        ClientHeight = 70
+        ClientWidth = 571
+        TabOrder = 1
+        object cbLng: TComboBox
+          Left = 24
+          Height = 31
+          Top = 14
+          Width = 248
+          ItemHeight = 23
+          ItemIndex = 0
+          Items.Strings = (
+            'English'
+          )
+          Style = csDropDownList
+          TabOrder = 0
+          Text = 'English'
         end
       end
     end
@@ -149,10 +173,10 @@ object Form4: TForm4
         Left = 7
         Height = 140
         Top = 7
-        Width = 1155
-        Caption = 'Import D64, G64:'
+        Width = 1160
+        Caption = 'Import D64, G64, NIB:'
         ClientHeight = 112
-        ClientWidth = 1151
+        ClientWidth = 1156
         TabOrder = 0
         object cbImportT18T19: TCheckBox
           Left = 28
@@ -162,7 +186,7 @@ object Form4: TForm4
           Caption = 'Import also track 18/19 to database (fully usage of database without images)'
           TabOrder = 0
         end
-        object Label3: TLabel
+        object lblImportHint1: TLabel
           Left = 56
           Height = 23
           Top = 56
@@ -175,10 +199,10 @@ object Form4: TForm4
         Left = 7
         Height = 142
         Top = 154
-        Width = 1155
+        Width = 1160
         Caption = 'Import D71:'
         ClientHeight = 114
-        ClientWidth = 1151
+        ClientWidth = 1156
         TabOrder = 1
         object cbImportT18T53: TCheckBox
           Left = 28
@@ -188,7 +212,7 @@ object Form4: TForm4
           Caption = 'Import also track 18/53 to database (fully usage of database without images)'
           TabOrder = 0
         end
-        object Label4: TLabel
+        object lblImportHint2: TLabel
           Left = 56
           Height = 23
           Top = 56
@@ -201,10 +225,10 @@ object Form4: TForm4
         Left = 7
         Height = 140
         Top = 304
-        Width = 1155
+        Width = 1160
         Caption = 'Import D81:'
         ClientHeight = 112
-        ClientWidth = 1151
+        ClientWidth = 1156
         TabOrder = 2
         object cbImportT40: TCheckBox
           Left = 28
@@ -214,7 +238,7 @@ object Form4: TForm4
           Caption = 'Import also track 40 to database (fully usage of database without images)'
           TabOrder = 0
         end
-        object Label5: TLabel
+        object lblImportHint3: TLabel
           Left = 56
           Height = 23
           Top = 56
@@ -224,7 +248,7 @@ object Form4: TForm4
         end
       end
     end
-    object tbVICE: TTabSheet
+    object tbEmu: TTabSheet
       Caption = 'Open with...'
       ClientHeight = 578
       ClientWidth = 1175
@@ -232,12 +256,12 @@ object Form4: TForm4
         Left = 7
         Height = 419
         Top = 8
-        Width = 1155
+        Width = 1160
         Caption = 'Emulator:'
         ClientHeight = 391
-        ClientWidth = 1151
+        ClientWidth = 1156
         TabOrder = 0
-        object lblCCS64Location: TLabel
+        object lblLocCCS64: TLabel
           Left = 28
           Height = 23
           Top = 14
@@ -249,7 +273,7 @@ object Form4: TForm4
           Left = 42
           Height = 31
           Top = 48
-          Width = 1080
+          Width = 1090
           DialogTitle = 'Select CCS64'
           Filter = 'CCS64|*.exe'
           FilterIndex = 0
@@ -260,7 +284,7 @@ object Form4: TForm4
           MaxLength = 0
           TabOrder = 0
         end
-        object lblDenise: TLabel
+        object lblLocDenise: TLabel
           Left = 28
           Height = 23
           Top = 84
@@ -272,7 +296,7 @@ object Form4: TForm4
           Left = 42
           Height = 31
           Top = 119
-          Width = 1080
+          Width = 1090
           DialogTitle = 'Select CCS64'
           Filter = 'CCS64|*.exe'
           FilterIndex = 0
@@ -283,7 +307,7 @@ object Form4: TForm4
           MaxLength = 0
           TabOrder = 1
         end
-        object lbHoxs64Location: TLabel
+        object lblLocHoxs64: TLabel
           Left = 28
           Height = 23
           Top = 232
@@ -295,7 +319,7 @@ object Form4: TForm4
           Left = 42
           Height = 31
           Top = 264
-          Width = 1080
+          Width = 1090
           DialogTitle = 'Select VICE'
           Filter = 'VICE|*.exe'
           FilterIndex = 0
@@ -306,7 +330,7 @@ object Form4: TForm4
           MaxLength = 0
           TabOrder = 3
         end
-        object lbVICELocation: TLabel
+        object lblLocVice: TLabel
           Left = 28
           Height = 23
           Top = 304
@@ -318,7 +342,7 @@ object Form4: TForm4
           Left = 42
           Height = 31
           Top = 336
-          Width = 1080
+          Width = 1090
           DialogTitle = 'Select VICE'
           Filter = 'VICE|*.exe'
           FilterIndex = 0
@@ -329,7 +353,7 @@ object Form4: TForm4
           MaxLength = 0
           TabOrder = 4
         end
-        object lblEmu64: TLabel
+        object lblLocEmu64: TLabel
           Left = 28
           Height = 23
           Top = 160
@@ -341,7 +365,7 @@ object Form4: TForm4
           Left = 42
           Height = 31
           Top = 192
-          Width = 1080
+          Width = 1090
           DialogTitle = 'Select CCS64'
           Filter = 'CCS64|*.exe'
           FilterIndex = 0
@@ -357,12 +381,12 @@ object Form4: TForm4
         Left = 7
         Height = 128
         Top = 432
-        Width = 1155
+        Width = 1160
         Caption = 'Tools:'
         ClientHeight = 100
-        ClientWidth = 1151
+        ClientWidth = 1156
         TabOrder = 1
-        object lblDirMaster: TLabel
+        object lblLocDirMaster: TLabel
           Left = 14
           Height = 23
           Top = 7
@@ -371,10 +395,10 @@ object Form4: TForm4
           ParentColor = False
         end
         object fileDirMaster: TFileNameEdit
-          Left = 28
+          Left = 42
           Height = 31
           Top = 42
-          Width = 1106
+          Width = 1090
           FilterIndex = 0
           HideDirectories = False
           ButtonWidth = 40
@@ -384,7 +408,7 @@ object Form4: TForm4
         end
       end
     end
-    object TabSheet1: TTabSheet
+    object tbPETSCII: TTabSheet
       Caption = 'PETSCII Font'
       ClientHeight = 578
       ClientWidth = 1175

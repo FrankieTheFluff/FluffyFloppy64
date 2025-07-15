@@ -1,4 +1,4 @@
-object Form5: TForm5
+object frmManual: TfrmManual
   Left = 1395
   Height = 744
   Top = 810
@@ -10,16 +10,16 @@ object Form5: TForm5
   DesignTimePPI = 168
   Position = poMainFormCenter
   LCLVersion = '4.0.0.4'
-  object btClose: TButton
+  object btOK: TButton
     Left = 1176
     Height = 44
     Top = 688
     Width = 131
-    Caption = 'Close'
+    Caption = 'OK'
     TabOrder = 0
-    OnClick = btCloseClick
+    OnClick = btOKClick
   end
-  object Memo1: TMemo
+  object memManual: TMemo
     Left = 14
     Height = 666
     Top = 14

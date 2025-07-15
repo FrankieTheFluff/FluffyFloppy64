@@ -19,13 +19,13 @@ begin
   RequireDerivedFormResource:=True;
   Application.Scaled:=True;
   Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
-  Application.CreateForm(TForm2, Form2);
-  Application.CreateForm(TForm3, Form3);
+  Application.CreateForm(TfrmMain, frmMain);
+  Application.CreateForm(TfrmDB, frmDB);
+  Application.CreateForm(TfrmAbout, frmAbout);
   Application.CreateForm(TForm4, Form4);
   Application.CreateForm(TfrmDel, frmDel);
   Application.CreateForm(TfrmImport, frmImport);
-  Application.CreateForm(TForm5, Form5);
+  Application.CreateForm(TfrmManual, frmManual);
   Application.Run;
 
 end.

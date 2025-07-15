@@ -26,15 +26,15 @@ uses
 
 type
 
-  { TForm2 }
+  { TfrmDB }
 
-  TForm2 = class(TForm)
+  TfrmDB = class(TForm)
     btOK: TButton;
     memComment: TDBMemo;
     grbDBProperties: TGroupBox;
     lblCreated: TLabel;
     lblLocation: TLabel;
-    lblLocation1: TLabel;
+    lblComment: TLabel;
     lblVersion: TLabel;
     sTLocation: TStaticText;
     sTVersion: TStaticText;
@@ -49,7 +49,7 @@ type
   end;
 
 var
-  Form2: TForm2;
+  frmDB: TfrmDB;
 
 implementation
 
@@ -58,30 +58,30 @@ implementation
 uses
   unit1;
 
-{ TForm2 }
+{ TfrmDB }
 
-procedure TForm2.btOKClick(Sender: TObject);
+procedure TfrmDB.btOKClick(Sender: TObject);
 begin
   close;
 end;
 
-procedure TForm2.FormActivate(Sender: TObject);
+procedure TfrmDB.FormActivate(Sender: TObject);
 begin
-  Form1.SQLQueryDB.Active:=true;
-  sTVersion.Caption := Form1.SQLQueryDB.FieldByName('DBVersion').AsString + ' ';
-  sTCreated.Caption := Form1.SQLQueryDB.FieldByName('DBCreated').AsString + ' ';
+  frmMain.SQLQueryDB.Active:=true;
+  sTVersion.Caption := frmMain.SQLQueryDB.FieldByName('DBVersion').AsString + ' ';
+  sTCreated.Caption := frmMain.SQLQueryDB.FieldByName('DBCreated').AsString + ' ';
   sTLocation.Caption := IniFluff.ReadString('Database', 'Location', '');
 end;
 
-procedure TForm2.memCommentEditingDone(Sender: TObject);
+procedure TfrmDB.memCommentEditingDone(Sender: TObject);
 begin
-   if Form1.ATransaction.Active then
+   if frmMain.ATransaction.Active then
    begin
-     Form1.SQlQueryDB.Edit;
-     Form1.SQlQueryDB.FieldByName('DBComment').AsString := memComment.Lines.Text;
-     Form1.SQlQueryDB.Post;
-     Form1.SQlQueryDB.ApplyUpdates;
-     Form1.SQLQueryDB.Active:=false;
+     frmMain.SQlQueryDB.Edit;
+     frmMain.SQlQueryDB.FieldByName('DBComment').AsString := memComment.Lines.Text;
+     frmMain.SQlQueryDB.Post;
+     frmMain.SQlQueryDB.ApplyUpdates;
+     frmMain.SQLQueryDB.Active:=false;
    end;
 end;
 

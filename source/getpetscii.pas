@@ -11,8 +11,9 @@ License: GNU General Public License v2.0
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
-Function GetPETSCII to convert font "C64 TrueType v1.2.1/Style"
-v1.00 - 2025-02-01 (c) 2023-2025 FrankieTheFluff
+Function "GetUTF8" to convert font "C64 TrueType v1.2.1/Style"
+v1.01 - 2025-07-08
+
 You can download the font here: https://style64.org/c64-truetype
 -----------------------------------------------------------------
 }
@@ -28,7 +29,6 @@ uses
 function GetUTF8(s: String; reverse: Boolean; lower: Boolean): String;
 
 implementation
-uses Unit1;
 
 function GetUTF8(s: String; reverse: Boolean; lower: Boolean): String;
 begin
