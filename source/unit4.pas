@@ -3,8 +3,6 @@
 FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
-A Microsoft(r) Windows(r) tool to catalog Commodore 64 (C64)
-floppy disk images (D64, G64, NIB, D71, D81, PRG, TAP)
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
 (c) 2021-2025 FrankieTheFluff
@@ -159,7 +157,7 @@ begin
    end
    else
     begin
-     FileUtil.CopyFile(PChar(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf'), SHGetFolderPathUTF8(20)+'C64_Pro_Mono-STYLE.ttf');
+     FileUtil.CopyFile(PChar(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf'), PChar(SHGetFolderPathUTF8(20)+'C64_Pro_Mono-STYLE.ttf'));
      Showmessage(msgSet04 + chr(13) + msgSet05);
     end;
 end;
@@ -303,8 +301,8 @@ begin
   lblLocEmu64.Caption := msgSet34;
   lblLocHoxs64.Caption := msgSet35;
   lblLocVice.Caption := msgSet36;
-  grbTools.Caption := msgSet39;
-  lblLocDirMaster.Caption := msgSet40;
+  grbTools.Caption := msgSet38;
+  lblLocDirMaster.Caption := msgSet39;
   tbPETSCII.Caption := msgSet40;
   grbFontOptions.Caption := msgSet41;
   lblFontSize.Caption := msgSet42;

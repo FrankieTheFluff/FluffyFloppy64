@@ -3,8 +3,6 @@
 FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
-A Microsoft(r) Windows(r) tool to catalog Commodore 64 (C64)
-floppy disk images (D64, G64, NIB, D71, D81, PRG, TAP)
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
 (c) 2021-2025 FrankieTheFluff
@@ -12,7 +10,7 @@ Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
 Functions for FluffyFloppy64
-v1.03 - 2025-07-08
+v1.04 - 2025-12-08
 
 Parts of it:
 -
@@ -34,7 +32,6 @@ uses
 type
   TByteArr = array of Byte;
 
-function CheckTmpPath(aTmpPath : String) : Boolean;
 function HexStrToStr(const HexStr: string): string;
 function LoadByteArray(const AFileName: string): TByteArr;
 function ByteArrayToHexString(AByteArray: TByteArr; ASep: string = ''): string;
@@ -62,26 +59,6 @@ var
 
 implementation
 uses Unit1, GetPETSCII;
-
-function CheckTmpPath(aTmpPath : String) : Boolean;
-begin
-  result := false;
-  try
-   try
-    if aTmpPath <> '' then
-     begin
-      if DirectoryExists(aTmpPath) = true then result := true;
-     end;
-   except
-   on E: Exception do
-    begin
-     Result := False;
-    end;
-   end;
-  finally
-   //
-  end;
-end;
 
 function HexStrToStr(const HexStr: string): string;
 var
@@ -231,15 +208,14 @@ end;
 
 function UnpackArchive(const aArchiveName, aTmpPath : string):boolean;
 var
-  tmpPath, UnpackPath : String;
+ UnpackPath : String;
 begin
  // Create tmp folder named like the archive and unpack
  result := false;
   try
   try
-   TmpPath := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
-   CreateDir(TmpPath + ExtractFileName(aArchiveName));
-   UnpackPath := IncludeTrailingPathDelimiter(TmpPath + ExtractFileName(aArchiveName));
+   CreateDir(sAppTmpPath + ExtractFileName(aArchiveName));
+   UnpackPath := IncludeTrailingPathDelimiter(sAppTmpPath + ExtractFileName(aArchiveName));
    UnPackFiles(aArchiveName, '', UnpackPath);
    result := true;
   except
@@ -261,7 +237,7 @@ begin
   UnZipper := TUnZipper.Create;
   try
     UnZipper.FileName := aArchiveName;
-    UnZipper.OutputPath := IncludeTrailingPathDelimiter(UnpackPath);
+    UnZipper.OutputPath := UnpackPath;
     UnZipper.Files.Clear;
     UnZipper.Files.Add(aImageFile);
     Unzipper.Examine;
@@ -280,8 +256,8 @@ var
   i : integer;
 begin
   Result:= false;
-  UnPackFileDir :=SysUtils.IncludeTrailingPathDelimiter(UnPackPath);
-  UnZipper      :=TUnZipper.Create;
+  UnPackFileDir := UnPackPath;
+  UnZipper      := TUnZipper.Create;
   try
   try
    UnZipper.FileName   := aArchiveName;
@@ -515,7 +491,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -538,8 +514,8 @@ begin
    begin
     BA := LoadByteArray(aImageName);  // g64, nib
     ImageSize := ByteArrayToHexString(BA);
-    BA := LoadByteArray(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64'))); // Vom d64
-    Init_ArrD64(IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', '')) + ExtractFileName(ChangeFileExt(aImageName,'.d64')));
+    BA := LoadByteArray(sAppTmpPath + ExtractFileName(ChangeFileExt(aImageName,'.d64'))); // Vom d64
+    Init_ArrD64(sAppTmpPath + ExtractFileName(ChangeFileExt(aImageName,'.d64')));
    end
   else
    begin
@@ -915,7 +891,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -1196,7 +1172,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -1353,7 +1329,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -1439,7 +1415,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp',''))+ ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);

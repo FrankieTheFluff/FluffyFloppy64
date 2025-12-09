@@ -3,7 +3,7 @@ FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
 A Microsoft(r) Windows(r) tool to catalog 
-Commodore(r) 64 (C64) floppy disk images (D64,G64,NIB, D71,D81,PRG,TAP)
+Commodore 64 (C64) floppy disk images (D64,G64,NIB, D71,D81,PRG,TAP)
 
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
@@ -31,6 +31,16 @@ Release notes
 
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
+
+v0.89 - 2025-12-09
+* Import: Dialogbox has now visual archive counter
+* Import: New button to save "hints/errors" log into txt file
++ Import: Faster import of ZIP-Archives
++ Updated: Multilanguage files (english and german)
+- Import: Fixes wrong dialogbox progressbar behaviour during import of archives
+- FFFunctions: Removed CheckTmpPath
+- Fixes: Selected "PRG" could not be opened with CCS64 or HOXS64 if scratched files are visible
+- Options: Fixes wrong translation labels "tools" / "DirMaster"
 
 v0.88 - 2025-07-15
 * Multilanguage (english and german included), new folder \lng\*.ini)

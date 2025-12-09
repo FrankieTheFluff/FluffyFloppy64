@@ -3,8 +3,6 @@
 FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
-A Microsoft(r) Windows(r) tool to catalog Commodore 64 (C64)
-floppy disk images (D64, G64, NIB, D71, D81, PRG, TAP)
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
 (c) 2021-2025 FrankieTheFluff
@@ -30,6 +28,7 @@ type
 
   TfrmImport = class(TForm)
     btClose: TButton;
+    btSaveHints: TButton;
     btImport: TButton;
     btCancel: TButton;
     cbImgD64: TCheckBox;
@@ -46,9 +45,11 @@ type
     grImportProgress: TGroupBox;
     grImportFrom: TGroupBox;
     lblFileArc: TLabel;
+    lblArchiveProgress: TLabel;
     lblFileSel: TLabel;
     lblFileProgress: TLabel;
     lblFileImg: TLabel;
+    lblImportCountArc: TStaticText;
     lblImportHintsErrors: TLabel;
     lblImportCount: TStaticText;
     lblImportCountErr: TStaticText;
@@ -58,10 +59,12 @@ type
     memoImportErr: TMemo;
     memoProgressBar: TProgressBar;
     lblImportFound: TStaticText;
+    SaveHintsErrors: TSaveDialog;
     procedure btCloseClick(Sender: TObject);
     procedure btImportClick(Sender: TObject);
     procedure btImportEnter(Sender: TObject);
     procedure btCancelClick(Sender: TObject);
+    procedure btSaveHintsClick(Sender: TObject);
     procedure DirImportChange(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -428,9 +431,10 @@ end;
 
 procedure TfrmImport.btImportClick(Sender: TObject);
 var
-  answer, img : integer;
+  answer, img, ImgCountA : integer;
   msgImp07, msgImp08, msgImp09, msgImp10, msgImp11, msgImp12, msgImp13 : String;
 begin
+ ImgCountA := 0;
 
  // Lng
  msgImp07 := IniLng.ReadString('MSG', 'msgImp07', 'Directory not found!');
@@ -496,15 +500,17 @@ begin
  btImport.Enabled:=false;
  btCancel.Enabled:=true;
  btClose.Enabled:=false;
+ btSaveHints.Enabled:=true;
  memoProgressBar.Position := 1;
  frmMain.DBGridDir.DataSource := nil;
  frmMain.PC2.ActivePage.Visible:=false;
 
+ memoProgressBar.Max:= str_AllImages.Count + ImageCountA; // Add found images also in ZIPs
+ memoProgressBar.Repaint;
+
  // Import images (D64...)
  if str_AllImages.Count > 0 then
   begin
-   memoProgressBar.Max:=str_AllImages.Count;
-   memoProgressBar.Repaint;
    Import;
   end;
 
@@ -519,8 +525,8 @@ begin
      If UnpackArchive(str_AllImagesInArchive[img], tmpDir) = true then  //  one archive after the other...
       begin
        FindAllImages(tmpDir,str_AllImagesInArchive[img]);
-       memoProgressBar.Max:= memoProgressBar.Max + str_AllImages.Count; // Add found images in ZIPs
-       memoProgressBar.Repaint;
+       ImgCountA := ImgCountA + 1;
+       lblImportCountArc.Caption := IntToStr(ImgCountA) + ' ' ;
        Import;  // Import directory of the image
       end
      else memoImportErr.Lines.Add(msgImp12 + ' "' + str_AllImagesInArchive[img] + '"');
@@ -539,7 +545,6 @@ begin
   btImport.Enabled := true;
   btCancel.Enabled := false;
   btClose.Enabled := true;
-  memoProgressBar.Position := StrToInt(Trim(lblImportFoundImg.Caption));
   frmMain.DBGridDir.DataSource := frmMain.DataSourceDir;
   frmMain.DBGridDir_ReadEntry(frmMain.SQLQueryDir.FieldByName('FileFull').Text);
   frmMain.Init_FilePath;
@@ -557,6 +562,13 @@ procedure TfrmImport.btCancelClick(Sender: TObject);
 begin
  // Stop import
  Terminate := true;
+ btSaveHints.Enabled:=true;
+end;
+
+procedure TfrmImport.btSaveHintsClick(Sender: TObject);
+begin
+ if SaveHintsErrors.Execute then
+    memoImportErr.Lines.SaveToFile(SaveHintsErrors.FileName);
 end;
 
 procedure TfrmImport.DirImportChange(Sender: TObject);
@@ -624,8 +636,7 @@ begin
  // ImageCountA2 = found images in archive
 
  // Lng
- msgImp16 := IniLng.ReadString('MSG', 'msgImp16', 'No image(s) to import!');
- msgImp17 := IniLng.ReadString('MSG', 'msgImp17', 'image(s) found.');
+ //msgImp17 := IniLng.ReadString('MSG', 'msgImp17', 'image(s) found.');
 
  str_AllImages.Clear;
  str_FindAllImagesTmp.Clear;
@@ -649,9 +660,10 @@ begin
 
  if (ImageCount + ImageCountA2) = 0 then
    begin
+    msgImp16 := IniLng.ReadString('MSG', 'msgImp16', 'No image(s) to import!');
     memoImport.Lines.Add(msgImp16);
     ImageCount  := 0;
-   end else memoImport.Lines.Add(IntToStr(ImageCount + ImageCountA2) + ' ' + msgImp17);
+   end;
 
   lblImportFoundImg.Caption := ' ' + IntToStr(ImageCount + ImageCountA2) + ' ';
   Application.ProcessMessages;
@@ -661,9 +673,6 @@ procedure TfrmImport.FindAllImagesInArchive(aPathArchive : String);
 var
   msgImp18 : String;
 begin
-
- // Lng
- msgImp18 := IniLng.ReadString('MSG', 'msgImp18', 'archive(s) found.');
 
  // aPathArchive = path to the archive
  str_AllImagesInArchive.Clear;
@@ -685,55 +694,25 @@ begin
     memoImport.Lines.Add('No archive(s) to import!');
    end else
    begin
+    msgImp18 := IniLng.ReadString('MSG', 'msgImp18', 'archive(s) found.');
     memoImport.Lines.Add(IntToStr(str_AllImagesInArchive.Count) + ' ' + msgImp18);
    end;
 end;
 
 procedure TfrmImport.Init_str_FindAllImages_Sync;
-var
-  ImgCount : Integer;
 begin
- exit; // Sync unfinished
  str_AllImages.Clear;
- str_AllImages.Add(frmMain.SQlQueryDir.FieldByName('FileFull').Text);
- if str_AllImages.Count = 1 then
-   begin
-    // Delete
-    DeleteFileUtf8(frmMain.SQLQueryDir.FieldByName('FileFull').Text);
-    frmMain.AConnection.ExecuteDirect('DELETE from DirectoryTXT WHERE idxTXT = ' + frmMain.SQLQueryDir.FieldByName('idxImg').Text + '');
-    frmMain.AConnection.ExecuteDirect('DELETE from Tracks WHERE idxTrks = ' + frmMain.SQLQueryDir.FieldByName('idxImg').Text + '');
-    frmMain.SQLQueryDir.Delete;
-    frmMain.SQLQueryDir.ApplyUpdates;
-    frmMain.ATransaction.CommitRetaining;
+ str_AllImages.Add(frmMain.SQLQueryDir.FieldByName('FileFull').Text);
+ //ImpCount := 1;
 
-   //if Form1.DBGridDirTxt.Visible = true then
-   // begin
-   //  if Form1.SQlQuerySearch.RecordCount > 0 then Form1.SQlQuerySearch.Locate('idxSearch', Form1.SQLQueryDir.FieldByName('idxImg').Text, []);
-   // end;
-    //Form1.DBGridDir_ReadEntry;
-    //Form1.DBGridDirTxt_ReadEntry;
-    //Form1.LoadBAM_D64(Form1.SQLQueryDir.FieldByName('FileFull').Text,Form1.SQLQueryDir.FieldByName('FileSizeImg').Text );
-    //Form1.LoadTS(Form1.SQLQueryDir.FieldByName('FileFull').Text);
-
-    // Sync
-    frmMain.SQLQueryDir.SQL.Clear;
-    frmMain.SQLQueryDir.SQL.Add('SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage');
-    frmMain.SQLQueryDir.Active := True;
-    frmMain.SQLQueryDir.Last;
-
-    //ImgCount := Form1.SQLQueryDir.FieldByName('idxImg').AsInteger;  // idxImg, idxTxt Zähler
-    ImgCount := frmMain.SQLQueryDir.RecNo;
-
-    frmMain.SQLQueryDir.Active:=false;
-    //Showmessage(str_FindAllImages.Strings[0]);
-    //Showmessage(IntToStr(ImgCount));
-    if Database_Ins_D64('', str_AllImages.Strings[0], ImgCount) = false then
-     begin
-      showmessage('buggy');
-     end;
-   end;
+ frmMain.AConnection.ExecuteDirect('DELETE from DirectoryTXT WHERE idxTXT = ' + frmMain.SQLQueryDir.FieldByName('idxImg').Text + '');
+ frmMain.AConnection.ExecuteDirect('DELETE from Tracks WHERE idxTrks = ' + frmMain.SQLQueryDir.FieldByName('idxImg').Text + '');
+ frmMain.SQLQueryDir.Delete;
  frmMain.SQLQueryDir.ApplyUpdates;
  frmMain.ATransaction.CommitRetaining;
+
+ // Import
+ frmImport.Import;
  str_AllImages.Free;
 end;
 
@@ -764,10 +743,13 @@ begin
  lblImportFoundImg.Caption := '0 ';
  lblImportFoundArc.Caption := '0 ';
  lblImportCount.Caption := '0 ';
+ lblImportCountArc.Caption := '0 ';
  lblImportCountErr.Caption := '0 ';
  memoImport.Lines.Add(msgImp19);
  lblImportFound.Caption := ' ' + msgImp20 + ' ';
  btImport.Enabled := false;
+ btSaveHints.Enabled:=false;
+
  Terminate := false;
 
  str_AllImages := TStringList.Create;
