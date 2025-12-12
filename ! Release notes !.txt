@@ -32,6 +32,10 @@ Release notes
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 
+v0.90 - 2025-12-12
+- GUI: Fixes: Error messages when SQL query without result
+- Option: Fixes "Temp folder" not found after change
+
 v0.89 - 2025-12-09
 * Import: Dialogbox has now visual archive counter
 * Import: New button to save "hints/errors" log into txt file

@@ -818,8 +818,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.89';
- sAppDate    := '2025-12-09';
+ sAppVersion := 'v0.90';
+ sAppDate    := '2025-12-12';
  sAppPath    := ExtractFilePath(ParamStr(0));
  frmMain.Caption:= sAppCaption + sAppVersion;
  SQlSearch_Click := false;
@@ -851,7 +851,7 @@ begin
    IniFluff.WriteBool('Database', 'Column8', true);
      mnuViewLocation.Checked:=true;
    IniFluff.WriteString('Options', 'FolderTemp', IncludeTrailingPathDelimiter(sAppPath + 'temp\'));
-   IniFluff.WriteString('NibConv', 'Location', IncludeTrailingPathDelimiter(sAppPath + 'nibtools\'));
+   IniFluff.WriteString('NibConv', 'Location', '');
    IniFluff.WriteBool('Options', 'Scratched', false);
    IniFluff.WriteBool('Options', 'Shifted', false);
    IniFluff.WriteBool('Options', 'IncludeT18T19', false);
@@ -870,6 +870,7 @@ begin
  IniFluff := TINIFile.Create(sAppPath + 'fluffyfloppy64.ini');
 
  // Temp folder
+ If  IniFluff.ReadString('Options', 'FolderTemp', '') = '' then IniFluff.WriteString('Options', 'FolderTemp', IncludeTrailingPathDelimiter(sAppPath + 'temp\'));
  sAppTmpPath := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
  DeleteDirectory(sAppTmpPath,true);  // Clean temp folder
 
@@ -1059,7 +1060,15 @@ begin
  msgEmu20 := IniLng.ReadString('MSG', 'msgEmu20', 'VICE does not support d81 images!');
  msgDM01 := IniLng.ReadString('MSG', 'msgDM01', 'DirMaster not found!');
 
- UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+ if SQLQueryDB.Active = true then
+  begin
+   if SQLQueryDir.RecordCount > 0 then
+    begin
+     UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+    end
+   else exit;
+  end
+ else exit;
 
   // CCS64###################################################################
   If cbEmulator.Text = 'CCS64' then
@@ -2555,6 +2564,7 @@ procedure TfrmMain.DBFilter;
 var
  StrSQL : String;
 begin
+ if SQLQueryDB.Active = false then exit;
  StrSQL := '';
  SQLQueryDir.Close;
  SQLQueryDir.DataBase := AConnection;
