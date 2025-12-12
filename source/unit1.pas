@@ -2564,7 +2564,7 @@ procedure TfrmMain.DBFilter;
 var
  StrSQL : String;
 begin
- if SQLQueryDB.Active = false then exit;
+ //if SQLQueryDB.Active = false then exit;
  StrSQL := '';
  SQLQueryDir.Close;
  SQLQueryDir.DataBase := AConnection;
@@ -4808,5 +4808,6 @@ begin
 end;
 
 end.
+
 
 
