@@ -10,7 +10,7 @@ Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
 Functions for FluffyFloppy64
-v1.04 - 2025-12-08
+v1.05 - 2025-12-21
 
 Parts of it:
 -
@@ -207,16 +207,13 @@ begin
 end;
 
 function UnpackArchive(const aArchiveName, aTmpPath : string):boolean;
-var
- UnpackPath : String;
 begin
  // Create tmp folder named like the archive and unpack
  result := false;
   try
   try
-   CreateDir(sAppTmpPath + ExtractFileName(aArchiveName));
-   UnpackPath := IncludeTrailingPathDelimiter(sAppTmpPath + ExtractFileName(aArchiveName));
-   UnPackFiles(aArchiveName, '', UnpackPath);
+   CreateDir(IncludeTrailingPathDelimiter(aTmpPath) + ExtractFileName(aArchiveName));
+   UnPackFiles(aArchiveName, '', IncludeTrailingPathDelimiter(aTmpPath) + ExtractFileName(aArchiveName));
    result := true;
   except
    on E: Exception do
@@ -491,7 +488,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -514,8 +511,8 @@ begin
    begin
     BA := LoadByteArray(aImageName);  // g64, nib
     ImageSize := ByteArrayToHexString(BA);
-    BA := LoadByteArray(sAppTmpPath + ExtractFileName(ChangeFileExt(aImageName,'.d64'))); // Vom d64
-    Init_ArrD64(sAppTmpPath + ExtractFileName(ChangeFileExt(aImageName,'.d64')));
+    BA := LoadByteArray(IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ChangeFileExt(aImageName,'.d64'))); // Vom d64
+    Init_ArrD64(IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ChangeFileExt(aImageName,'.d64')));
    end
   else
    begin
@@ -891,7 +888,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -1172,7 +1169,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -1329,7 +1326,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
@@ -1415,7 +1412,7 @@ begin
   FileArchType := '';
   If aArchiveImage.Contains('|') then
    begin
-    FileFullA := StringReplace(aArchiveImage, sAppTmpPath + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);

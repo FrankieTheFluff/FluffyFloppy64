@@ -138,6 +138,7 @@ begin
  // Images
  if str_AllImages.Count > 0 then
   begin
+   frmMain.SQLQueryDir.Active:=true;
    frmMain.SQLQueryDir.Last;
    ImgCount := frmMain.SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates
    frmMain.SQLQueryDir.Active:=false;
@@ -147,13 +148,12 @@ begin
      try
      memoProgressBar.Position := memoProgressBar.Position + 1;
      ImageFile := str_AllImages.Strings[img]; // e.g. ....d64
-
      // Split, check if image is in archive
      If ImageFile.Contains('|')then
       begin
        ImageFileArray := str_AllImages.Strings[img].Split('|');
        ImageFileA := str_AllImages.Strings[img];  // Archive ZIP | Image location inside of archive
-       ImageFile  := ImageFileArray[1];               // image location in tmp folder
+       ImageFile  := ImageFileArray[1];           // image location in tmp folder  e.g. "temp\123.zip\abc.d64"
       end
      else
       begin
@@ -410,6 +410,7 @@ begin
      end; // accept only valid files to import
 
     Application.ProcessMessages;
+
     // Cancel
     if terminate = true then
      begin
@@ -467,7 +468,7 @@ begin
     end;
  end;
 
- //Check if nibtools available?
+ //Check if nibtools for G64 available?
  If cbImgG64.Checked = true then
   begin
    If FileExists(IniFluff.ReadString('NibConv', 'Location', '')) = false then
@@ -481,7 +482,7 @@ begin
     end;
   end;
 
- //Check if nibtools available?
+ //Check if nibtools for nib available?
  If cbImgNIB.Checked = true then
   begin
    If FileExists(IniFluff.ReadString('NibConv', 'Location', '')) = false then
@@ -756,7 +757,7 @@ begin
  str_AllImagesInArchive := TStringList.Create;
  str_FindAllImagesTmp := TStringList.Create;
  str_FindAllImagesArchive := TStringList.Create;
- tmpDir := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
+ tmpDir := IniFluff.ReadString('Options', 'FolderTemp', '');
  memoProgressbar.Position:=0;
  memoImport.Clear;
  memoImportErr.Clear;

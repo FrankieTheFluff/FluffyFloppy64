@@ -32,15 +32,22 @@ Release notes
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 
+v0.91 - 2025-12-21
+- FFFunctions v1.05: Additional "temp folder"/"ZIP files" fixes
+- D71: Fixes read entries
+- Database: Fixes two times DBfilter when opening a database
+- Database: Fixes missing "favourite" or "corrupt" flags
+
 v0.90 - 2025-12-12
 - GUI: Fixes: Error messages when SQL query without result
-- Option: Fixes "Temp folder" not found after change
+- Options: Fixes "Temp folder" not found after change
 
 v0.89 - 2025-12-09
 * Import: Dialogbox has now visual archive counter
 * Import: New button to save "hints/errors" log into txt file
 + Import: Faster import of ZIP-Archives
 + Updated: Multilanguage files (english and german)
++ Database: "sqlite.dll" v3.51.1 2025-12-04
 - Import: Fixes wrong dialogbox progressbar behaviour during import of archives
 - FFFunctions: Removed CheckTmpPath
 - Fixes: Selected "PRG" could not be opened with CCS64 or HOXS64 if scratched files are visible
@@ -48,7 +55,7 @@ v0.89 - 2025-12-09
 
 v0.88 - 2025-07-15
 * Multilanguage (english and german included), new folder \lng\*.ini)
-+ Reorganized functions in unit "ffunctions"
++ Reorganized functions in unit "FFFunctions"
 + Optimized checking if temp folder is available
 
 v0.87 - 2025-07-05

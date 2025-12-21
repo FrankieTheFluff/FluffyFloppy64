@@ -119,7 +119,7 @@ begin
   IniFluff.WriteInteger('Options', 'DirFontSize', spFontSize.Value);
   IniFluff.WriteString('Options', 'DirFont', ColorToString(clbFont.Selected));
   IniFluff.WriteString('Options', 'DirFontBackground', ColorToString(clbBackground.Selected));
-  IniFluff.WriteString('Options', 'FolderTemp', IncludeTrailingPathDelimiter(folderTemp.Directory));
+  IniFluff.WriteString('Options', 'FolderTemp', folderTemp.Directory);
   sAppTmpPath := folderTemp.Directory;
   IniFluff.WriteString('NibConv', 'Location', fileNibConv.FileName);
   IniFluff.WriteString('DirMaster', 'Location', fileDirMaster.FileName);

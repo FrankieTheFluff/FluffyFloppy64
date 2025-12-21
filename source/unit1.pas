@@ -29,8 +29,8 @@ type
   { TfrmMain }
 
   TfrmMain = class(TForm)
-    ATransaction: TSQLTransaction;
     AConnection : TSQLite3Connection;
+    ATransaction: TSQLTransaction;
     BtSQLSearch: TBitBtn;
     cbDBFilePath: TComboBox;
     cbDBFileNameExt: TComboBox;
@@ -77,6 +77,7 @@ type
     lstBoxSectors: TMemo;
     MemoBAMHint: TMemo;
     mnuRecPrint: TMenuItem;
+    Database_NewDialog: TSaveDialog;
     Separator14: TMenuItem;
     mnuRecRefresh: TMenuItem;
     Separator13: TMenuItem;
@@ -772,8 +773,9 @@ procedure TfrmMain.UnpackFileFullContainsPipe(aFileFull : String);
 var
  tmpImg, ArchivePath1, ArchivePath2 : String;
  ImageFileArray : TStringArray;
- i, answer : Integer;
+ answer : Integer;
 begin
+ tmpImg := '';
  If aFileFull.Contains('|') = true then  // check if path locates an archive
   begin
    ImageFileArray := aFileFull.Split('|');
@@ -787,7 +789,7 @@ begin
        end;
     end;
 
-   FileFull := sAppTmpPath + ExtractFileName(ImageFileArray[0]) + ImageFileArray[1]; //location of D64 in tmp folder  "c:\temp\mops.zip\123.d64"
+   FileFull := IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]) + ImageFileArray[1]; //location of D64 in tmp folder  "c:\temp\mops.zip\123.d64"
    // check if zip archive exists
    if fileexists(ImageFileArray[0]) = false then
     begin
@@ -798,12 +800,12 @@ begin
     begin
      If DirectoryExists(sAppTmpPath + ExtractFileName(ImageFileArray[0])) = false then
       begin
-       CreateDir(sAppTmpPath + ExtractFileName(ImageFileArray[0])); // folder to temporarly unzip archive
+       CreateDir(IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0])); // folder to temporarly unzip archive
       end;
      tmpImg := ExtractFileName(ImageFileArray[1]);
      ArchivePath1 := TrimLeadingBackslash(ImageFileArray[1]);
      ArchivePath2 := StringReplace(ArchivePath1, PathDelim, '/', [rfReplaceAll]);
-     if UnpackFile(ImageFileArray[0], ArchivePath2, sAppTmpPath + ExtractFileName(ImageFileArray[0])) = false then
+     if UnpackFile(ImageFileArray[0], ArchivePath2, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0])) = false then
       begin
        exit;
       end;
@@ -818,24 +820,22 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.90';
- sAppDate    := '2025-12-12';
- sAppPath    := ExtractFilePath(ParamStr(0));
+ sAppVersion := 'v0.91';
+ sAppDate    := '2025-12-21';
+ sAppPath    := ExtractFilePath(Application.ExeName); ExtractFilePath(ParamStr(0));
  frmMain.Caption:= sAppCaption + sAppVersion;
  SQlSearch_Click := false;
  dbGridSorted := 'ASC';
 
- // Default Folders
- If Dev_Mode = true then Showmessage('[Dev_Mode] - Create folders');
- If DirectoryExists(IncludeTrailingPathDelimiter(sAppPath + 'temp')) = false then CreateDir(IncludeTrailingPathDelimiter(sAppPath + 'temp\'));
- If DirectoryExists(IncludeTrailingPathDelimiter(sAppPath + 'nibtools')) = false then CreateDir(IncludeTrailingPathDelimiter(sAppPath + 'nibtools\'));
-
  // INI
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - Create INI');
  if FileExists(sAppPath + 'fluffyfloppy64.ini') = False then
   try
    IniFluff := TINIFile.Create(sAppPath + 'fluffyfloppy64.ini');
    IniFluff.WriteString('FluffyFloppy64', 'Version', sAppVersion);
    IniFluff.WriteString('FluffyFloppy64', 'Language', 'English');
+   If DirectoryExists(sAppPath + 'temp') = false then CreateDir(sAppPath + 'temp');
+   IniFluff.WriteString('Options', 'FolderTemp', sAppPath + 'temp');
    IniFluff.WriteInteger('FluffyFloppy64', 'DBModulo', 50);
    InIFluff.WriteBool('FluffyFloppy64', 'Dev_Mode', false);
    IniFluff.WriteBool('Start', 'OpenDatabase', true);
@@ -850,7 +850,6 @@ begin
    IniFluff.WriteBool('Database', 'Column7', true);
    IniFluff.WriteBool('Database', 'Column8', true);
      mnuViewLocation.Checked:=true;
-   IniFluff.WriteString('Options', 'FolderTemp', IncludeTrailingPathDelimiter(sAppPath + 'temp\'));
    IniFluff.WriteString('NibConv', 'Location', '');
    IniFluff.WriteBool('Options', 'Scratched', false);
    IniFluff.WriteBool('Options', 'Shifted', false);
@@ -866,13 +865,20 @@ begin
    IniFluff.WriteString('VICE', 'Location', '');
   finally
  end;
-
  IniFluff := TINIFile.Create(sAppPath + 'fluffyfloppy64.ini');
 
  // Temp folder
- If  IniFluff.ReadString('Options', 'FolderTemp', '') = '' then IniFluff.WriteString('Options', 'FolderTemp', IncludeTrailingPathDelimiter(sAppPath + 'temp\'));
- sAppTmpPath := IncludeTrailingPathDelimiter(IniFluff.ReadString('Options', 'FolderTemp', ''));
- DeleteDirectory(sAppTmpPath,true);  // Clean temp folder
+ If IniFluff.ReadString('Options', 'FolderTemp', '') = '' then
+  begin
+   If DirectoryExists(sAppPath + 'temp') = false then CreateDir(sAppPath + 'temp');
+   IniFluff.WriteString('Options', 'FolderTemp', sAppPath + 'temp')
+  end;
+ If DirectoryExists(IniFluff.ReadString('Options', 'FolderTemp', '')) = false then
+  begin
+   CreateDir(IniFluff.ReadString('Options', 'FolderTemp', ''));
+  end;
+ sAppTmpPath := IniFluff.ReadString('Options', 'FolderTemp', '');
+ CleanTmp(sAppTmpPath);  // Clean temp folder
 
  // Language
  GetLNG(IniFluff.ReadString('FluffyFloppy64', 'Language', 'English'));
@@ -886,13 +892,13 @@ begin
  If Dev_Mode = true then frmMain.Caption:= sAppCaption + sAppVersion + ' [Dev_Mode]';
 
  // Font
- If fileexists(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = false then
+ If fileexists(sAppPath+'C64_Pro_Mono-STYLE.ttf') = false then
   begin
-   Showmessage('Font not found: ' + chr(13) + PChar(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf'));
+   Showmessage('Font not found: ' + chr(13) + PChar(sAppPath+'C64_Pro_Mono-STYLE.ttf'));
   end
   else
    begin
-    If Dev_Mode = true then Showmessage('[Dev_Mode] - Font found: ' + chr(13) + PChar(IncludeTrailingPathDelimiter(sAppPath))+'C64_Pro_Mono-STYLE.ttf');
+    If Dev_Mode = true then Showmessage('[Dev_Mode] - Font found: ' + chr(13) + PChar(sAppPath)+'C64_Pro_Mono-STYLE.ttf');
    end;
 
  If Dev_Mode = true then Showmessage('[Dev_Mode] - ClientWidth & ClientHeight');
@@ -919,18 +925,8 @@ begin
  LstBoxPETSCII.Color := StringToColor(IniFluff.ReadString('Options', 'DirFontBackground', '$00DB3F1E'));
  //
 
- // Temp folder
- If DirectoryExists(sAppTmpPath) = false then
-  begin
-   IniFluff.WriteString('Options', 'FolderTemp', IncludeTrailingPathDelimiter(sAppPath + 'temp\')); // default
-  end;
-
- // Nibtools
- If DirectoryExists(ExtractFilePath(IniFluff.ReadString('NibConv', 'Location', IncludeTrailingPathDelimiter(sAppPath + 'nibtools\')))) = false then
-  begin
-   IniFluff.WriteString('NibConv', 'Location', '');
-  end;
- If FileExists(IniFluff.ReadString('NibConv', 'Location', IncludeTrailingPathDelimiter(sAppPath + 'nibtools\') + 'nibconv.exe')) = false then
+ // Nibtools location
+ If FileExists(IniFluff.ReadString('NibConv', 'Location', sAppPath + 'nibtools\' + 'nibconv.exe')) = false then
   begin
    IniFluff.WriteString('NibConv', 'Location', '');
   end;
@@ -1642,10 +1638,10 @@ procedure TfrmMain.mnuNewClick(Sender: TObject);
 var
  answer : integer;
 begin
- Database_OpenDialog.Title:= IniLng.ReadString('MSG', 'msgDB01', 'Create new database');
- if Database_OpenDialog.Execute then
+ Database_NewDialog.Title:= IniLng.ReadString('MSG', 'msgDB01', 'Create new database');
+ if Database_NewDialog.Execute then
  begin
-  if FileExists(Database_OpenDialog.FileName) then
+  if FileExists(Database_NewDialog.FileName) then
    begin
     answer := MessageDlg(IniLng.ReadString('MSG', 'msgDB02', 'Database already exists! Unable to create!'),mtWarning, [mbOK], 0);
      if answer = mrOk then
@@ -1656,14 +1652,11 @@ begin
   try
     // Database_Create
     If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - Step 1');
-    ATransaction.Active:=false;
-    //AConnection.Close;
-    AConnection := TSQLite3Connection.Create(nil);
-    AConnection.DatabaseName := Database_OpenDialog.FileName;
-    ATransaction := TSQLTransaction.Create(AConnection);
-    AConnection.Transaction := ATransaction;
+    AConnection.Close;
+    AConnection.DatabaseName := Database_NewDialog.FileName;
     AConnection.Open;
-    ATransaction.StartTransaction;
+    ATransaction.Active := true;
+
     AConnection.ExecuteDirect('CREATE TABLE "DB"('+
                 ' "idDB" Integer PRIMARY KEY,'+
                 ' "DBVersion" String,'+
@@ -1722,9 +1715,7 @@ begin
       begin
        ATransaction.Active:=false;
       end;
-  end;
-
-  AddToRecentFiles(Database_OpenDialog.FileName);
+  end; // End Create Database
 
   mnuImport.Enabled:=true;
   mnuRecOpen.Enabled:=false;
@@ -1751,19 +1742,17 @@ begin
   LstBxDirectoryPETSCII.Clear;
   LstBxDirectoryPETSCII.Items.Add(IniLng.ReadString('MSG', 'msgDB05', 'Image not found'));
   MemoBAMHint.Clear;
-  frmMain.Caption:= sAppCaption + sAppVersion + ' [' + ExtractFileName(Database_OpenDialog.FileName) + ']';
-  IniFluff.WriteString('Database', 'Location', Database_OpenDialog.FileName);
+  frmMain.Caption:= sAppCaption + sAppVersion + ' [' + ExtractFileName(Database_NewDialog.FileName) + ']';
+  IniFluff.WriteString('Database', 'Location', Database_NewDialog.FileName);
   answer := MessageDlg(IniLng.ReadString('MSG', 'msgDB04', 'Database successfully created!'),mtInformation, [mbOK], 0);
-   if answer = mrOk then
+  if answer = mrOk then
     begin
      //
     end;
-   Init_FilePath;
-   if ATransaction.Active then
-    begin
-     ATransaction.Commit;
-    end;
+  Init_FilePath;
    If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - End');
+   OpenDatabase(Database_NewDialog.FileName);
+   AddToRecentFiles(Database_NewDialog.FileName);
   end;
 end;
 
@@ -2102,17 +2091,11 @@ begin
  StatusBar1.Panels[2].Text:= '';
  StatusBar1.Panels[3].Text:= '';
  MemoBAMHint.Clear;
- If Atransaction.Active then
-  begin
-   SQLQueryDir.Active:=false;
-   ATransaction.Active:=false;
-   AConnection.Close;
-  end;
- AConnection := TSQLite3Connection.Create(nil);
+
+ AConnection.Close;
  AConnection.DatabaseName := aFileName;
- ATransaction := TSQLTransaction.Create(AConnection);
- AConnection.Transaction := ATransaction;
  AConnection.Open;
+ ATransaction.Active := true;
 
  // Check version
  SQLQueryDB.DataBase := AConnection;
@@ -2184,14 +2167,13 @@ begin
      end;
   end;
 
- If Dev_Mode = true then Showmessage('[Dev_Mode] - Database filter');
- DBFilter;
-
  // Last
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Start Init_FilePath procedure');
  If aFileName <> IniFluff.ReadString('Database', 'Location', '') then IniFluff.ReadString('Database', 'FilePathLast', '');
  Init_FilePath;
  CleanTmp(sAppTmpPath);
+
+ If Dev_Mode = true then Showmessage('[Dev_Mode] - Database filter');
  DBFilter;
 
  frmMain.Caption:= sAppCaption + sAppVersion + ' - [' + ExtractFileName(aFileName) + ']';
@@ -2418,7 +2400,6 @@ begin
 
         If SQLQueryDir.RecordCount > 0 then SQLQueryDir.First;
         LoadDir;
-
         exit;
      end;
     end;
@@ -2564,7 +2545,7 @@ procedure TfrmMain.DBFilter;
 var
  StrSQL : String;
 begin
- //if SQLQueryDB.Active = false then exit;
+ if SQLQueryDB.Active = false then exit;
  StrSQL := '';
  SQLQueryDir.Close;
  SQLQueryDir.DataBase := AConnection;
@@ -2755,10 +2736,6 @@ begin
   end;
  if SQLQueryDir.RecordCount > 0 then
   begin
-   if ATransaction.Active then
-    begin
-     SQlQueryDir.ApplyUpdates;
-    end;
    CleanTmp(sAppTmpPath);
    LoadDir;
   end;
@@ -2781,6 +2758,7 @@ begin
     end;
    UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
    GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
+   DBGridDirTxt_ReadEntry;
   end;
 end;
 
@@ -2931,7 +2909,7 @@ Begin
           begin
            arrD71[18,0] := frmMain.SQLQueryTrks.FieldByName('T18').AsString;
            arrD71[53,0] := frmMain.SQLQueryTrks.FieldByName('T53').AsString;
-           frmMain.ReadDirEntries_D64;
+           frmMain.ReadDirEntries_D71;
            filesizeImg := frmMain.SQlQueryDir.FieldByName('filesizeImg').AsString;
           end;
          end
@@ -3595,6 +3573,10 @@ begin
  mnuRecFavourite.Enabled:=false;
  mnuRecCorrupt.Enabled:=false;
  mnuRecDelete.Enabled:=false;
+ if ATransaction.Active then
+  begin
+   SQlQueryDir.ApplyUpdates;
+  end;
 end;
 
 procedure TfrmMain.DBGridDirKeyUp(Sender: TObject; var Key: Word;
@@ -3899,7 +3881,7 @@ begin
  On E : Exception do
   ShowMessage(E.Message + ' - Unable to clear temporary folder! Please check files for e.g. "readonly" attribute.');
  end;
- IniFluff.WriteString('Database', 'FilePathLast', IncludeTrailingPathDelimiter(cbDBFilePath.Text));
+ IniFluff.WriteString('Database', 'FilePathLast', cbDBFilePath.Text);
  IniFluff.WriteBool('Options', 'Scratched', TgScratch.Checked);
  IniFluff.WriteBool('Options', 'Shifted', TgCShift.Checked);
  IniFluff.WriteInteger('Application', 'ClientWidth', ClientWidth);
@@ -3915,7 +3897,7 @@ begin
    SQlQueryDir.ApplyUpdates;
    ATransaction.Commit;
   end;
- AConnection.Free;
+ AConnection.Close;
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -3930,7 +3912,7 @@ end;
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
   If Dev_Mode = true then Showmessage('[Dev_Mode] - Start RemoveFontRessource procedure');
-  If fileexists(IncludeTrailingPathDelimiter(sAppPath)+'C64_Pro_Mono-STYLE.ttf') = true then
+  If fileexists(sAppPath+'C64_Pro_Mono-STYLE.ttf') = true then
    begin
     RemoveFontResourceExW(PWideChar('C64_Pro_Mono-STYLE.ttf'),FR_PRIVATE,nil);
    end;
@@ -4653,7 +4635,6 @@ begin
   begin
    Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
    Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
-
    try
     UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text); // FileFull
    finally
@@ -4808,6 +4789,5 @@ begin
 end;
 
 end.
-
 
 

@@ -417,7 +417,7 @@ object frmMain: TfrmMain
               Left = 140
               Height = 38
               Hint = 'Filter: File extensions'
-              Top = 42
+              Top = 49
               Width = 123
               Anchors = [akLeft]
               ItemHeight = 30
@@ -449,10 +449,10 @@ object frmMain: TfrmMain
               OnChange = cbDBFileNameExtChange
             end
             object EdSQLSearch: TEdit
-              Left = 140
+              Left = 144
               Height = 38
               Hint = 'Search database...'
-              Top = 89
+              Top = 98
               Width = 326
               Anchors = [akLeft, akRight]
               Enabled = False
@@ -867,8 +867,8 @@ object frmMain: TfrmMain
     ResizeAnchor = akRight
   end
   object MainMenu1: TMainMenu
-    Left = 1696
-    Top = 168
+    Left = 1544
+    Top = 688
     object mnuFile: TMenuItem
       Caption = '&File'
       object mnuDatabase: TMenuItem
@@ -1019,8 +1019,8 @@ object frmMain: TfrmMain
   object Database_OpenDialog: TOpenDialog
     DefaultExt = '.sl3'
     Filter = 'FluffyFloppy64 Database|*.sl3'
-    Left = 1190
-    Top = 168
+    Left = 1088
+    Top = 160
   end
   object DataSourceDir: TDataSource
     DataSet = SQLQueryDir
@@ -1031,6 +1031,7 @@ object frmMain: TfrmMain
     PacketRecords = -1
     IndexFieldNames = 'idxImg'
     FieldDefs = <>
+    Database = AConnection
     Transaction = ATransaction
     SQL.Strings = (
       ''
@@ -1062,6 +1063,7 @@ object frmMain: TfrmMain
   end
   object ATransaction: TSQLTransaction
     Active = False
+    Database = AConnection
     Left = 1484
     Top = 308
   end
@@ -1117,8 +1119,8 @@ object frmMain: TfrmMain
     Top = 420
   end
   object mnuKontextDBGridDir: TPopupMenu
-    Left = 1694
-    Top = 266
+    Left = 1680
+    Top = 688
     object mnuOpenImage: TMenuItem
       Caption = 'Open'
       Enabled = False
@@ -1173,6 +1175,7 @@ object frmMain: TfrmMain
   object SQLQueryDB: TSQLQuery
     PacketRecords = -1
     FieldDefs = <>
+    Database = AConnection
     Transaction = ATransaction
     SQL.Strings = (
       ''
@@ -1217,5 +1220,20 @@ object frmMain: TfrmMain
     DataSet = SQLQueryDB
     Left = 1064
     Top = 420
+  end
+  object Database_NewDialog: TSaveDialog
+    DefaultExt = '.sl3'
+    Filter = 'FluffyFloppy64 Database|*.sl3'
+    Left = 1304
+    Top = 160
+  end
+  object AConnection: TSQLite3Connection
+    Connected = False
+    LoginPrompt = False
+    KeepConnection = False
+    Transaction = ATransaction
+    AlwaysUseBigint = False
+    Left = 1656
+    Top = 312
   end
 end
