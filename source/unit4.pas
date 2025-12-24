@@ -38,6 +38,7 @@ type
     cbImportT40: TCheckBox;
     cbStartOpenDB: TCheckBox;
     cbPETSCIITracks: TCheckBox;
+    cbDirImport: TCheckBox;
     clbBackground: TColorBox;
     clbFont: TColorBox;
     cbLng: TComboBox;
@@ -61,6 +62,7 @@ type
     grbEmulator: TGroupBox;
     grbTools: TGroupBox;
     grbLng: TGroupBox;
+    GroupBox1: TGroupBox;
     lbFontFolder: TLabel;
     lbFontFolder2: TLabel;
     lblImportHint1: TLabel;
@@ -119,6 +121,7 @@ begin
   IniFluff.WriteInteger('Options', 'DirFontSize', spFontSize.Value);
   IniFluff.WriteString('Options', 'DirFont', ColorToString(clbFont.Selected));
   IniFluff.WriteString('Options', 'DirFontBackground', ColorToString(clbBackground.Selected));
+  IniFluff.WriteBool('Options', 'cbDirImport', cbDirImport.Checked);
   IniFluff.WriteString('Options', 'FolderTemp', folderTemp.Directory);
   sAppTmpPath := folderTemp.Directory;
   IniFluff.WriteString('NibConv', 'Location', fileNibConv.FileName);
@@ -193,7 +196,7 @@ var
   msgSet20, msgSet21, msgSet22, msgSet23, msgSet24, msgSet25, msgSet26, msgSet27 : String;
   msgSet30, msgSet31, msgSet32, msgSet33, msgSet34, msgSet35, msgSet36, msgSet38, msgSet39 : String;
   msgSet40, msgSet41, msgSet42, msgSet43, msgSet44, msgSet45, msgSet46, msgSet47, msgSet48, msgSet49 : String;
-  msgSet50 : String;
+  msgSet50, msgSet51 : String;
 begin
 
   cbStartOpenDB.Checked := IniFluff.ReadBool('Start', 'OpenDatabase', true);
@@ -201,6 +204,7 @@ begin
   cbImportT18T19.Checked := IniFluff.ReadBool('Options', 'IncludeT18T19', false);
   cbImportT18T53.Checked := IniFluff.ReadBool('Options', 'IncludeT18T53', false);
   cbImportT40.Checked := IniFluff.ReadBool('Options', 'IncludeT40', false);
+  cbDirImport.Checked := IniFluff.ReadBool('Options', 'cbDirImport', false);
   folderTemp.Directory := IniFluff.ReadString('Options', 'FolderTemp', '');
   fileNibConv.FileName := IniFluff.ReadString('NibConv', 'Location', '');
   spFontSize.Value := IniFluff.ReadInteger('Options', 'DirFontSize', 12);
@@ -272,6 +276,7 @@ begin
   msgSet48 := IniLng.ReadString('SET', 'msgSet48', 'Needs a restart of the application to make the changes take effect...');
   msgSet49 := IniLng.ReadString('SET', 'msgSet49', 'Copy2Fonts');
   msgSet50 := IniLng.ReadString('SET', 'msgSet50', 'Language:');
+  msgSet51 := IniLng.ReadString('SET', 'msgSet51', 'Remember recent used directory for import');
 
   btCancel.Caption:= msgSet01;
   btOK.Caption:= msgSet02;
@@ -317,6 +322,7 @@ begin
   lbFontFolder2.Caption := msgSet48;
   btCopyFont.Caption := msgSet49;
   grbLng.Caption := msgSet50;
+  cbDirImport.Caption := msgSet51;
 
 end;
 

@@ -116,6 +116,14 @@ object frmImport: TfrmImport
       Caption = '0 '
       TabOrder = 5
     end
+    object cbLogNoImport: TCheckBox
+      Left = 644
+      Height = 34
+      Top = 204
+      Width = 372
+      Caption = 'Log "No import (already exists)" hints'
+      TabOrder = 6
+    end
   end
   object grImportFrom: TGroupBox
     Left = 9

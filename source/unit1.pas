@@ -255,7 +255,7 @@ procedure OpenEmu(aEmu: string; aParam: string);
 var
   frmMain: TfrmMain;
   Dev_mode : boolean;
-  DB_RecCount : Integer;
+  DB_RecCount, ImgCount : Integer;
   sAppPath, sAppVersion, sAppCaption, sAppDate,  sAppTmpPath : String;
   FileFull : String; // Global, check if field contains pipe "|"
   IniFluff, IniLng : TInifile;
@@ -323,7 +323,7 @@ begin
    try
     IniLng := TINIFile.Create(IncludeTrailingPathDelimiter(sAppPath + 'lng') + 'English.ini');
     IniLng.WriteString('FluffyFloppy64', 'LNG', 'English');
-    IniLng.WriteString('FluffyFloppy64', 'Version', '0.89');
+    IniLng.WriteString('FluffyFloppy64', 'Version', '0.92');
     IniLng.WriteString('MNU', 'mnuFile', '&File');
     IniLng.WriteString('MNU', 'mnuDatabase', '&Database...');
     IniLng.WriteString('MNU', 'mnuNew', '&New');
@@ -433,6 +433,7 @@ begin
     IniLng.WriteString('Import', 'lblFileProgress', 'File(s) imported:');
     IniLng.WriteString('Import', 'lblArchiveProgress', 'Archive(s) imported:');
     IniLng.WriteString('Import', 'lblImportHintsErrors', 'Hints/Errors:');
+    IniLng.WriteString('Import', 'cbLogNoImport', 'Log "No import (already exists)" hints');
     IniLng.WriteString('Import', 'btClose', 'Close');
     IniLng.WriteString('Import', 'btCancel', 'Cancel');
     IniLng.WriteString('Import', 'btImport', 'Import');
@@ -551,6 +552,7 @@ begin
     IniLng.WriteString('SET', 'msgSet48', 'Needs a restart of the application to make the changes take effect...');
     IniLng.WriteString('SET', 'msgSet49', 'Copy2Fonts');
     IniLng.WriteString('SET', 'msgSet50', 'Language:');
+    IniLng.WriteString('SET', 'msgSet51', 'Remember recent used directory for import');
    finally
    end;
 
@@ -666,6 +668,7 @@ begin
   frmImport.lblFileProgress.Caption := IniLng.ReadString('Import', 'lblFileProgress', 'File(s) imported:');
   frmImport.lblArchiveProgress.Caption := IniLng.ReadString('Import', 'lblArchiveProgress', 'Archive(s) imported:');
   frmImport.lblImportHintsErrors.Caption := IniLng.ReadString('Import', 'lblImportHintsErrors', 'Hints/Errors:');
+  frmImport.cbLogNoImport.Caption := IniLng.ReadString('Import', 'cbLogNoImport', 'Log "No import (already exists)" hints');
   frmImport.btClose.Caption := IniLng.ReadString('Import', 'btClose', 'Close');
   frmImport.btCancel.Caption := IniLng.ReadString('Import', 'btCancel', 'Cancel');
   frmImport.btImport.Caption := IniLng.ReadString('Import', 'btImport', 'Import');
@@ -758,20 +761,19 @@ var
 begin
   Process := TProcess.Create(nil);
   try
-    //showmessage(aEmu + ' --' + aParam);
-    Process.Executable := '"' + aEmu + '"';
-    Process.Parameters.Add(aParam);
-    Process.ShowWindow := swoShow;
-    Process.Options := Process.Options + [poWaitOnExit];
-    Process.Execute;
+   Process.Executable := '"' + aEmu + '"';
+   Process.Parameters.Add(aParam);
+   Process.ShowWindow := swoShow;
+   Process.Options := Process.Options;
+   Process.Execute;
   finally
-    Process.Free;
+   Process.Free;
   end;
 end;
 
 procedure TfrmMain.UnpackFileFullContainsPipe(aFileFull : String);
 var
- tmpImg, ArchivePath1, ArchivePath2 : String;
+ tmpImg, ArchivePath, ImageFileName : String;
  ImageFileArray : TStringArray;
  answer : Integer;
 begin
@@ -803,9 +805,9 @@ begin
        CreateDir(IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0])); // folder to temporarly unzip archive
       end;
      tmpImg := ExtractFileName(ImageFileArray[1]);
-     ArchivePath1 := TrimLeadingBackslash(ImageFileArray[1]);
-     ArchivePath2 := StringReplace(ArchivePath1, PathDelim, '/', [rfReplaceAll]);
-     if UnpackFile(ImageFileArray[0], ArchivePath2, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0])) = false then
+     ArchivePath := TrimLeadingBackslash(ImageFileArray[1]);
+     ImageFileName := StringReplace(ArchivePath, PathDelim, '/', [rfReplaceAll]);
+     if UnpackFile(ImageFileArray[0], ImageFileName, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0])) = false then
       begin
        exit;
       end;
@@ -820,8 +822,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.91';
- sAppDate    := '2025-12-21';
+ sAppVersion := 'v0.92';
+ sAppDate    := '2025-12-24';
  sAppPath    := ExtractFilePath(Application.ExeName); ExtractFilePath(ParamStr(0));
  frmMain.Caption:= sAppCaption + sAppVersion;
  SQlSearch_Click := false;
@@ -1056,15 +1058,12 @@ begin
  msgEmu20 := IniLng.ReadString('MSG', 'msgEmu20', 'VICE does not support d81 images!');
  msgDM01 := IniLng.ReadString('MSG', 'msgDM01', 'DirMaster not found!');
 
- if SQLQueryDB.Active = true then
+ if SQLQueryDB.Active = false then SQLQueryDB.Active := true;
+ if SQLQueryDir.RecordCount > 0 then
   begin
-   if SQLQueryDir.RecordCount > 0 then
-    begin
-     UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
-    end
-   else exit;
+   UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
   end
- else exit;
+   else exit;
 
   // CCS64###################################################################
   If cbEmulator.Text = 'CCS64' then
@@ -1850,9 +1849,6 @@ begin
    If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
     else
    If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-   SQLQueryDir.SQL.Add(StrSQL);
-   SQLQueryDir.Active := True;
-   SQLQueryDir.First;
    DBFilter;
   end;
 
@@ -1897,6 +1893,12 @@ begin
    edTags.Enabled:=false;
    memInfo.Enabled:=false;
   end;
+
+  frmMain.SQLQueryDir.Active:=true;
+  frmMain.SQLQueryDir.Last;
+  ImgCount := frmMain.SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates - last db entry
+  frmMain.SQLQueryDir.Active:=false;
+
   frmImport.Showmodal;
 end;
 
@@ -2312,9 +2314,6 @@ begin
    If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
     else
    If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-   SQLQueryDir.SQL.Add(StrSQL);
-   SQLQueryDir.Active := True;
-   SQLQueryDir.First;
    DBFilter;
    exit;
   end;

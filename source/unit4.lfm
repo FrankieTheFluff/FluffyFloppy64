@@ -172,7 +172,7 @@ object Form4: TForm4
       object grbImportD64: TGroupBox
         Left = 7
         Height = 140
-        Top = 7
+        Top = 112
         Width = 1160
         Caption = 'Import D64, G64, NIB:'
         ClientHeight = 105
@@ -198,7 +198,7 @@ object Form4: TForm4
       object grbImportD71: TGroupBox
         Left = 7
         Height = 142
-        Top = 154
+        Top = 264
         Width = 1160
         Caption = 'Import D71:'
         ClientHeight = 107
@@ -224,7 +224,7 @@ object Form4: TForm4
       object grbImportD81: TGroupBox
         Left = 7
         Height = 140
-        Top = 304
+        Top = 416
         Width = 1160
         Caption = 'Import D81:'
         ClientHeight = 105
@@ -245,6 +245,24 @@ object Form4: TForm4
           Width = 513
           Caption = 'Not recommended! Could go slow, needs more storage'
           ParentColor = False
+        end
+      end
+      object GroupBox1: TGroupBox
+        Left = 7
+        Height = 96
+        Top = 8
+        Width = 1153
+        Caption = 'Location:'
+        ClientHeight = 61
+        ClientWidth = 1149
+        TabOrder = 3
+        object cbDirImport: TCheckBox
+          Left = 28
+          Height = 34
+          Top = 14
+          Width = 429
+          Caption = 'Remember recent used directory for import'
+          TabOrder = 0
         end
       end
     end

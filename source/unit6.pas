@@ -41,6 +41,7 @@ type
     CheckBox1: TCheckBox;
     CheckBox2: TCheckBox;
     cbArcZIP: TCheckBox;
+    cbLogNoImport: TCheckBox;
     DirImport: TDirectoryEdit;
     grImportProgress: TGroupBox;
     grImportFrom: TGroupBox;
@@ -101,7 +102,7 @@ procedure TfrmImport.Import;
 var
   fstream : TFileStream;
   filesizeImg, ImageFile, ImageFileA : String;
-  ImgCount, img, dbMod : Integer;
+  img, dbMod : Integer;
   msgImp01, msgImp02, msgImp03, msgImp04, msgImp05, msgImp06  : String;
 begin
 
@@ -132,16 +133,11 @@ begin
   btImport.Enabled := false;
   memoImport.Clear;
   Terminate := false;
-  ImgCount := 0;
   lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
 
  // Images
  if str_AllImages.Count > 0 then
   begin
-   frmMain.SQLQueryDir.Active:=true;
-   frmMain.SQLQueryDir.Last;
-   ImgCount := frmMain.SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates
-   frmMain.SQLQueryDir.Active:=false;
    // accept only valid files to stringlist str_Images
    for img := 0 to str_AllImages.count-1 do
     begin
@@ -172,7 +168,7 @@ begin
            ImgCount := ImgCount - 1;
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
+           if cbLogNoImport.Checked then memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
           end
         else
           begin
@@ -197,7 +193,7 @@ begin
             ImgCount := ImgCount - 1;
             ImgCountErr := ImgCountErr + 1;
             lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-            memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
+            if cbLogNoImport.Checked then memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
            end
          else
            begin
@@ -233,7 +229,7 @@ begin
               ImgCount := ImgCount - 1;
               ImgCountErr := ImgCountErr + 1;
               lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-              memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
+              if cbLogNoImport.Checked then memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
              end
            else
              begin
@@ -269,7 +265,7 @@ begin
             ImgCount := ImgCount - 1;
             ImgCountErr := ImgCountErr + 1;
             lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-            memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
+            if cbLogNoImport.Checked then memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
            end
          else
            begin
@@ -305,7 +301,7 @@ begin
            ImgCount := ImgCount - 1;
            ImgCountErr := ImgCountErr + 1;
            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-           memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
+           if cbLogNoImport.Checked then memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
           end
          else
            begin
@@ -341,7 +337,7 @@ begin
              ImgCount := ImgCount - 1;
              ImgCountErr := ImgCountErr + 1;
              lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-             memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
+             if cbLogNoImport.Checked then memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
             end
            else
             begin
@@ -378,7 +374,7 @@ begin
              ImgCount := ImgCount - 1;
              ImgCountErr := ImgCountErr + 1;
              lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
-             memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
+             if cbLogNoImport.Checked then memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
             end
            else
             begin
@@ -421,12 +417,12 @@ begin
       exit;
      end;
    end;  // accept only valid files
+
   end;  // > 0
 end;
 
 procedure TfrmImport.btCloseClick(Sender: TObject);
 begin
- frmMain.DBFilter;
  close;
 end;
 
@@ -497,7 +493,6 @@ begin
   end;
 
  // Start import
- Init_DirImport;
  btImport.Enabled:=false;
  btCancel.Enabled:=true;
  btClose.Enabled:=false;
@@ -580,9 +575,12 @@ end;
 procedure TfrmImport.FormActivate(Sender: TObject);
 begin
  Application.ProcessMessages;
- DirImport.Directory := IniFluff.ReadString('Options', 'FolderImport', '');
+ if IniFluff.ReadBool('Options', 'cbDirImport', false) then
+   begin
+    DirImport.Directory := IniFluff.ReadString('Options', 'FolderImport', '');
+    Init_DirImport;
+   end;
  DirImport.Enabled := true;
- Init_DirImport;
 end;
 
 procedure TfrmImport.Init_DirImport;
@@ -725,7 +723,7 @@ begin
  str_FindAllImagesArchive.Free;
  CleanTmp(tmpDir);
  IniFluff.WriteString('Options', 'FolderImport', DirImport.Directory);
- close;
+ frmMain.DBFilter;
 end;
 
 procedure TfrmImport.FormShow(Sender: TObject);
@@ -738,6 +736,8 @@ begin
 
  ImgAdd := 0;
  ImageCountA2 := 0;
+ DirImport.Text:='';
+ DirImport.Directory:='';
  memoImport.Clear;
  memoImportErr.Clear;
  ImgCountErr := 0;

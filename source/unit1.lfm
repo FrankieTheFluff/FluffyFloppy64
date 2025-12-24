@@ -91,7 +91,7 @@ object frmMain: TfrmMain
         object LstBxDirectoryPETSCII: TListBox
           Left = 14
           Height = 825
-          Top = 70
+          Top = 72
           Width = 786
           Anchors = [akTop, akLeft, akRight, akBottom]
           Color = 14368542

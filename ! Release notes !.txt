@@ -32,6 +32,14 @@ Release notes
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 
+v0.92 - 2025-12-24
+* Import: Optional "Log "No import (already exists)" hints"
++ Import: Faster import of ZIP-Archives after removing unneeded SQL related code
++ Possible multiple emulator instances (Process.options [poWaitOnExit] removed)
+- Import: Removed unneeded "Init_DirImport" event when press "import" button
+- FFFunctions v1.06: Fixes UTF8 problems when extracting ZIPs (e.g. german Umlaute äöü)
+- Removed some addidtional unneeded SQL releated code
+
 v0.91 - 2025-12-21
 - FFFunctions v1.05: Additional "temp folder"/"ZIP files" fixes
 - D71: Fixes read entries
