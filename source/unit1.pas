@@ -822,8 +822,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.92';
- sAppDate    := '2025-12-24';
+ sAppVersion := 'v0.93';
+ sAppDate    := '2025-12-25';
  sAppPath    := ExtractFilePath(Application.ExeName); ExtractFilePath(ParamStr(0));
  frmMain.Caption:= sAppCaption + sAppVersion;
  SQlSearch_Click := false;
@@ -2544,7 +2544,6 @@ procedure TfrmMain.DBFilter;
 var
  StrSQL : String;
 begin
- if SQLQueryDB.Active = false then exit;
  StrSQL := '';
  SQLQueryDir.Close;
  SQLQueryDir.DataBase := AConnection;

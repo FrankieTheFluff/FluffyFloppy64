@@ -10,7 +10,7 @@ Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
 Functions for FluffyFloppy64
-v1.06 - 2025-12-23
+v1.07 - 2025-12-25
 
 Parts of it:
 -
@@ -200,8 +200,6 @@ End;
 function UnpackFile(const aArchiveName, aImageFile, ExtractPath: string) : Boolean;
 var
   UnZipper: TUnZipper;
-  i : integer;
-  Extpath : String;
 begin
   result := false;
   UnZipper := TUnZipper.Create;
@@ -209,12 +207,8 @@ begin
   try
    UnZipper.FileName := aArchiveName;
    UnZipper.OutputPath := ExtractPath;
-   Extpath := IncludeTrailingPathDelimiter(ExtractPath);
    Unzipper.Examine;
-   UnZipper.UnzipFile(utf8tocp437(aImageFile));
-   for i := 0 to UnZipper.Entries.Count-1 do begin
-    Renamefile(Extpath+UnZipper.Entries.Entries[i].ArchiveFileName, Extpath+cp437toutf8(UnZipper.Entries.Entries[i].ArchiveFileName));
-   end;
+   UnZipper.UnzipFile((aImageFile));
    Result:= true;
    except
     on E: Exception do
@@ -231,8 +225,6 @@ end;
 function UnPackFiles(aArchiveName, ExtractPath: String): Boolean;
 var
   UnZipper : TUnZipper;
-  i : integer;
-  Extpath : String;
 begin
   Result:= false;
   UnZipper      := TUnZipper.Create;
@@ -240,12 +232,8 @@ begin
   try
    UnZipper.FileName   := aArchiveName;
    UnZipper.OutputPath := ExtractPath;
-   Extpath := IncludeTrailingPathDelimiter(ExtractPath);
    UnZipper.Examine;
    Unzipper.UnZipAllFiles;
-   for i := 0 to UnZipper.Entries.Count-1 do begin
-    Renamefile(Extpath+UnZipper.Entries.Entries[i].ArchiveFileName, Extpath+cp437toutf8(UnZipper.Entries.Entries[i].ArchiveFileName));
-   end;
    Result:= true;
    except
     on E: Exception do

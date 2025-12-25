@@ -32,6 +32,9 @@ Release notes
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 
+v0.93 - 2025-12-25
+- FFFunctions v1.07: Revert the changes in v1.06 (codepage)
+
 v0.92 - 2025-12-24
 * Import: Optional "Log "No import (already exists)" hints"
 + Import: Faster import of ZIP-Archives after removing unneeded SQL related code
