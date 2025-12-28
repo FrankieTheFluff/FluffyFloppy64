@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
-  Left = 793
+  Left = 1072
   Height = 1125
-  Top = 327
+  Top = 388
   Width = 1818
   Caption = 'frmMain'
   ClientHeight = 1125
@@ -438,6 +438,8 @@ object frmMain: TfrmMain
                 'D81'
                 'tap'
                 'TAP'
+                'txt'
+                'TXT'
               )
               ParentShowHint = False
               ReadOnly = True

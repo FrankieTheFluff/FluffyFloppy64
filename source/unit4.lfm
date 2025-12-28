@@ -177,7 +177,7 @@ object Form4: TForm4
         Caption = 'Import D64, G64, NIB:'
         ClientHeight = 105
         ClientWidth = 1156
-        TabOrder = 0
+        TabOrder = 2
         object cbImportT18T19: TCheckBox
           Left = 28
           Height = 34
@@ -203,7 +203,7 @@ object Form4: TForm4
         Caption = 'Import D71:'
         ClientHeight = 107
         ClientWidth = 1156
-        TabOrder = 1
+        TabOrder = 3
         object cbImportT18T53: TCheckBox
           Left = 28
           Height = 34
@@ -229,7 +229,7 @@ object Form4: TForm4
         Caption = 'Import D81:'
         ClientHeight = 105
         ClientWidth = 1156
-        TabOrder = 2
+        TabOrder = 4
         object cbImportT40: TCheckBox
           Left = 28
           Height = 34
@@ -251,11 +251,11 @@ object Form4: TForm4
         Left = 7
         Height = 96
         Top = 8
-        Width = 1153
+        Width = 825
         Caption = 'Location:'
         ClientHeight = 61
-        ClientWidth = 1149
-        TabOrder = 3
+        ClientWidth = 821
+        TabOrder = 0
         object cbDirImport: TCheckBox
           Left = 28
           Height = 34
@@ -263,6 +263,29 @@ object Form4: TForm4
           Width = 429
           Caption = 'Remember recent used directory for import'
           TabOrder = 0
+        end
+      end
+      object grbCP: TGroupBox
+        Left = 843
+        Height = 96
+        Top = 8
+        Width = 324
+        Caption = 'Codepage:'
+        ClientHeight = 61
+        ClientWidth = 320
+        TabOrder = 1
+        object cbCP: TComboBox
+          Left = 32
+          Height = 38
+          Top = 8
+          Width = 175
+          ItemHeight = 30
+          Items.Strings = (
+            '437'
+            'System'
+          )
+          TabOrder = 0
+          Text = 'Default'
         end
       end
     end

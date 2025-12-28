@@ -51,7 +51,7 @@ object frmImport: TfrmImport
       ParentColor = False
     end
     object memoImport: TMemo
-      Left = 14
+      Left = 16
       Height = 100
       Top = 96
       Width = 1134
@@ -60,15 +60,15 @@ object frmImport: TfrmImport
       TabOrder = 1
     end
     object lblImportHintsErrors: TLabel
-      Left = 14
+      Left = 16
       Height = 30
-      Top = 208
+      Top = 204
       Width = 114
       Caption = 'Hints/Errors:'
       ParentColor = False
     end
     object memoImportErr: TMemo
-      Left = 14
+      Left = 16
       Height = 240
       Top = 249
       Width = 1134
@@ -79,7 +79,7 @@ object frmImport: TfrmImport
       WordWrap = False
     end
     object lblImportCount: TStaticText
-      Left = 196
+      Left = 240
       Height = 30
       Top = 56
       Width = 105
@@ -89,9 +89,9 @@ object frmImport: TfrmImport
       TabOrder = 3
     end
     object lblImportCountErr: TStaticText
-      Left = 196
+      Left = 240
       Height = 30
-      Top = 208
+      Top = 204
       Width = 105
       Alignment = taRightJustify
       BorderStyle = sbsSunken
@@ -99,7 +99,7 @@ object frmImport: TfrmImport
       TabOrder = 4
     end
     object lblArchiveProgress: TLabel
-      Left = 373
+      Left = 400
       Height = 30
       Top = 56
       Width = 185
@@ -107,9 +107,9 @@ object frmImport: TfrmImport
       ParentColor = False
     end
     object lblImportCountArc: TStaticText
-      Left = 597
+      Left = 648
       Height = 30
-      Top = 55
+      Top = 56
       Width = 105
       Alignment = taRightJustify
       BorderStyle = sbsSunken
@@ -123,6 +123,22 @@ object frmImport: TfrmImport
       Width = 372
       Caption = 'Log "No import (already exists)" hints'
       TabOrder = 6
+    end
+    object lblCP: TLabel
+      Left = 848
+      Height = 30
+      Top = 56
+      Width = 99
+      Caption = 'Codepage:'
+    end
+    object lblImportCP: TStaticText
+      Left = 994
+      Height = 30
+      Top = 56
+      Width = 156
+      Alignment = taRightJustify
+      BorderStyle = sbsSunken
+      TabOrder = 7
     end
   end
   object grImportFrom: TGroupBox
@@ -299,6 +315,16 @@ object frmImport: TfrmImport
       Checked = True
       State = cbChecked
       TabOrder = 5
+    end
+    object cbImgTXT: TCheckBox
+      Left = 896
+      Height = 34
+      Top = 140
+      Width = 76
+      Caption = '*.TXT'
+      Checked = True
+      State = cbChecked
+      TabOrder = 14
     end
   end
   object btImport: TButton

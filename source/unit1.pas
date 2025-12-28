@@ -217,6 +217,7 @@ type
     procedure DBGridDirTxt_ReadEntry;
     procedure DBSearch;
     procedure Init_FilePath;
+    procedure Init_Menu;
     procedure mnuSyncClick(Sender: TObject);
     procedure mnuViewLocationClick(Sender: TObject);
     procedure PC1Change(Sender: TObject);
@@ -282,6 +283,11 @@ const
   MaxRecentFiles = 5;
 
 { TfrmMain }
+
+function GetNumScrollLines: Integer;
+begin
+  SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 1, @Result, 0);
+end;
 
 procedure ReverseBytes(Source, Dest: Pointer; Size: Integer);
 var
@@ -773,6 +779,7 @@ end;
 
 procedure TfrmMain.UnpackFileFullContainsPipe(aFileFull : String);
 var
+ // Unpacks ZIP archive to temporary path
  tmpImg, ArchivePath, ImageFileName : String;
  ImageFileArray : TStringArray;
  answer : Integer;
@@ -807,7 +814,7 @@ begin
      tmpImg := ExtractFileName(ImageFileArray[1]);
      ArchivePath := TrimLeadingBackslash(ImageFileArray[1]);
      ImageFileName := StringReplace(ArchivePath, PathDelim, '/', [rfReplaceAll]);
-     if UnpackFile(ImageFileArray[0], ImageFileName, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0])) = false then
+     if UnpackFile(ImageFileArray[0], ImageFileName, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]), IniFluff.ReadString('Options', 'Codepage', 'System')) = false then
       begin
        exit;
       end;
@@ -822,8 +829,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.93';
- sAppDate    := '2025-12-25';
+ sAppVersion := 'v0.94';
+ sAppDate    := '2025-12-28';
  sAppPath    := ExtractFilePath(Application.ExeName); ExtractFilePath(ParamStr(0));
  frmMain.Caption:= sAppCaption + sAppVersion;
  SQlSearch_Click := false;
@@ -838,6 +845,7 @@ begin
    IniFluff.WriteString('FluffyFloppy64', 'Language', 'English');
    If DirectoryExists(sAppPath + 'temp') = false then CreateDir(sAppPath + 'temp');
    IniFluff.WriteString('Options', 'FolderTemp', sAppPath + 'temp');
+   IniFluff.WriteString('Options', 'Codepage', 'System');
    IniFluff.WriteInteger('FluffyFloppy64', 'DBModulo', 50);
    InIFluff.WriteBool('FluffyFloppy64', 'Dev_Mode', false);
    IniFluff.WriteBool('Start', 'OpenDatabase', true);
@@ -1054,7 +1062,7 @@ begin
  msgEmu16 := IniLng.ReadString('MSG', 'msgEmu16', 'Hoxs does not support d81 images!');
  msgEmu17 := IniLng.ReadString('MSG', 'msgEmu17', 'VICE not found!');
  msgEmu18 := IniLng.ReadString('MSG', 'msgEmu18', 'VICE does not support nib images!');
- msgEmu19 := IniLng.ReadString('MSG', 'msgEmu19', 'VIVE does not support d71 images!');
+ msgEmu19 := IniLng.ReadString('MSG', 'msgEmu19', 'VICE does not support d71 images!');
  msgEmu20 := IniLng.ReadString('MSG', 'msgEmu20', 'VICE does not support d81 images!');
  msgDM01 := IniLng.ReadString('MSG', 'msgDM01', 'DirMaster not found!');
 
@@ -1578,7 +1586,6 @@ end;
 
 procedure TfrmMain.mnuDelTempClick(Sender: TObject);
 var
-  tmpPathArch : TStringList;
   i : Integer;
 begin
  // Clean tmp folder
@@ -1732,8 +1739,6 @@ begin
   mnuCorrupt.Enabled:=false;
   mnuRefresh.Enabled:=false;
   mnuDelete.Enabled:=false;
-  edTags.Enabled:=false;
-  memInfo.Enabled:=false;
   StatusBar1.Panels[0].Text:= '0/0';
   StatusBar1.Panels[1].Text:= '';
   StatusBar1.Panels[2].Text:= '';
@@ -1853,53 +1858,11 @@ begin
   end;
 
  //
- If SQLQueryDir.RecordCount > 0 then
-  begin
-   mnuRecOpen.Enabled:=true;
-   mnuRecOpenLocation.Enabled:=true;
-   mnuRecFavourite.Enabled:=true;
-   mnuRecFavourite.Enabled:=true;
-   mnuRecCorrupt.Enabled:=true;
-   mnuRecDelete.Enabled:=true;
-   edTags.Enabled:=true;
-   memInfo.Enabled:=true;
-   mnuOpenImage.Enabled:=true;
-   mnuOpenFileBrowser.Enabled:=true;
-   mnuOpenExplorer.Enabled:=true;
-   mnuFavourite.Enabled:=true;
-   mnuCorrupt.Enabled:=true;
-   mnuRefresh.Enabled:=false;
-   mnuDelete.Enabled:=true;
-   edTags.Enabled:=true;
-   memInfo.Enabled:=true;
-  end
- else
-  begin
-   mnuRecOpen.Enabled:=false;
-   mnuRecOpenLocation.Enabled:=false;
-   mnuRecFavourite.Enabled:=false;
-   mnuRecFavourite.Enabled:=false;
-   mnuRecCorrupt.Enabled:=false;
-   mnuRecDelete.Enabled:=false;
-   edTags.Enabled:=false;
-   memInfo.Enabled:=false;
-   mnuOpenImage.Enabled:=false;
-   mnuOpenFileBrowser.Enabled:=false;
-   mnuOpenExplorer.Enabled:=false;
-   mnuFavourite.Enabled:=false;
-   mnuCorrupt.Enabled:=false;
-   mnuRefresh.Enabled:=false;
-   mnuDelete.Enabled:=false;
-   edTags.Enabled:=false;
-   memInfo.Enabled:=false;
-  end;
-
-  frmMain.SQLQueryDir.Active:=true;
-  frmMain.SQLQueryDir.Last;
-  ImgCount := frmMain.SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates - last db entry
-  frmMain.SQLQueryDir.Active:=false;
-
-  frmImport.Showmodal;
+ SQLQueryDir.Active:=true;
+ SQLQueryDir.Last;
+ ImgCount := SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates - last db entry
+ SQLQueryDir.Active:=false;
+ frmImport.Showmodal;
 end;
 
 Procedure TfrmMain.Init_FilePath;
@@ -1931,7 +1894,8 @@ begin
       cbDBFilePath.Text:=IniFluff.ReadString('Database', 'FilePathLast', cbDBFilePath.Text);
      end
     else cbDBFilePath.ItemIndex:=0;
-    SQLQueryFP.Active:=false;
+   SQLQueryFP.Active:=false;
+   Str_FP.Free;
 end;
 
 procedure TfrmMain.mnuSyncClick(Sender: TObject);
@@ -2270,6 +2234,7 @@ begin
     nibProcess.Free;
 end;
 
+
 procedure TfrmMain.DBSearch;
 var
  StrSQL : String;
@@ -2398,6 +2363,7 @@ begin
         DBGridSplitter.Visible:=true;
 
         If SQLQueryDir.RecordCount > 0 then SQLQueryDir.First;
+        Init_Menu;
         LoadDir;
         exit;
      end;
@@ -2408,7 +2374,6 @@ begin
       if BtSQLSearch.Caption ='Search' then  // Start Search
        begin
         DBGridDirTxt.Clear;
-
         frmMain.SQLQueryDir.Close;
         frmMain.SQLQueryDir.SQL.Clear;
         StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where DiskName Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
@@ -2419,13 +2384,11 @@ begin
         If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
         SQLQueryDir.SQL.Add(StrSQL);
         frmMain.SQLQueryDir.Active := True;
-
         BtSQLSearch.Caption:='Reset';
         BtSQLSearch.ImageIndex:=3;
         BtSQLSearch.Default:=false;
         DBGridDirTxt.Visible:=false;
         DBGridSplitter.Visible:=false;
-
         If frmMain.SQLQueryDir.RecordCount > 0 then
          begin
           frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
@@ -2442,6 +2405,7 @@ begin
           Statusbar1.Panels[3].Text := '';
           Statusbar1.Panels[4].Text := '';
          end;
+        Init_Menu;
         exit;
        end;
      end;
@@ -2451,7 +2415,6 @@ begin
       if BtSQLSearch.Caption ='Search' then  // Start Search
        begin
         DBGridDirTxt.Clear;
-
         frmMain.SQLQueryDir.Close;
         frmMain.SQLQueryDir.SQL.Clear;
         StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileName Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
@@ -2462,13 +2425,11 @@ begin
         If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
         SQLQueryDir.SQL.Add(StrSQL);
         frmMain.SQLQueryDir.Active := True;
-
         BtSQLSearch.Caption:='Reset';
         BtSQLSearch.ImageIndex:=3;
         BtSQLSearch.Default:=false;
         DBGridDirTxt.Visible:=false;
         DBGridSplitter.Visible:=false;
-
         If frmMain.SQLQueryDir.RecordCount > 0 then
          begin
           frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
@@ -2485,6 +2446,7 @@ begin
           Statusbar1.Panels[3].Text := '';
           Statusbar1.Panels[4].Text := '';
          end;
+        Init_Menu;
         exit;
        end;
       end;
@@ -2494,7 +2456,6 @@ begin
       if BtSQLSearch.Caption ='Search' then  // Start Search
        begin
         DBGridDirTxt.Clear;
-
         frmMain.SQLQueryDir.Close;
         frmMain.SQLQueryDir.SQL.Clear;
         StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where Tags Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
@@ -2505,13 +2466,11 @@ begin
         If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
         SQLQueryDir.SQL.Add(StrSQL);
         frmMain.SQLQueryDir.Active := True;
-
         BtSQLSearch.Caption:='Reset';
         BtSQLSearch.ImageIndex:=3;
         BtSQLSearch.Default:=false;
         DBGridDirTxt.Visible:=false;
         DBGridSplitter.Visible:=false;
-
         If frmMain.SQLQueryDir.RecordCount > 0 then
          begin
           frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
@@ -2528,16 +2487,56 @@ begin
           Statusbar1.Panels[3].Text := '';
           Statusbar1.Panels[4].Text := '';
          end;
+        Init_Menu;
         exit;
        end;
       end;
-
     end;
 end;
 
 procedure TfrmMain.BtSQLSearchClick(Sender: TObject);
 begin
  DBSearch;
+end;
+
+procedure TfrmMain.Init_Menu;
+begin
+ If SQLQueryDir.RecordCount > 0 then
+  begin
+   mnuRecOpen.Enabled:=true;
+   mnuRecOpenLocation.Enabled:=true;
+   mnuRecFavourite.Enabled:=true;
+   mnuRecFavourite.Enabled:=true;
+   mnuRecCorrupt.Enabled:=true;
+   mnuRecDelete.Enabled:=true;
+   edTags.Enabled:=true;
+   memInfo.Enabled:=true;
+   mnuOpenImage.Enabled:=true;
+   mnuOpenFileBrowser.Enabled:=true;
+   mnuOpenExplorer.Enabled:=true;
+   mnuFavourite.Enabled:=true;
+   mnuCorrupt.Enabled:=true;
+   mnuRefresh.Enabled:=false;
+   mnuDelete.Enabled:=true;
+  end
+ else
+  begin
+   mnuRecOpen.Enabled:=false;
+   mnuRecOpenLocation.Enabled:=false;
+   mnuRecFavourite.Enabled:=false;
+   mnuRecFavourite.Enabled:=false;
+   mnuRecCorrupt.Enabled:=false;
+   mnuRecDelete.Enabled:=false;
+   edTags.Enabled:=false;
+   memInfo.Enabled:=false;
+   mnuOpenImage.Enabled:=false;
+   mnuOpenFileBrowser.Enabled:=false;
+   mnuOpenExplorer.Enabled:=false;
+   mnuFavourite.Enabled:=false;
+   mnuCorrupt.Enabled:=false;
+   mnuRefresh.Enabled:=false;
+   mnuDelete.Enabled:=false;
+  end;
 end;
 
 procedure TfrmMain.DBFilter;
@@ -2574,6 +2573,7 @@ begin
       end;
      SQlQueryDir.SQL.Add(StrSQL);
      SQLQueryDir.Active:=true;
+     Init_Menu;
      LoadDir;
      exit;
     end;
@@ -2600,6 +2600,7 @@ begin
       end;
      SQLQueryDir.SQL.Add(StrSQL);
      SQLQueryDir.Active:=true;
+     Init_Menu;
      LoadDir;
      exit;
     end;
@@ -2614,6 +2615,7 @@ begin
    If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
    SQLQueryDir.SQL.Add(StrSQL);
    SQLQueryDir.Active:=true;
+   Init_Menu;
    LoadDir;
    exit;
   end;
@@ -2625,6 +2627,7 @@ begin
    BtSQlSearch.Caption:='Search';
    AConnection.ExecuteDirect('DROP Table IF EXISTS Search');
    DBSearch;
+   Init_Menu;
    exit;
   end;
 end;
@@ -3604,10 +3607,7 @@ begin
      end;
    end;
 end;
-function GetNumScrollLines: Integer;
-begin
-  SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 1, @Result, 0);
-end;
+
 procedure TfrmMain.DBGridDirMouseWheel(Sender: TObject; Shift: TShiftState;
   WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 var

@@ -10,7 +10,7 @@ Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
 Functions for FluffyFloppy64
-v1.07 - 2025-12-25
+v1.08 - 2025-12-28
 
 Parts of it:
 -
@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, StrUtils, Zipper, LConvEncoding, LazUTF8, FileUtil,
-  LazFileUtils;
+  LazFileUtils, LazUtils;
 type
   TByteArr = array of Byte;
 
@@ -38,9 +38,9 @@ function HexToASCII(mnuHexView:string):string;
 function TrimLeadingBackslash(const S: string): string;
 function RemoveReadOnlyRecursive(const aFolder: String):Boolean;
 function CleanTmp(aTmpPath : string):Boolean;
-function UnpackArchive(const aArchiveName, aTmpPath : string):boolean;
-function UnpackFile(const aArchiveName, aImageFile, ExtractPath: string): boolean;
-function UnPackFiles(aArchivename, ExtractPath: String): Boolean;
+function UnpackArchive(const aArchiveName, aTmpPath, aCP : string):boolean;
+function UnpackFile(const aArchiveName, aImageFile, ExtractPath, aCP: string): boolean;
+function UnPackFiles(aArchivename, ExtractPath, aCP : String): Boolean;
 function Init_ArrD64(aImageName : String): Boolean;
 function Init_ArrD71(aImageName : String): Boolean;
 function Init_ArrD81(aImageName : String): Boolean;
@@ -50,6 +50,7 @@ function Database_Ins_D71(aArchiveImage: String; aImageName: String; aImg : Inte
 function Database_Ins_D81(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
 function Database_Ins_PRG(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
 function Database_Ins_TAP(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
+function Database_Ins_TXT(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
 
 var
  ImageFileArray : TStringArray;
@@ -177,14 +178,14 @@ begin
   result := true;
 end;
 
-function UnpackArchive(const aArchiveName, aTmpPath : string):boolean;
+function UnpackArchive(const aArchiveName, aTmpPath, aCP : string):boolean;
 begin
  // Create tmp folder named like the archive and unpack
  result := false;
   try
   try
    CreateDir(IncludeTrailingPathDelimiter(aTmpPath) + ExtractFileName(aArchiveName));
-   UnPackFiles(aArchiveName, IncludeTrailingPathDelimiter(aTmpPath) + ExtractFileName(aArchiveName));
+   UnPackFiles(aArchiveName, IncludeTrailingPathDelimiter(aTmpPath) + ExtractFileName(aArchiveName), aCP);
    result := true;
   except
    on E: Exception do
@@ -197,9 +198,11 @@ begin
  end;
 End;
 
-function UnpackFile(const aArchiveName, aImageFile, ExtractPath: string) : Boolean;
+function UnpackFile(const aArchiveName, aImageFile, ExtractPath, aCP: string) : Boolean;
 var
   UnZipper: TUnZipper;
+  i : integer;
+  Extpath, entry : String;
 begin
   result := false;
   UnZipper := TUnZipper.Create;
@@ -207,8 +210,19 @@ begin
   try
    UnZipper.FileName := aArchiveName;
    UnZipper.OutputPath := ExtractPath;
+
+   Extpath := IncludeTrailingPathDelimiter(ExtractPath);
    Unzipper.Examine;
-   UnZipper.UnzipFile((aImageFile));
+   entry := aImageFile;
+   if aCP = '' then SetCodePage(RawByteString(entry), DefaultSystemCodePage, true);
+   if aCP = '437' then SetCodePage(RawByteString(entry), 437, true);
+   UnZipper.UnzipFile(entry);
+   for i := 0 to UnZipper.Entries.Count-1 do begin
+    entry := UnZipper.Entries.Entries[i].ArchiveFileName;
+    if aCP = '' then SetCodePage(RawByteString(entry), DefaultSystemCodePage, false);
+    if aCP = '437' then SetCodePage(RawByteString(entry), 437, false);
+    Renamefile(Extpath+UnZipper.Entries.Entries[i].ArchiveFileName, Extpath+entry);
+   end;
    Result:= true;
    except
     on E: Exception do
@@ -222,9 +236,11 @@ begin
 end;
 
 
-function UnPackFiles(aArchiveName, ExtractPath: String): Boolean;
+function UnPackFiles(aArchiveName, ExtractPath, aCP: String): Boolean;
 var
   UnZipper : TUnZipper;
+  i : integer;
+  Extpath, entry : String;
 begin
   Result:= false;
   UnZipper      := TUnZipper.Create;
@@ -232,8 +248,15 @@ begin
   try
    UnZipper.FileName   := aArchiveName;
    UnZipper.OutputPath := ExtractPath;
+   Extpath := IncludeTrailingPathDelimiter(ExtractPath);
    UnZipper.Examine;
    Unzipper.UnZipAllFiles;
+   for i := 0 to UnZipper.Entries.Count-1 do begin
+    entry := UnZipper.Entries.Entries[i].ArchiveFileName;
+    if aCP = '' then SetCodePage(RawByteString(entry), DefaultSystemCodePage, false);
+    if aCP = '437' then SetCodePage(RawByteString(entry), 437, false);
+    Renamefile(Extpath+UnZipper.Entries.Entries[i].ArchiveFileName, Extpath+entry);
+   end;
    Result:= true;
    except
     on E: Exception do
@@ -435,7 +458,7 @@ begin
 
   // Write FilePath (for dropdown) and flag if archive
   FileArchType := '';
-  If aArchiveImage.Contains('|') then
+ If aArchiveImage <> '' then
    begin
     FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
@@ -446,7 +469,7 @@ begin
       ' values('+
       ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
    end;
-  If aArchiveImage.Contains('|') = false then
+ If aArchiveImage = '' then
    begin
    FileFullA := aImageName;
    FilePathA := aImageName;
@@ -835,7 +858,7 @@ begin
 
   // Write FilePath (for dropdown) and flag if archive
   FileArchType := '';
-  If aArchiveImage.Contains('|') then
+  If aArchiveImage <> '' then
    begin
     FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
@@ -846,7 +869,7 @@ begin
       ' values('+
       ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
    end;
-  If aArchiveImage.Contains('|') = false then
+  If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
@@ -1116,7 +1139,7 @@ begin
 
   // Write FilePath (for dropdown) and flag if archive
   FileArchType := '';
-  If aArchiveImage.Contains('|') then
+  If aArchiveImage <> '' then
    begin
     FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
@@ -1127,7 +1150,7 @@ begin
       ' values('+
       ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
    end;
-  If aArchiveImage.Contains('|') = false then
+  If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
@@ -1273,7 +1296,7 @@ begin
 
   // Write FilePath (for dropdown) and flag if archive
   FileArchType := '';
-  If aArchiveImage.Contains('|') then
+  If aArchiveImage <> '' then
    begin
     FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
@@ -1284,7 +1307,7 @@ begin
       ' values('+
       ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
    end;
-  If aArchiveImage.Contains('|') = false then
+  If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
@@ -1359,7 +1382,7 @@ begin
 
   // Write FilePath (for dropdown) and flag if archive
   FileArchType := '';
-  If aArchiveImage.Contains('|') then
+  If aArchiveImage <> '' then
    begin
     FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
     FilePathA := ImageFileArray[0];    // location of archive
@@ -1368,15 +1391,15 @@ begin
     FileArchType := sp;
     frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');        // FilePath
    end;
-  If aArchiveImage.Contains('|') = false then
+  If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
     frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');       // FilePath
    end;
 
   Try
@@ -1421,6 +1444,88 @@ begin
   frmMain.ATransaction.Active:=false;
   result := true;
 end;
+
+function Database_Ins_TXT(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
+var
+  Img_FileExt : String;
+  FileTXTCont : TStringList;
+  fstream : TFileStream;
+  FileSizeTXT, FileNameTXT, FileTypeTXT, FileFullA, FilePathA, sp, FileArchType : String;
+begin
+  FileTXTCont := TStringList.Create;
+  frmMain.ATransaction.Active:=false;
+  frmMain.ATransaction.StartTransaction;
+
+  // TXT
+
+  Img_FileExt := ExtractFileExt(aImageName);
+  if (length(Img_FileExt)>0) and (Img_FileExt[1]='.') then delete(Img_FileExt,1,1); // d64 ohne Punkt
+
+  // Write FilePath (for dropdown) and flag if archive
+  FileArchType := '';
+  If aArchiveImage <> '' then
+   begin
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FilePathA := ImageFileArray[0];    // location of archive
+    sp := ExtractFileExt(ImageFileArray[0]);
+    while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
+    FileArchType := sp;
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+      ' values('+
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');       // FilePath
+   end;
+  If aArchiveImage = '' then
+   begin
+    FileFullA := aImageName;
+    FilePathA := aImageName;
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+      ' values('+
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');      // FilePath
+   end;
+
+  FileTXTCont.LoadFromFile(aImageName);
+  Try
+   frmMain.AConnection.ExecuteDirect('insert into FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeIMG, FileDateTime, FileFull, FileArchType, Favourite, Corrupt, Tags, Info)'+
+   ' values('+
+    ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
+    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
+    ' '''','+                                                                                  //DateLast
+    ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
+    ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
+    ' ''' + Img_FileExt + ''','+                                                               //FileNameExt
+    ' ''' + IntToStr(FileSize(aImageName)) + ''','+                                            //FileSizeImg
+    ' ''' + DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))) + ''','+                //FileDateTime
+    ' ' + QuotedStr(FileFullA) + ','+                                                          //FileFull
+    ' ' + QuotedStr(FileArchType) + ','+                                                       //FileArchType
+    ' ''' + BoolToStr(false) + ''','+                                                          //Favourite
+    ' ''' + BoolToStr(false) + ''','+                                                          //Corrupt
+    ' '''','+                                                                                  //Tags
+    ' ''' + FileTXTCont.Text + ''');');
+  except
+   frmMain.ATransaction.Active:=false;
+   result := false;
+   FileTXTCont.Free;
+   exit;
+  end;
+
+  fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
+  //FileSizeTxt := IntToStr(fstream.Size div 252);
+  FileSizeTxt := IntToStr(fstream.Size);
+  FileNameTXT := ExtractFileName(aImageName);
+  FileTypeTXT := 'TXT';
+  frmMain.AConnection.ExecuteDirect('insert into DirectoryTXT (idxTxt, FileSizeTxt, FileNameTxt, FileTypeTxt)'+
+  ' values('+
+  ' ''' + IntToStr(aImg) + ''','+         //idxTxt (Index manuell)
+  ' ''' + FileSizeTxt + ''','+            //FileSizeTxt
+  ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
+  ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
+  fstream.Free;
+  frmMain.ATransaction.Commit;
+  frmMain.ATransaction.Active:=false;
+  FileTXTCont.Free;
+  result := true;
+end;
+
 
 end.
 

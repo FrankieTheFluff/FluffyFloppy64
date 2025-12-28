@@ -42,6 +42,7 @@ type
     clbBackground: TColorBox;
     clbFont: TColorBox;
     cbLng: TComboBox;
+    cbCP: TComboBox;
     fileCCS64: TFileNameEdit;
     fileDenise: TFileNameEdit;
     fileEmu64: TFileNameEdit;
@@ -63,6 +64,7 @@ type
     grbTools: TGroupBox;
     grbLng: TGroupBox;
     GroupBox1: TGroupBox;
+    grbCP: TGroupBox;
     lbFontFolder: TLabel;
     lbFontFolder2: TLabel;
     lblImportHint1: TLabel;
@@ -114,6 +116,7 @@ procedure TForm4.btOKClick(Sender: TObject);
 begin
   InIFluff.WriteString('FluffyFloppy64', 'Language', cbLng.Text);
   IniFluff.WriteBool('Start', 'OpenDatabase', cbStartOpenDB.Checked);
+  IniFluff.WriteString('Options', 'Codepage', cbCP.Text);
   IniFluff.WriteBool('Options', 'cbPETSCIITracks', cbPETSCIITracks.Checked);
   IniFluff.WriteBool('Options', 'IncludeT18T19', cbImportT18T19.Checked);
   IniFluff.WriteBool('Options', 'IncludeT18T53', cbImportT18T53.Checked);
@@ -200,6 +203,7 @@ var
 begin
 
   cbStartOpenDB.Checked := IniFluff.ReadBool('Start', 'OpenDatabase', true);
+  cbCP.Text := IniFluff.ReadString('Options', 'Codepage', 'System');
   cbPETSCIITracks.Checked := IniFluff.ReadBool('Options', 'cbPETSCIITracks', false);
   cbImportT18T19.Checked := IniFluff.ReadBool('Options', 'IncludeT18T19', false);
   cbImportT18T53.Checked := IniFluff.ReadBool('Options', 'IncludeT18T53', false);

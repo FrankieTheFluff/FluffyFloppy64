@@ -42,15 +42,18 @@ type
     CheckBox2: TCheckBox;
     cbArcZIP: TCheckBox;
     cbLogNoImport: TCheckBox;
+    cbImgTXT: TCheckBox;
     DirImport: TDirectoryEdit;
     grImportProgress: TGroupBox;
     grImportFrom: TGroupBox;
+    lblCP: TLabel;
     lblFileArc: TLabel;
     lblArchiveProgress: TLabel;
     lblFileSel: TLabel;
     lblFileProgress: TLabel;
     lblFileImg: TLabel;
     lblImportCountArc: TStaticText;
+    lblImportCP: TStaticText;
     lblImportHintsErrors: TLabel;
     lblImportCount: TStaticText;
     lblImportCountErr: TStaticText;
@@ -117,7 +120,6 @@ begin
 
   frmMain.cbDBFilePath.ItemIndex:=0;
   frmMain.cbDBFileNameExt.ItemIndex:=0;
-  frmMain.DBFilter;
   frmMain.LstBxDirectoryPETSCII.Clear;
   frmMain.LstBAM.Clear;
   frmMain.lstBoxSectors.Clear;
@@ -144,6 +146,7 @@ begin
      try
      memoProgressBar.Position := memoProgressBar.Position + 1;
      ImageFile := str_AllImages.Strings[img]; // e.g. ....d64
+
      // Split, check if image is in archive
      If ImageFile.Contains('|')then
       begin
@@ -153,9 +156,8 @@ begin
       end
      else
       begin
-       ImageFileA := '';           // Archive ZIP
+       ImageFileA := '';           // no archive
       end;
-
     //TAP - check if valid file
     if cbImgPRG.Checked = true then
      begin
@@ -388,6 +390,31 @@ begin
         end;
       end;  // Ende nib
 
+     //TXT - check if valid file
+     if cbImgTXT.Checked = true then
+      begin
+       if lowercase(ExtractFileExt(ImageFile)) = '.txt' then
+        begin
+         // Add
+         ImgCount := ImgCount + 1;
+         if Database_Ins_TXT(ImageFileA, ImageFile, ImgCount) = false then
+           begin
+            ImgCount := ImgCount - 1;
+            ImgCountErr := ImgCountErr + 1;
+            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+            if cbLogNoImport.Checked then memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
+           end
+         else
+           begin
+            ImgAdd := ImgAdd + 1;
+            lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
+            memoImport.Lines.Clear;
+            memoImport.Lines.Add(ImageFile);
+           end;
+          // Add Ende
+        end;
+      end;
+
      // Commit every e.g. 50 entries (In case of a application crash to avoid database goes corrupt)
      dbMod := IniFluff.ReadInteger('FluffyFloppy64', 'DBModulo', 50); // Default 50
      if ImgAdd >= dbMod then
@@ -501,12 +528,11 @@ begin
  frmMain.DBGridDir.DataSource := nil;
  frmMain.PC2.ActivePage.Visible:=false;
 
- memoProgressBar.Max:= str_AllImages.Count + ImageCountA; // Add found images also in ZIPs
- memoProgressBar.Repaint;
-
- // Import images (D64...)
+ // Import images (D64, D71...)
  if str_AllImages.Count > 0 then
   begin
+   memoProgressBar.Max:= str_AllImages.Count;
+   memoProgressBar.Repaint;
    Import;
   end;
 
@@ -514,11 +540,13 @@ begin
  if str_AllImagesInArchive.Count > 0 then  // After "select directory": "Init_str_FindAllFilesArchive" collected ZIPs
   begin
    lblImportfound.Caption := ' ' + msgImp11;
+   memoProgressBar.Max:= str_AllImages.Count + str_AllImagesInArchive.Count; // Add found images also in ZIPs
+   memoProgressBar.Repaint;
    for img := 0 to str_AllImagesInArchive.Count-1 do
     begin
      CleanTmp(tmpDir);
      If Terminate = true then break;
-     If UnpackArchive(str_AllImagesInArchive[img], tmpDir) = true then  //  one archive after the other...
+     If UnpackArchive(str_AllImagesInArchive[img], tmpDir, IniFluff.ReadString('Options', 'Codepage', 'System')) = true then  //  one archive after the other...
       begin
        FindAllImages(tmpDir,str_AllImagesInArchive[img]);
        ImgCountA := ImgCountA + 1;
@@ -532,10 +560,13 @@ begin
 
   str_AllImages.Clear;
   str_AllImagesInArchive.Clear;
+  str_FindAllImagesTmp.Clear;
+  str_FindAllImagesArchive.Clear;
   memoImport.Lines.Add(msgImp13);
   frmMain.SQLQueryDir.SQL.Clear;
   frmMain.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
   frmMain.SQLQueryDir.Active:=true;
+  frmMain.DBFilter;
   If Terminate = false then memoImport.Lines.Add('Import finished! (duplicates ignored)');
   If Terminate = true then memoImport.Lines.Add('Import cancelled! (duplicates ignored)');
   btImport.Enabled := true;
@@ -545,6 +576,7 @@ begin
   frmMain.DBGridDir_ReadEntry(frmMain.SQLQueryDir.FieldByName('FileFull').Text);
   frmMain.Init_FilePath;
   frmMain.PC2.ActivePage.Visible:=true;
+
 end;
 
 
@@ -613,9 +645,9 @@ begin
  lblImportfound.Caption := ' ' + msgImp14;
  CleanTmp(tmpDir);
 
- // Images
+ // Images   : str_AllImages
  FindAllImages(DirImport.Directory,'');
- // Archives
+ // Archives : str_AllImagesInArchive
  If cbArcZIP.Checked = true then FindAllImagesInArchive(DirImport.Directory);
 
  lblImportfound.Caption := ' ' + msgImp15;
@@ -628,7 +660,7 @@ end;
 procedure TfrmImport.FindAllImages(aFileFull : String; aPathArchive : String);
 var
   i : integer;
-  msgImp16, msgImp17 : String;
+  msgImp16, msgImp17, fExt : String;
 begin
  // aFileFull = path to the image e.g. also \temp
  // aPathArchive = path to the archive also ...\temp123.zip
@@ -641,7 +673,46 @@ begin
  str_FindAllImagesTmp.Clear;
 
  // Known images files without archives
- FindAllFiles(str_FindAllImagesTmp, IncludeTrailingPathDelimiter(aFileFull), '*.tap;*.prg;*.d64;*.g64;*.nib;*d71;*.d81', true);
+ fExt := '';
+ If cbIMGD64.Checked then fExt := fExt + '*.d64';
+ If cbIMGG64.Checked then
+   begin
+    if fExt <> '' then fExt := fExt + ';*.g64'
+   end
+   else fExt := '*.g64';
+ If cbIMGNIB.Checked then
+   begin
+    if fExt <> '' then fExt := fExt + ';*.nib'
+   end
+   else fExt := '*.nib';
+ If cbIMGD71.Checked then
+   begin
+    if fExt <> '' then fExt := fExt + ';*.d71'
+   end
+   else fExt := '*.d71';
+ If cbIMGD81.Checked then
+   begin
+    if fExt <> '' then fExt := fExt + ';*.d81'
+   end
+   else fExt := '*.d81';
+ If cbIMGPRG.Checked then
+   begin
+    if fExt <> '' then fExt := fExt + ';*.prg'
+   end
+   else fExt := '*.prg';
+ If cbIMGTAP.Checked then
+   begin
+    if fExt <> '' then fExt := fExt + ';*.tap'
+   end
+   else fExt := '*.tap';
+ If cbIMGTXT.Checked then
+   begin
+    if fExt <> '' then fExt := fExt + ';*.txt'
+   end
+   else fExt := '*.txt';
+
+ FindAllFiles(str_FindAllImagesTmp, IncludeTrailingPathDelimiter(aFileFull), fExt, true);
+
  If aPathArchive = '' then // running this procedure without archives
   begin
    str_AllImages.Text := str_FindAllImagesTmp.Text;
@@ -746,6 +817,7 @@ begin
  lblImportCount.Caption := '0 ';
  lblImportCountArc.Caption := '0 ';
  lblImportCountErr.Caption := '0 ';
+ lblimportCP.Caption := IniFluff.ReadString('Options', 'Codepage', 'System') + ' ';
  memoImport.Lines.Add(msgImp19);
  lblImportFound.Caption := ' ' + msgImp20 + ' ';
  btImport.Enabled := false;
