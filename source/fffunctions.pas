@@ -5,12 +5,12 @@ v0.xx
 -----------------------------------------------------------------
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
-(c) 2021-2025 FrankieTheFluff
+(c) 2021-2026 FrankieTheFluff
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
 Functions for FluffyFloppy64
-v1.08 - 2025-12-28
+v1.09 - 2026-01-01
 
 Parts of it:
 -
@@ -51,7 +51,7 @@ function Database_Ins_D81(aArchiveImage: String; aImageName: String; aImg : Inte
 function Database_Ins_PRG(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
 function Database_Ins_TAP(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
 function Database_Ins_TXT(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
-
+function Database_Ins_NFO(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
 var
  ImageFileArray : TStringArray;
 
@@ -214,12 +214,13 @@ begin
    Extpath := IncludeTrailingPathDelimiter(ExtractPath);
    Unzipper.Examine;
    entry := aImageFile;
-   if aCP = '' then SetCodePage(RawByteString(entry), DefaultSystemCodePage, true);
+   if (aCP = '') or (aCP = 'System') then SetCodePage(RawByteString(entry), DefaultSystemCodePage, true);
    if aCP = '437' then SetCodePage(RawByteString(entry), 437, true);
    UnZipper.UnzipFile(entry);
+
    for i := 0 to UnZipper.Entries.Count-1 do begin
     entry := UnZipper.Entries.Entries[i].ArchiveFileName;
-    if aCP = '' then SetCodePage(RawByteString(entry), DefaultSystemCodePage, false);
+    if (aCP = '') or (aCP = 'System') then SetCodePage(RawByteString(entry), DefaultSystemCodePage, true);
     if aCP = '437' then SetCodePage(RawByteString(entry), 437, false);
     Renamefile(Extpath+UnZipper.Entries.Entries[i].ArchiveFileName, Extpath+entry);
    end;
@@ -240,7 +241,7 @@ function UnPackFiles(aArchiveName, ExtractPath, aCP: String): Boolean;
 var
   UnZipper : TUnZipper;
   i : integer;
-  Extpath, entry : String;
+  Extpath, entry, cpFilename : String;
 begin
   Result:= false;
   UnZipper      := TUnZipper.Create;
@@ -253,7 +254,7 @@ begin
    Unzipper.UnZipAllFiles;
    for i := 0 to UnZipper.Entries.Count-1 do begin
     entry := UnZipper.Entries.Entries[i].ArchiveFileName;
-    if aCP = '' then SetCodePage(RawByteString(entry), DefaultSystemCodePage, false);
+    if (aCP = '') or (aCP = 'System') then SetCodePage(RawByteString(entry), DefaultSystemCodePage, true);
     if aCP = '437' then SetCodePage(RawByteString(entry), 437, false);
     Renamefile(Extpath+UnZipper.Entries.Entries[i].ArchiveFileName, Extpath+entry);
    end;
@@ -1447,7 +1448,7 @@ end;
 
 function Database_Ins_TXT(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
 var
-  Img_FileExt : String;
+  Img_FileExt, StrM : String;
   FileTXTCont : TStringList;
   fstream : TFileStream;
   FileSizeTXT, FileNameTXT, FileTypeTXT, FileFullA, FilePathA, sp, FileArchType : String;
@@ -1483,7 +1484,15 @@ begin
       ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');      // FilePath
    end;
 
-  FileTXTCont.LoadFromFile(aImageName);
+  fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
+  Try
+    FileSizeTxt := IntToStr(fstream.Size);
+    FileTXTCont.LoadFromStream(fstream);
+    StrM:=ConvertEncoding(FileTXTCont.Text, GuessEncoding(FileTXTCont.Text), 'UTF-8');
+  finally
+    fstream.Free;
+  end;
+
   Try
    frmMain.AConnection.ExecuteDirect('insert into FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeIMG, FileDateTime, FileFull, FileArchType, Favourite, Corrupt, Tags, Info)'+
    ' values('+
@@ -1500,7 +1509,7 @@ begin
     ' ''' + BoolToStr(false) + ''','+                                                          //Favourite
     ' ''' + BoolToStr(false) + ''','+                                                          //Corrupt
     ' '''','+                                                                                  //Tags
-    ' ''' + FileTXTCont.Text + ''');');
+    ' ' + QuotedStr(StrM) + ');');                                                             //Info
   except
    frmMain.ATransaction.Active:=false;
    result := false;
@@ -1508,9 +1517,6 @@ begin
    exit;
   end;
 
-  fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
-  //FileSizeTxt := IntToStr(fstream.Size div 252);
-  FileSizeTxt := IntToStr(fstream.Size);
   FileNameTXT := ExtractFileName(aImageName);
   FileTypeTXT := 'TXT';
   frmMain.AConnection.ExecuteDirect('insert into DirectoryTXT (idxTxt, FileSizeTxt, FileNameTxt, FileTypeTxt)'+
@@ -1519,13 +1525,96 @@ begin
   ' ''' + FileSizeTxt + ''','+            //FileSizeTxt
   ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
   ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
-  fstream.Free;
   frmMain.ATransaction.Commit;
   frmMain.ATransaction.Active:=false;
   FileTXTCont.Free;
   result := true;
 end;
 
+function Database_Ins_NFO(aArchiveImage: String; aImageName: String; aImg : Integer): Boolean;
+var
+  Img_FileExt, StrM : String;
+  FileTXTCont : TStringList;
+  fstream : TFileStream;
+  FileSizeTXT, FileNameTXT, FileTypeTXT, FileFullA, FilePathA, sp, FileArchType : String;
+begin
+  FileTXTCont := TStringList.Create;
+  frmMain.ATransaction.Active:=false;
+  frmMain.ATransaction.StartTransaction;
+
+  // NFO
+
+  Img_FileExt := ExtractFileExt(aImageName);
+  if (length(Img_FileExt)>0) and (Img_FileExt[1]='.') then delete(Img_FileExt,1,1); // d64 ohne Punkt
+
+  // Write FilePath (for dropdown) and flag if archive
+  FileArchType := '';
+  If aArchiveImage <> '' then
+   begin
+    FileFullA := StringReplace(aArchiveImage, IncludeTrailingPathDelimiter(sAppTmpPath) + ExtractFileName(ImageFileArray[0]),'', [rfReplaceAll, rfIgnoreCase]);
+    FilePathA := ImageFileArray[0];    // location of archive
+    sp := ExtractFileExt(ImageFileArray[0]);
+    while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
+    FileArchType := sp;
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+      ' values('+
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');       // FilePath
+   end;
+  If aArchiveImage = '' then
+   begin
+    FileFullA := aImageName;
+    FilePathA := aImageName;
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+      ' values('+
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');      // FilePath
+   end;
+
+  fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
+  Try
+    FileSizeTxt := IntToStr(fstream.Size);
+    FileTXTCont.LoadFromStream(fstream);
+    StrM:=ConvertEncoding(FileTXTCont.Text, GuessEncoding(FileTXTCont.Text), 'UTF-8');
+  finally
+    fstream.Free;
+  end;
+
+  Try
+   frmMain.AConnection.ExecuteDirect('insert into FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeIMG, FileDateTime, FileFull, FileArchType, Favourite, Corrupt, Tags, Info)'+
+   ' values('+
+    ' ''' + IntToStr(aImg) + ''','+                                                            //idxImg (Index manuell)
+    ' ''' + DateTimeToStr(now) + ''','+                                                        //DateImport
+    ' '''','+                                                                                  //DateLast
+    ' ' + QuotedStr(ExtractFilePath(FilePathA)) + ','+                                         //FilePath
+    ' ' + QuotedStr(ExtractFileNameOnly(ExtractFileName(aImageName))) + ','+                   //FileName
+    ' ''' + Img_FileExt + ''','+                                                               //FileNameExt
+    ' ''' + IntToStr(FileSize(aImageName)) + ''','+                                            //FileSizeImg
+    ' ''' + DateTimeToStr(FileDateTodateTime(FileAgeUTF8(aImageName))) + ''','+                //FileDateTime
+    ' ' + QuotedStr(FileFullA) + ','+                                                          //FileFull
+    ' ' + QuotedStr(FileArchType) + ','+                                                       //FileArchType
+    ' ''' + BoolToStr(false) + ''','+                                                          //Favourite
+    ' ''' + BoolToStr(false) + ''','+                                                          //Corrupt
+    ' '''','+                                                                                  //Tags
+    ' ' + QuotedStr(StrM) + ');');                                                             //Info
+  except
+   frmMain.ATransaction.Active:=false;
+   result := false;
+   FileTXTCont.Free;
+   exit;
+  end;
+
+  FileNameTXT := ExtractFileName(aImageName);
+  FileTypeTXT := 'NFO';
+  frmMain.AConnection.ExecuteDirect('insert into DirectoryTXT (idxTxt, FileSizeTxt, FileNameTxt, FileTypeTxt)'+
+  ' values('+
+  ' ''' + IntToStr(aImg) + ''','+         //idxTxt (Index manuell)
+  ' ''' + FileSizeTxt + ''','+            //FileSizeTxt
+  ' ' + QuotedStr(FileNameTXT) + ','+     //FileNameTxt
+  ' ''' + FileTypeTXT + ''');');          //FileTypeTxt
+  frmMain.ATransaction.Commit;
+  frmMain.ATransaction.Active:=false;
+  FileTXTCont.Free;
+  result := true;
+end;
 
 end.
 

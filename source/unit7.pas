@@ -1,3 +1,17 @@
+{
+-----------------------------------------------------------------
+FluffyFloppy64
+v0.xx
+-----------------------------------------------------------------
+FREEWARE / OpenSource
+License: GNU General Public License v2.0
+(c) 2021-2026 FrankieTheFluff
+Web: https://github.com/FrankieTheFluff/FluffyFloppy64
+Mail: fluxmyfluffyfloppy@mail.de
+-----------------------------------------------------------------
+Import
+-----------------------------------------------------------------
+}
 unit Unit7;
 
 {$mode ObjFPC}{$H+}

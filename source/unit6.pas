@@ -5,7 +5,7 @@ v0.xx
 -----------------------------------------------------------------
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
-(c) 2021-2025 FrankieTheFluff
+(c) 2021-2026 FrankieTheFluff
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
@@ -38,6 +38,7 @@ type
     cbImgG64: TCheckBox;
     cbImgTAP: TCheckBox;
     cbImgNIB: TCheckBox;
+    cbImgNFO: TCheckBox;
     CheckBox1: TCheckBox;
     CheckBox2: TCheckBox;
     cbArcZIP: TCheckBox;
@@ -158,6 +159,7 @@ begin
       begin
        ImageFileA := '';           // no archive
       end;
+
     //TAP - check if valid file
     if cbImgPRG.Checked = true then
      begin
@@ -398,6 +400,31 @@ begin
          // Add
          ImgCount := ImgCount + 1;
          if Database_Ins_TXT(ImageFileA, ImageFile, ImgCount) = false then
+           begin
+            ImgCount := ImgCount - 1;
+            ImgCountErr := ImgCountErr + 1;
+            lblImportCountErr.Caption := IntToStr(ImgCountErr) + ' ';
+            if cbLogNoImport.Checked then memoImportErr.Lines.Add(msgImp02 + ' ' + ImageFile);
+           end
+         else
+           begin
+            ImgAdd := ImgAdd + 1;
+            lblImportCount.Caption:=IntTostr(ImgAdd) + ' ';
+            memoImport.Lines.Clear;
+            memoImport.Lines.Add(ImageFile);
+           end;
+          // Add Ende
+        end;
+      end;
+
+     //NFO - check if valid file
+     if cbImgNFO.Checked = true then
+      begin
+       if lowercase(ExtractFileExt(ImageFile)) = '.nfo' then
+        begin
+         // Add
+         ImgCount := ImgCount + 1;
+         if Database_Ins_NFO(ImageFileA, ImageFile, ImgCount) = false then
            begin
             ImgCount := ImgCount - 1;
             ImgCountErr := ImgCountErr + 1;
@@ -710,6 +737,11 @@ begin
     if fExt <> '' then fExt := fExt + ';*.txt'
    end
    else fExt := '*.txt';
+ If cbIMGNFO.Checked then
+   begin
+    if fExt <> '' then fExt := fExt + ';*.nfo'
+   end
+   else fExt := '*.nfo';
 
  FindAllFiles(str_FindAllImagesTmp, IncludeTrailingPathDelimiter(aFileFull), fExt, true);
 

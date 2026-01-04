@@ -5,7 +5,7 @@ v0.xx
 -----------------------------------------------------------------
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
-(c) 2021-2025 FrankieTheFluff
+(c) 2021-2026 FrankieTheFluff
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
@@ -212,6 +212,7 @@ type
     procedure mnuAboutClick(Sender: TObject);
     procedure mnuImportClick(Sender: TObject);
     procedure GetLng(aLngFile : String);
+    procedure DBRecordCount(aStrSQL : String);
     procedure DBFilter;
     procedure DBGridDir_ReadEntry(aImageName : String);
     procedure DBGridDirTxt_ReadEntry;
@@ -275,6 +276,7 @@ uses unit2, unit3, unit4, unit5, unit6, unit8, FFFunctions, GetPETSCII;
 
 const
   FR_PRIVATE  = $00000010;
+  StrSQL = 'Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DateLast, DateImport, FilePath, Favourite, Corrupt, Tags, Info from FileImage';
 
   function AddFontResourceExW(name: LPCWSTR; fl: DWORD; res: PVOID): LongInt; stdcall external 'gdi32.dll';
   function RemoveFontResourceExW(name: LPCWSTR; fl: DWORD; pdv: PVOID): BOOL; stdcall external 'gdi32.dll';
@@ -329,7 +331,7 @@ begin
    try
     IniLng := TINIFile.Create(IncludeTrailingPathDelimiter(sAppPath + 'lng') + 'English.ini');
     IniLng.WriteString('FluffyFloppy64', 'LNG', 'English');
-    IniLng.WriteString('FluffyFloppy64', 'Version', '0.92');
+    IniLng.WriteString('FluffyFloppy64', 'Version', '0.95');
     IniLng.WriteString('MNU', 'mnuFile', '&File');
     IniLng.WriteString('MNU', 'mnuDatabase', '&Database...');
     IniLng.WriteString('MNU', 'mnuNew', '&New');
@@ -407,7 +409,10 @@ begin
     IniLng.WriteString('PC1', 'lblSearch', 'Search:');
     IniLng.WriteString('PC1', 'EdSQLSearchHint', 'Search database...');
     IniLng.WriteString('PC1', 'EdSQLSearchTextHint', 'Search database...');
-    IniLng.WriteString('PC1', 'cbSQLSearch', 'Directory entry');
+    IniLng.WriteString('PC1', 'cbSQLSearch1', 'Directory entry');
+    IniLng.WriteString('PC1', 'cbSQLSearch2', 'Diskname');
+    IniLng.WriteString('PC1', 'cbSQLSearch3', 'Filename');
+    IniLng.WriteString('PC1', 'cbSQLSearch4', 'Tags');
     IniLng.WriteString('PC1', 'cbSQLSearchHint', 'Select field');
     IniLng.WriteString('PC1', 'BtSQLSearch', 'Search');
     IniLng.WriteString('PC1', 'BtSQLSearchHint', 'Search');
@@ -559,6 +564,7 @@ begin
     IniLng.WriteString('SET', 'msgSet49', 'Copy2Fonts');
     IniLng.WriteString('SET', 'msgSet50', 'Language:');
     IniLng.WriteString('SET', 'msgSet51', 'Remember recent used directory for import');
+    IniLng.WriteString('SET', 'msgSet52', 'PacketRecords (Changes need restart!):');
    finally
    end;
 
@@ -642,7 +648,12 @@ begin
   lblSearch.Caption := IniLng.ReadString('PC1', 'lblSearch', 'Search:');
   EdSQLSearch.Hint := IniLng.ReadString('PC1', 'EdSQLSearchHint', 'Search database...');
   EdSQLSearch.TextHint := IniLng.ReadString('PC1', 'EdSQLSearchTextHint', 'Search database...');
-  cbSQLSearch.Caption := IniLng.ReadString('PC1', 'cbSQLSearch', 'Directory entry');
+  cbSQLSearch.Items.Clear;
+  cbSQLSearch.Items.Add(IniLng.ReadString('PC1', 'cbSQLSearch1', 'Directory entry'));
+  cbSQLSearch.Items.Add(IniLng.ReadString('PC1', 'cbSQLSearch2', 'Diskname'));
+  cbSQLSearch.Items.Add(IniLng.ReadString('PC1', 'cbSQLSearch3', 'Filename'));
+  cbSQLSearch.Items.Add(IniLng.ReadString('PC1', 'cbSQLSearch4', 'Tags'));
+  cbSQLSearch.ItemIndex:=0;
   cbSQLSearch.Hint := IniLng.ReadString('PC1', 'cbSQLSearchHint', 'Select field');
   BtSQLSearch.Caption := IniLng.ReadString('PC1', 'BtSQLSearch', 'Search');
   BtSQLSearch.Hint := IniLng.ReadString('PC1', 'BtSQLSearchHint', 'Search');
@@ -826,11 +837,12 @@ end;
 procedure TfrmMain.FormShow(Sender: TObject);
 var
  GetDB : String;
+ PR : Integer;
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.94';
- sAppDate    := '2025-12-28';
+ sAppVersion := 'v0.95';
+ sAppDate    := '2026-01-04';
  sAppPath    := ExtractFilePath(Application.ExeName); ExtractFilePath(ParamStr(0));
  frmMain.Caption:= sAppCaption + sAppVersion;
  SQlSearch_Click := false;
@@ -844,6 +856,8 @@ begin
    IniFluff.WriteString('FluffyFloppy64', 'Version', sAppVersion);
    IniFluff.WriteString('FluffyFloppy64', 'Language', 'English');
    If DirectoryExists(sAppPath + 'temp') = false then CreateDir(sAppPath + 'temp');
+   IniFluff.WriteBool('Options', 'cbPR', false);
+   IniFluff.WriteInteger('Options', 'edPR', 500);
    IniFluff.WriteString('Options', 'FolderTemp', sAppPath + 'temp');
    IniFluff.WriteString('Options', 'Codepage', 'System');
    IniFluff.WriteInteger('FluffyFloppy64', 'DBModulo', 50);
@@ -858,7 +872,7 @@ begin
      mnuViewDateImported.Checked:=true;
    IniFluff.WriteBool('Database', 'Column6', true);
    IniFluff.WriteBool('Database', 'Column7', true);
-   IniFluff.WriteBool('Database', 'Column8', true);
+   IniFluff.WriteBool('Database', 'Column8', false);
      mnuViewLocation.Checked:=true;
    IniFluff.WriteString('NibConv', 'Location', '');
    IniFluff.WriteBool('Options', 'Scratched', false);
@@ -948,8 +962,21 @@ begin
   begin
    If IniFluff.ReadBool('Start', 'OpenDatabase', true) = true then
     begin
+     // PacketRecords
+     If IniFluff.ReadBool('Options', 'cbPR', false) = true then
+      begin
+       frmMain.SQLQueryDir.IndexFieldNames := '';
+       PR := IniFluff.ReadInteger('Options', 'edPR', 500);
+       If PR < 1 then PR := 1;
+       frmMain.SQLQueryDir.PacketRecords := PR;
+      end;
+     If IniFluff.ReadBool('Options', 'cbPR', false) = false then
+      begin
+       frmMain.SQLQueryDir.IndexFieldNames := 'idxImg';
+       frmMain.SQLQueryDir.PacketRecords := -1;
+      end;
      OpenDatabase(GetDB);
-     Database_OpenDialog.FileName := GetDB;
+     Database_OpenDialog.FileName := GetDB;  // Remember DB
      if SQLQueryDir.RecordCount = 0 then exit;
      if SQLQueryDir.RecordCount > 0 then
       begin
@@ -1687,7 +1714,7 @@ begin
                 ' "Favourite" Boolean,'+
                 ' "Corrupt" Boolean,'+
                 ' "Tags" Char(255),'+
-                ' "Info" Char(255),'+
+                ' "Info" Text,'+
                 ' "BlocksFreeTxt" Char(5));');
     // Index
     AConnection.ExecuteDirect('CREATE UNIQUE INDEX "Data_id_idx" ON "FileImage"( "idxImg" );');
@@ -1712,7 +1739,7 @@ begin
                 ' "FileTypeTxt" Char(3),'+
                 ' FOREIGN KEY (idxTxt) REFERENCES FileImage(idxImg));');
     // Version, Created
-    AConnection.ExecuteDirect('insert into DB (idDB,DBVersion,DBCreated) values (1,''110'', ''' + DateToStr(now) + ''');');
+    AConnection.ExecuteDirect('insert into DB (idDB,DBVersion,DBCreated) values (1,''111'', ''' + DateToStr(now) + ''');');
     ATransaction.Commit;
     If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - Step 2');
   except
@@ -1826,27 +1853,27 @@ procedure TfrmMain.mnuImportClick(Sender: TObject);
 var
  StrSQL : String;
 begin
- // Reset if search
+ // Reset if search is in use
+ StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage';
  If EdSQLSearch.Text <> '' then
   begin
-   StrSQL := '';
    EdSQLSearch.Text:='';  // Field reacts OnChange
    AConnection.ExecuteDirect('DROP Table IF EXISTS Search');
    If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text = 'All') then
     begin
-     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where idxImg in (SELECT idxTXT FROM DirectoryTXT';
+     StrSQL := StrSQL + ' Where idxImg in (SELECT idxTXT FROM DirectoryTXT)';
     end;
    If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text <> 'All') then
     begin
-     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
+     StrSQL := StrSQL + ' Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT)';
     end;
    if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text = 'All') then
     begin
-     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
+     StrSQL := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT)';
     end;
    if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text <> 'All') then
     begin
-     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+     StrSQL := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
     end;
 
    If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
@@ -2043,7 +2070,27 @@ Begin
      LstBxDirectoryTxt.Clear;
     end;
   end;
+end;
 
+procedure TfrmMain.DBRecordCount(aStrSQL : String);
+var
+   PR : Integer;
+begin
+   //DBGridDir.DataSource.DataSet.DisableControls;
+   SQLQueryDir.Close;
+   SQLQueryDir.DataBase := AConnection;
+   SQLQueryDir.SQL.Clear;
+   frmMain.SQLQueryDir.IndexFieldNames := 'idxImg';
+   frmMain.SQLQueryDir.PacketRecords := -1;
+   SQlQueryDir.SQL.Add('Select idxImg from FileImage');
+   SQLQueryDir.Active:=true;
+   Showmessage(IntToStr(SQLQueryDir.RecordCount));
+   SQLQueryDir.Active:=false;
+   SQLQueryDir.Close;
+   SQLQueryDir.DataBase := AConnection;
+   SQLQueryDir.SQL.Clear;
+   SQlQueryDir.SQL.Add(aStrSQL);  // Back to current SELECT
+   //DBGridDir.DataSource.DataSet.EnableControls;
 end;
 
 Procedure TfrmMain.OpenDatabase(aFileName : String);
@@ -2068,6 +2115,7 @@ begin
  SQLQueryDB.SQL.Clear;
  SQLQueryDB.SQL.Add('Select * from DB');
  SQLQueryDB.Active:=true;
+
  sTVersion := SQLQueryDB.FieldByName('DBVersion').AsInteger;
  If Dev_Mode = true then Showmessage('[Dev_Mode] - DB version: ' + IntToStr(sTVersion));
 
@@ -2087,7 +2135,7 @@ begin
      end;
   end;
 
-  If sTVersion < 110 then
+  If sTVersion < 111 then
   begin
    answer := MessageDlg('The database "' + aFileName + '" version "' + IntToStr(sTVersion) + '" is older than expected!' + chr(13) + 'Database will be converted!',mtWarning, [mbOK], 0);
     if answer = mrOk then
@@ -2119,14 +2167,14 @@ begin
                   ' "Favourite" Boolean,'+
                   ' "Corrupt" Boolean,'+
                   ' "Tags" Char(255),'+
-                  ' "Info" Char(255),'+
+                  ' "Info" Text,'+
                   ' "BlocksFreeTxt" Char(5));');
       AConnection.ExecuteDirect('INSERT INTO FileImage (idx, idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeImg, FileDateTime, FileFull, FileArchType, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt)' +
        ' SELECT idx, idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeImg, FileDateTime, FileFull, FileArchType, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt FROM FileImage_old;');
       AConnection.ExecuteDirect('DROP TABLE FileImage_old;');
 
       SQlQueryDB.Edit;
-      SQlQueryDB.FieldByName('DBVersion').AsString := '110';
+      SQlQueryDB.FieldByName('DBVersion').AsString := '111';
       SQlQueryDB.Post;
       SQlQueryDB.ApplyUpdates;
       ATransaction.Commit;
@@ -2141,7 +2189,6 @@ begin
 
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Database filter');
  DBFilter;
-
  frmMain.Caption:= sAppCaption + sAppVersion + ' - [' + ExtractFileName(aFileName) + ']';
  If Dev_Mode = true then
   begin
@@ -2192,6 +2239,7 @@ begin
    edTags.Enabled:=false;
    memInfo.Enabled:=false;
   end;
+
 end;
 
 procedure TfrmMain.Convert_G64NIB(aImageName: String);
@@ -2234,14 +2282,12 @@ begin
     nibProcess.Free;
 end;
 
-
 procedure TfrmMain.DBSearch;
 var
- StrSQL : String;
+ StrSQL2 : String;
  answer : Integer;
 begin
- StrSQL := '';
-
+  StrSQl2 := '';
  // Temp folder
  if DirectoryExists(sAppTmpPath) = false then
   begin
@@ -2252,250 +2298,208 @@ begin
      end;
   end;
 
- if BtSQLSearch.Caption ='Reset' then
-  begin
-   EdSQLSearch.Text:='';  // Field reacts OnChange
-   AConnection.ExecuteDirect('DROP Table IF EXISTS Search');
-   If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text = 'All') then
-    begin
-     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where idxImg in (SELECT idxTXT FROM DirectoryTXT';
-    end;
-   If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text <> 'All') then
-    begin
-     if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
-     if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
-    end;
-   if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text = 'All') then
-    begin
-     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT';
-    end;
-   if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text <> 'All') then
-    begin
-     StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
-    end;
-
-   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
-    else
-   If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
-    else
-   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-   DBFilter;
-   exit;
-  end;
-
-  if BtSQLSearch.Caption ='Search' then
-   begin
     SQLQueryDirTXT.DataBase := AConnection;
-
-    if cbSQLSearch.Text = 'Directory entry' then
+    if cbSQLSearch.ItemIndex = 0 then     // Directory entry
      begin
-      if BtSQLSearch.Caption ='Search' then  // Start Search
+      AConnection.ExecuteDirect('CREATE TEMP TABLE "Search"('+
+          ' "idx" Integer PRIMARY KEY,'+
+          ' "idxSearch" Integer,'+
+          ' "FileSizeTxt" Char(5),'+
+          ' "FileNameTxt" Char(16),'+
+          ' "FileTypeTxt" Char(3),'+
+          ' "FilePath" String,'+
+          ' "FileFull" String);');
+      DBGridDirTxt.Clear;
+      SQLQueryDirTxt.Close;
+      SQLQueryDirTxt.SQL.Clear;
+      SQLQueryDirTxt.SQL.Add('SELECT * FROM DirectoryTXT WHERE FileNameTxt Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"');
+      SQLQueryDirTxt.Active := True;
+
+      SQLQueryDir.Close;
+      SQLQueryDir.SQL.Clear;
+      DBGridDir.DataSource.DataSet.DisableControls;
+
+      If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text = 'All') then
        begin
-        AConnection.ExecuteDirect('CREATE TEMP TABLE "Search"('+
-            ' "idx" Integer PRIMARY KEY,'+
-            ' "idxSearch" Integer,'+
-            ' "FileSizeTxt" Char(5),'+
-            ' "FileNameTxt" Char(16),'+
-            ' "FileTypeTxt" Char(3),'+
-            ' "FilePath" String,'+
-            ' "FileFull" String);');
-        DBGridDirTxt.Clear;
-        SQLQueryDirTxt.Close;
-        SQLQueryDirTxt.SQL.Clear;
-        SQLQueryDirTxt.SQL.Add('SELECT * FROM DirectoryTXT WHERE FileNameTxt Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"');
-        SQLQueryDirTxt.Active := True;
+        StrSQL2 := StrSQL + ' Where idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+       end;
+      If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text <> 'All') then
+       begin
+        if cbFilterCase.Checked = true then StrSQL2 := StrSQL + ' Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+        if cbFilterCase.Checked = false then StrSQL2 := StrSQL + ' Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+       end;
+      if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text = 'All') then
+       begin
+        StrSQL2 := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+       end;
+      if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text <> 'All') then
+       begin
+        if cbFilterCase.Checked = true then StrSQL2 := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+        if cbFilterCase.Checked = false then StrSQL2 :=  StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+       end;
+      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL2 + ' AND Favourite = true'
+       else
+      If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
+       else
+      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
+      SQLQueryDir.SQL.Add(StrSQL2);
+      SQLQueryDir.Active := True;
+      If SQLQueryDir.RecordCount > 0 then SQLQueryDir.First;
 
-        SQLQueryDir.Close;
-        SQLQueryDir.SQL.Clear;
-        DBGridDir.DataSource.DataSet.DisableControls;
+      While not SQLQueryDir.EOF do
+       begin
+        SQlQueryDirTxt.Locate('idxTxt', SQLQueryDir.FieldByName('idxImg').Text, []);
+        AConnection.ExecuteDirect('insert into Search (idxSearch, FileSizeTxt, FileNameTxt, FileTypeTxt, FileFull)'+
+        ' values('+
+        ' ''' + SQLQueryDirTxt.FieldByName('idxTxt').AsString + ''','+
+        ' ''' + SQLQueryDirTxt.FieldByName('FileSizeTxt').AsString + ''','+
+        ' ' + QuotedStr(SQLQueryDirTxt.FieldByName('FileNameTxt').AsString) + ','+
+        ' ''' + SQLQueryDirTxt.FieldByName('FileTypeTxt').AsString + ''','+
+        //' ' + QuotedStr(SQLQueryDir.FieldByName('FilePath').AsString) + ','+
+        ' ' + QuotedStr(SQLQueryDir.FieldByName('FileFull').AsString)+');');
+        SQLQueryDir.Next;
+       end;
+      DBGridDir.DataSource.DataSet.EnableControls;
+      SQLQuerySearch.Close;
+      SQLQuerySearch.DataBase := AConnection;
+      SQLQuerySearch.SQL.Clear;
+      SQLQuerySearch.SQL.Add('Select idxSearch, FileSizeTxt, FileNameTxt, FileTypeTxt, FileFull from Search');
+      SQLQuerySearch.Active:=true;
+      DBGridDirTxt.Visible:=true;
+      BtSQLSearch.Caption:='Reset';
+      BtSQLSearch.ImageIndex:=3;
+      BtSQLSearch.Default:=false;
+      DBGridDirTxt.Visible:=true;
+      DBGridSplitter.Visible:=true;
 
-        If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text = 'All') then
-         begin
-          StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
-         end;
-        If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text <> 'All') then
-         begin
-          if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
-          if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
-         end;
-        if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text = 'All') then
-         begin
-          StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
-         end;
-        if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text <> 'All') then
-         begin
-          if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
-          if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
-         end;
-        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
-         else
-        If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
-         else
-        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-        SQLQueryDir.SQL.Add(StrSQL);
-        SQLQueryDir.Active := True;
-        SQLQueryDir.First;
-
-        While not SQLQueryDir.EOF do
-         begin
-          SQlQueryDirTxt.Locate('idxTxt', SQLQueryDir.FieldByName('idxImg').Text, []);
-          AConnection.ExecuteDirect('insert into Search (idxSearch, FileSizeTxt, FileNameTxt, FileTypeTxt, FileFull)'+
-          ' values('+
-          ' ''' + SQLQueryDirTxt.FieldByName('idxTxt').AsString + ''','+
-          ' ''' + SQLQueryDirTxt.FieldByName('FileSizeTxt').AsString + ''','+
-          ' ' + QuotedStr(SQLQueryDirTxt.FieldByName('FileNameTxt').AsString) + ','+
-          ' ''' + SQLQueryDirTxt.FieldByName('FileTypeTxt').AsString + ''','+
-          //' ' + QuotedStr(SQLQueryDir.FieldByName('FilePath').AsString) + ','+
-          ' ' + QuotedStr(SQLQueryDir.FieldByName('FileFull').AsString)+');');
-          SQLQueryDir.Next;
-         end;
-        DBGridDir.DataSource.DataSet.EnableControls;
-        SQLQuerySearch.Close;
-        SQLQuerySearch.DataBase := AConnection;
-        SQLQuerySearch.SQL.Clear;
-        SQLQuerySearch.SQL.Add('Select idxSearch, FileSizeTxt, FileNameTxt, FileTypeTxt, FileFull from Search');
-        SQLQuerySearch.Active:=true;
-        DBGridDirTxt.Visible:=true;
-        BtSQLSearch.Caption:='Reset';
-        BtSQLSearch.ImageIndex:=3;
-        BtSQLSearch.Default:=false;
-        DBGridDirTxt.Visible:=true;
-        DBGridSplitter.Visible:=true;
-
-        If SQLQueryDir.RecordCount > 0 then SQLQueryDir.First;
-        Init_Menu;
-        LoadDir;
-        exit;
-     end;
+      If SQLQueryDir.RecordCount > 0 then SQLQueryDir.First;
+      Init_Menu;
+      LoadDir;
+      exit;
     end;
 
-    if cbSQLSearch.Text = 'Diskname' then
+    if cbSQLSearch.ItemIndex = 1 then    // Diskname
      begin
-      if BtSQLSearch.Caption ='Search' then  // Start Search
+      DBGridDirTxt.Clear;
+      frmMain.SQLQueryDir.Close;
+      frmMain.SQLQueryDir.SQL.Clear;
+      StrSQL2 := StrSQL + ' Where DiskName Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
+      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL2 + ' AND Favourite = true'
+       else
+      If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
+       else
+      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
+      SQLQueryDir.SQL.Add(StrSQL2);
+      frmMain.SQLQueryDir.Active := True;
+      BtSQLSearch.Caption:='Reset';
+      BtSQLSearch.ImageIndex:=3;
+      BtSQLSearch.Default:=false;
+      DBGridDirTxt.Visible:=false;
+      DBGridSplitter.Visible:=false;
+      If frmMain.SQLQueryDir.RecordCount > 0 then
        begin
-        DBGridDirTxt.Clear;
-        frmMain.SQLQueryDir.Close;
-        frmMain.SQLQueryDir.SQL.Clear;
-        StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where DiskName Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
-        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
-         else
-        If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
-         else
-        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-        SQLQueryDir.SQL.Add(StrSQL);
-        frmMain.SQLQueryDir.Active := True;
-        BtSQLSearch.Caption:='Reset';
-        BtSQLSearch.ImageIndex:=3;
-        BtSQLSearch.Default:=false;
-        DBGridDirTxt.Visible:=false;
-        DBGridSplitter.Visible:=false;
-        If frmMain.SQLQueryDir.RecordCount > 0 then
-         begin
-          frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
-          UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
-          GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
-          Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
-         end;
-        If frmMain.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
-         begin
-          LstBxDirectoryPETSCII.Clear;
-          Statusbar1.Panels[0].Text := ' 0/0';
-          Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-          Statusbar1.Panels[2].Text := '';
-          Statusbar1.Panels[3].Text := '';
-          Statusbar1.Panels[4].Text := '';
-         end;
-        Init_Menu;
-        exit;
+        frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
+        UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+        GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
+        Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
        end;
+      If frmMain.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
+       begin
+        LstBxDirectoryPETSCII.Clear;
+        Statusbar1.Panels[0].Text := ' 0/0';
+        Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
+        Statusbar1.Panels[2].Text := '';
+        Statusbar1.Panels[3].Text := '';
+        Statusbar1.Panels[4].Text := '';
+       end;
+      Init_Menu;
+      exit;
      end;
 
-    if cbSQLSearch.Text = 'Image filename' then
+    if cbSQLSearch.ItemIndex = 2 then   // Filename
      begin
-      if BtSQLSearch.Caption ='Search' then  // Start Search
+      DBGridDirTxt.Clear;
+      frmMain.SQLQueryDir.Close;
+      frmMain.SQLQueryDir.SQL.Clear;
+      StrSQL2 := StrSQL + ' Where FileName Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
+      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL2 + ' AND Favourite = true'
+       else
+      If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
+       else
+      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
+      SQLQueryDir.SQL.Add(StrSQL2);
+      frmMain.SQLQueryDir.Active := True;
+      BtSQLSearch.Caption:='Reset';
+      BtSQLSearch.ImageIndex:=3;
+      BtSQLSearch.Default:=false;
+      DBGridDirTxt.Visible:=false;
+      DBGridSplitter.Visible:=false;
+      If frmMain.SQLQueryDir.RecordCount > 0 then
        begin
-        DBGridDirTxt.Clear;
-        frmMain.SQLQueryDir.Close;
-        frmMain.SQLQueryDir.SQL.Clear;
-        StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where FileName Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
-        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
-         else
-        If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
-         else
-        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-        SQLQueryDir.SQL.Add(StrSQL);
-        frmMain.SQLQueryDir.Active := True;
-        BtSQLSearch.Caption:='Reset';
-        BtSQLSearch.ImageIndex:=3;
-        BtSQLSearch.Default:=false;
-        DBGridDirTxt.Visible:=false;
-        DBGridSplitter.Visible:=false;
-        If frmMain.SQLQueryDir.RecordCount > 0 then
-         begin
-          frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
-          UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
-          GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
-          Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
-         end;
-        If frmMain.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
-         begin
-          LstBxDirectoryPETSCII.Clear;
-          Statusbar1.Panels[0].Text := ' 0/0';
-          Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-          Statusbar1.Panels[2].Text := '';
-          Statusbar1.Panels[3].Text := '';
-          Statusbar1.Panels[4].Text := '';
-         end;
-        Init_Menu;
-        exit;
+        frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
+        UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+        GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
+        Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
        end;
-      end;
+      If frmMain.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
+       begin
+        LstBxDirectoryPETSCII.Clear;
+        Statusbar1.Panels[0].Text := ' 0/0';
+        Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
+        Statusbar1.Panels[2].Text := '';
+        Statusbar1.Panels[3].Text := '';
+        Statusbar1.Panels[4].Text := '';
+       end;
+      Init_Menu;
+      exit;
+     end;
 
-    if cbSQLSearch.Text = 'Tags' then
+    if cbSQLSearch.ItemIndex = 3 then    // tags
      begin
-      if BtSQLSearch.Caption ='Search' then  // Start Search
+      DBGridDirTxt.Clear;
+      frmMain.SQLQueryDir.Close;
+      frmMain.SQLQueryDir.SQL.Clear;
+      StrSQL2 := StrSQL + ' Where Tags Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
+      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL2 + ' AND Favourite = true'
+       else
+      If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
+       else
+      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
+      SQLQueryDir.SQL.Add(StrSQL2);
+      frmMain.SQLQueryDir.Active := True;
+      BtSQLSearch.Caption:='Reset';
+      BtSQLSearch.ImageIndex:=3;
+      BtSQLSearch.Default:=false;
+      DBGridDirTxt.Visible:=false;
+      DBGridSplitter.Visible:=false;
+      If frmMain.SQLQueryDir.RecordCount > 0 then
        begin
-        DBGridDirTxt.Clear;
-        frmMain.SQLQueryDir.Close;
-        frmMain.SQLQueryDir.SQL.Clear;
-        StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, Favourite, Corrupt, FilePath, Tags, Info FROM FileImage Where Tags Like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
-        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
-         else
-        If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
-         else
-        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-        SQLQueryDir.SQL.Add(StrSQL);
-        frmMain.SQLQueryDir.Active := True;
-        BtSQLSearch.Caption:='Reset';
-        BtSQLSearch.ImageIndex:=3;
-        BtSQLSearch.Default:=false;
-        DBGridDirTxt.Visible:=false;
-        DBGridSplitter.Visible:=false;
-        If frmMain.SQLQueryDir.RecordCount > 0 then
-         begin
-          frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
-          UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
-          GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
-          Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
-         end;
-        If frmMain.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
-         begin
-          LstBxDirectoryPETSCII.Clear;
-          Statusbar1.Panels[0].Text := ' 0/0';
-          Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-          Statusbar1.Panels[2].Text := '';
-          Statusbar1.Panels[3].Text := '';
-          Statusbar1.Panels[4].Text := '';
-         end;
-        Init_Menu;
-        exit;
+        frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
+        UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
+        GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
+        Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
        end;
-      end;
-    end;
+      If frmMain.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
+       begin
+        LstBxDirectoryPETSCII.Clear;
+        Statusbar1.Panels[0].Text := ' 0/0';
+        Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
+        Statusbar1.Panels[2].Text := '';
+        Statusbar1.Panels[3].Text := '';
+        Statusbar1.Panels[4].Text := '';
+       end;
+      Init_Menu;
+      exit;
+     end;
 end;
 
 procedure TfrmMain.BtSQLSearchClick(Sender: TObject);
 begin
+  if BtSQLSearch.Caption ='Reset' then
+   begin
+    EdSQLSearch.Text:='';  // Field reacts OnChange
+    exit;
+   end;
  DBSearch;
 end;
 
@@ -2541,9 +2545,17 @@ end;
 
 procedure TfrmMain.DBFilter;
 var
- StrSQL : String;
+ StrSQL2 : String;
 begin
- StrSQL := '';
+
+ If edSQLSearch.Text <> '' then
+  begin
+   DBSearch;
+   exit;
+  end;
+
+ StrSQL2 := '';
+ Datasourcedir.DataSet.DisableControls;
  SQLQueryDir.Close;
  SQLQueryDir.DataBase := AConnection;
  SQLQueryDir.SQL.Clear;
@@ -2554,25 +2566,27 @@ begin
     begin
      If cbDBFileNameExt.ItemIndex = 0 then // All
       begin
-       StrSQL := 'Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DateLast, DateImport, FilePath, Favourite, Corrupt, Tags, Info from FileImage';
-       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' WHERE Favourite = true'
+       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL + ' WHERE Favourite = true'
        else
-       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' WHERE Corrupt = true'
+       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL + ' WHERE Corrupt = true'
        else
-       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' WHERE Favourite = true AND Corrupt = true';
+       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL + ' WHERE Favourite = true AND Corrupt = true'
+       else
+       If (cbFilterFav.Checked = false) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL; // Show All
       end
      else
       begin
-       if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DateLast, DateImport, FilePath, Favourite, Corrupt, Tags, Info FROM FileImage Where FileNameExt = "' + cbDBFileNameExt.Text + '"';
-       if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DiskName, DateLast, DateImport, FilePath, Favourite, Corrupt, Tags, Info FROM FileImage Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '"';
-       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
+       if cbFilterCase.Checked = true then StrSQL2 := StrSQL + ' Where FileNameExt = "' + cbDBFileNameExt.Text + '"';
+       if cbFilterCase.Checked = false then StrSQL2 := StrSQL + ' Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '"';
+       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL + ' AND Favourite = true'
        else
-       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
+       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL + ' AND Corrupt = true'
        else
-       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
+       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL + ' AND Favourite = true AND Corrupt = true';
       end;
-     SQlQueryDir.SQL.Add(StrSQL);
+     SQlQueryDir.SQL.Add(StrSQL2);
      SQLQueryDir.Active:=true;
+     Datasourcedir.DataSet.EnableControls;
      Init_Menu;
      LoadDir;
      exit;
@@ -2582,54 +2596,45 @@ begin
     begin
      If cbDBFilePath.ItemIndex = 0 then
       begin
-       StrSQL := 'Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, FilePath, Favourite, Corrupt, Tags, Info from FileImage';
-       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' WHERE Favourite = true'
+       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL + ' WHERE Favourite = true'
        else
-       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' WHERE Corrupt = true'
+       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL + ' WHERE Corrupt = true'
        else
-       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' WHERE Favourite = true AND Corrupt = true';
+       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL + ' WHERE Favourite = true AND Corrupt = true';
       end
      else
       begin
-       StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, FilePath, Favourite, Corrupt, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '"';
-       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
+       StrSQL2 := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase])+'"';
+       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL2 + ' AND Favourite = true'
        else
-       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
+       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
        else
-       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
+       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
       end;
-     SQLQueryDir.SQL.Add(StrSQL);
+     SQLQueryDir.SQL.Add(StrSQL2);
      SQLQueryDir.Active:=true;
+     Datasourcedir.DataSet.EnableControls;
      Init_Menu;
      LoadDir;
      exit;
     end;
 
    // ELSE:
-   if cbFilterCase.Checked = true then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, FilePath, Favourite, Corrupt, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt = "' + cbDBFileNameExt.Text + '"';
-   if cbFilterCase.Checked = false then StrSQL := 'SELECT idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, FilePath, Favourite, Corrupt, Tags, Info FROM FileImage Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '"';
-   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
+   if cbFilterCase.Checked = true then StrSQL2 := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt = "' + cbDBFileNameExt.Text + '"';
+   if cbFilterCase.Checked = false then StrSQL2 := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '"';
+   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL + ' AND Favourite = true'
    else
-   If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
+   If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL + ' AND Corrupt = true'
    else
-   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-   SQLQueryDir.SQL.Add(StrSQL);
+   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL + ' AND Favourite = true AND Corrupt = true';
+   SQLQueryDir.SQL.Add(StrSQL2);
    SQLQueryDir.Active:=true;
+   Datasourcedir.DataSet.EnableControls;
    Init_Menu;
    LoadDir;
    exit;
   end;
 
- // #########################################################################################
-
- If edSQLSearch.Text <> '' then
-  begin
-   BtSQlSearch.Caption:='Search';
-   AConnection.ExecuteDirect('DROP Table IF EXISTS Search');
-   DBSearch;
-   Init_Menu;
-   exit;
-  end;
 end;
 
 procedure TfrmMain.cbDBFilePathChange(Sender: TObject);
@@ -2639,26 +2644,86 @@ begin
 end;
 
 procedure TfrmMain.cbDBFileNameExtChange(Sender: TObject);
+var
+ tmpSQls : String;
 begin
  CleanTmp(sAppTmpPath);
+ If cbDBFileNameExt.ItemIndex = 0 then
+  begin
+   cbFilterCase.Checked := false;
+   cbFilterCase.Enabled := false;
+  end;
+ If cbDBFileNameExt.ItemIndex > 0 then
+  begin
+   cbFilterCase.Checked := true;
+   cbFilterCase.Enabled := true;
+  end;
+
+ // Check if search is active
+ if BtSQLSearch.Caption ='Reset' then
+  begin
+   tmpSQls := edSQlSearch.Text;
+   edSQlSearch.Text := '';
+   edSQlSearch.Text := tmpSQls;
+   DBSearch;
+   exit;
+  end;
+
  DBFilter;
 end;
 
 procedure TfrmMain.cbFilterCaseChange(Sender: TObject);
+var
+tmpSQls : String;
 begin
- CleanTmp(sAppTmpPath);
- DBFilter;
+
+ If cbFilterCase.Focused then
+  begin
+   CleanTmp(sAppTmpPath);
+   // Check if search is active
+   if BtSQLSearch.Caption ='Reset' then
+    begin
+     tmpSQls := edSQlSearch.Text;
+     edSQlSearch.Text := '';
+     edSQlSearch.Text := tmpSQls;
+     DBSearch;
+     exit;
+    end;
+    DBFilter;
+  end;
 end;
 
 procedure TfrmMain.cbFilterCorruptChange(Sender: TObject);
+var
+ tmpSQls : String;
 begin
  CleanTmp(sAppTmpPath);
+ // Check if search is active
+ if BtSQLSearch.Caption ='Reset' then
+  begin
+   tmpSQls := edSQlSearch.Text;
+   edSQlSearch.Text := '';
+   edSQlSearch.Text := tmpSQls;
+   DBSearch;
+   exit;
+  end;
  DBFilter;
 end;
 
 procedure TfrmMain.cbFilterFavChange(Sender: TObject);
+var
+ tmpSQls : String;
 begin
  CleanTmp(sAppTmpPath);
+ // Check if search is active
+ if BtSQLSearch.Caption ='Reset' then
+  begin
+   tmpSQls := edSQlSearch.Text;
+   edSQlSearch.Text := '';
+   edSQlSearch.Text := tmpSQls;
+   DBSearch;
+   exit;
+  end;
  DBFilter;
 end;
 
@@ -2680,7 +2745,8 @@ begin
     If EdSQLSearch.Text = '' then
      begin
       BtSQLSearch.ImageIndex:=2;
-      BtSQLSearch.Caption:='Search';
+      BtSQLSearch.Caption := IniLng.ReadString('PC1', 'BtSQLSearch', 'Search');
+      BtSQLSearch.Hint := IniLng.ReadString('PC1', 'BtSQLSearchHint', 'Search');
       BtSQLSearch.Enabled:=false;
       BtSQLSearch.Default:=false;
       DBGridDir.Visible:=true;
@@ -2694,7 +2760,8 @@ begin
       if BtSQLSearch.Caption <>'Reset' then
        begin
         BtSQLSearch.ImageIndex:=2;
-        BtSQLSearch.Caption:='Search';
+        BtSQLSearch.Caption := IniLng.ReadString('PC1', 'BtSQLSearch', 'Search');
+        BtSQLSearch.Hint := IniLng.ReadString('PC1', 'BtSQLSearchHint', 'Search');
         BtSQLSearch.Enabled:=true;
         BtSQLSearch.Default:=true;
        end;
@@ -2703,7 +2770,8 @@ begin
         AConnection.ExecuteDirect('DROP Table IF EXISTS Search');
         DBGridDir.Visible:=true;
         BtSQLSearch.ImageIndex:=2;
-        BtSQLSearch.Caption:='Search';
+        BtSQLSearch.Caption := IniLng.ReadString('PC1', 'BtSQLSearch', 'Search');
+        BtSQLSearch.Hint := IniLng.ReadString('PC1', 'BtSQLSearchHint', 'Search');
         BtSQLSearch.Enabled:=true;
         BtSQLSearch.Default:=true;
        end;
@@ -3685,6 +3753,7 @@ procedure TfrmMain.DBGridDirTxtCellClick(Column: TColumn);
 begin
   if SQLQueryDir.RecordCount > 0 then
    begin
+    CleanTmp(sAppTmpPath);
     SQlQueryDir.Locate('idxImg', SQLQuerySearch.FieldByName('idxSearch').Text, []);
     LoadDir;
    end;
@@ -3694,6 +3763,7 @@ procedure TfrmMain.DBGridDirTxtDblClick(Sender: TObject);
 begin
   if SQLQueryDir.RecordCount > 0 then
    begin
+    CleanTmp(sAppTmpPath);
     UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
     If OpenDocument(FileFull) = true then
      begin
@@ -3727,8 +3797,8 @@ begin
            exit;
           end;
        end;
-      SQlQueryDir.Locate('idxImg', SQLQuerySearch.FieldByName('idxSearch').Text, []);
       CleanTmp(sAppTmpPath);
+      SQlQueryDir.Locate('idxImg', SQLQuerySearch.FieldByName('idxSearch').Text, []);
       LoadDir;
      end;
    end;
@@ -3737,29 +3807,33 @@ end;
 procedure TfrmMain.DBGridDirTxtMouseWheel(Sender: TObject; Shift: TShiftState;
   WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 begin
-  with TDBGrid(Sender) do
+ with TDBGrid(Sender) do
+ begin
+ if DBGridDirTxt.Visible = true then
   begin
+   CleanTmp(sAppTmpPath);
    If DBGridDirTxt.Focused = true then
    begin
     if Assigned(DataSource) and Assigned(DataSource.DataSet) then
      begin
        if WheelDelta > 0 then
-         SQLQuerySearch.Prior
+        begin
+         SQLQuerySearch.Prior;
+        end
        else
-         SQLQuerySearch.Next;
+       begin
+        SQLQuerySearch.Next;
+       end;
      end;
+    end;
     Handled := True;
     Invalidate;
-   if DBGridDirTxt.Visible = true then
-    begin
     if SQLQueryDir.RecordCount > 0 then
      begin
       SQlQueryDir.Locate('idxImg', SQLQuerySearch.FieldByName('idxSearch').Text, []);
      end;
-    end;
     LoadDir;
-  end;
-
+   end;
   end;
 end;
 
@@ -3792,12 +3866,14 @@ end;
 
 procedure TfrmMain.EdSQLSearchChange(Sender: TObject);
 var
-  StrSQL : String;
+  StrSQL2 : String;
 begin
+  StrSQL2 := '';
   If EdSQLSearch.Text = '' then
    begin
     BtSQLSearch.ImageIndex:=2;
-    BtSQLSearch.Caption:='Search';
+    BtSQLSearch.Caption := IniLng.ReadString('PC1', 'BtSQLSearch', 'Search');
+    BtSQLSearch.Hint := IniLng.ReadString('PC1', 'BtSQLSearchHint', 'Search');
     BtSQLSearch.Enabled:=false;
     BtSQLSearch.Default:=false;
     DBGridDir.Visible:=true;
@@ -3809,28 +3885,38 @@ begin
     DBGridDirTxt.Clear;
     SQLQueryDir.Close;
     SQLQueryDir.SQL.Clear;
-    if cbDBFilePath.Text = 'All' then
+
+    If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text = 'All') then
      begin
-      StrSQL := 'Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, FilePath, Favourite, Corrupt, Tags, Info from FileImage';
-      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' WHERE Favourite = true'
-       else
-      If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' WHERE Corrupt = true'
-       else
-      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' WHERE Favourite = true AND Corrupt = true';
-      SQLQueryDir.SQL.Add(StrSQL);
+      StrSQL2 := StrSQL + ' Where idxImg in (SELECT idxTXT FROM DirectoryTXT)';
      end;
-    if cbDBFilePath.Text <> 'All' then
+
+    If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text <> 'All') then
      begin
-      StrSQL := 'Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, FilePath, Favourite, Corrupt, Tags, Info from FileImage WHERE FilePath = "' + cbDBFilePath.Text + '"';
-      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
-       else
-      If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
-       else
-      If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-      SQLQueryDir.SQL.Add(StrSQL);
+      if cbFilterCase.Checked = true then StrSQL2 := StrSQL + ' Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT)';
+      if cbFilterCase.Checked = false then StrSQL2 := StrSQL + ' Where FileNameExt COLLATE NOCASE = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT)';
      end;
+
+    if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text = 'All') then
+     begin
+      StrSQL2 := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT)';
+     end;
+
+    if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text <> 'All') then
+     begin
+      StrSQL2 := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
+     end;
+
+    If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL2 := StrSQL2 + ' AND Favourite = true'
+     else
+    If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
+     else
+    If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
+
+    SQLQueryDir.SQL.Add(StrSQL2);
     SQLQueryDir.Active := True;
-    SQLQueryDir.First;
+    If SQLQueryDir.RecordCount > 0 then SQLQueryDir.First;
+    Init_Menu;
     LoadDir;
     exit;
    end;
@@ -3840,7 +3926,8 @@ begin
     if BtSQLSearch.Caption <>'Reset' then
      begin
       BtSQLSearch.ImageIndex:=2;
-      BtSQLSearch.Caption:='Search';
+      BtSQLSearch.Caption := IniLng.ReadString('PC1', 'BtSQLSearch', 'Search');
+      BtSQLSearch.Hint := IniLng.ReadString('PC1', 'BtSQLSearchHint', 'Search');
       BtSQLSearch.Enabled:=true;
       BtSQLSearch.Default:=true;
      end;
@@ -3849,7 +3936,8 @@ begin
       AConnection.ExecuteDirect('DROP Table IF EXISTS Search');
       DBGridDir.Visible:=true;
       BtSQLSearch.ImageIndex:=2;
-      BtSQLSearch.Caption:='Search';
+      BtSQLSearch.Caption := IniLng.ReadString('PC1', 'BtSQLSearch', 'Search');
+      BtSQLSearch.Hint := IniLng.ReadString('PC1', 'BtSQLSearchHint', 'Search');
       BtSQLSearch.Enabled:=true;
       BtSQLSearch.Default:=true;
      end;

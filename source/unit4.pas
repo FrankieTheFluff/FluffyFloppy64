@@ -5,7 +5,7 @@ v0.xx
 -----------------------------------------------------------------
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
-(c) 2021-2025 FrankieTheFluff
+(c) 2021-2026 FrankieTheFluff
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
@@ -39,6 +39,7 @@ type
     cbStartOpenDB: TCheckBox;
     cbPETSCIITracks: TCheckBox;
     cbDirImport: TCheckBox;
+    cbPR: TCheckBox;
     clbBackground: TColorBox;
     clbFont: TColorBox;
     cbLng: TComboBox;
@@ -84,6 +85,7 @@ type
     lblLocVice: TLabel;
     lblTempFolder: TLabel;
     spFontSize: TSpinEdit;
+    edPR: TSpinEdit;
     tbPETSCII: TTabSheet;
     tbImport: TTabSheet;
     tbSettings: TPageControl;
@@ -95,6 +97,7 @@ type
     procedure btDefaultSizeClick(Sender: TObject);
     procedure btOKClick(Sender: TObject);
     procedure btCopyFontClick(Sender: TObject);
+    procedure cbPRChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
 
@@ -117,6 +120,8 @@ begin
   InIFluff.WriteString('FluffyFloppy64', 'Language', cbLng.Text);
   IniFluff.WriteBool('Start', 'OpenDatabase', cbStartOpenDB.Checked);
   IniFluff.WriteString('Options', 'Codepage', cbCP.Text);
+  IniFluff.WriteBool('Options', 'cbPR', cbPR.Checked);
+  IniFluff.WriteInteger('Options', 'edPR', edPR.Value);
   IniFluff.WriteBool('Options', 'cbPETSCIITracks', cbPETSCIITracks.Checked);
   IniFluff.WriteBool('Options', 'IncludeT18T19', cbImportT18T19.Checked);
   IniFluff.WriteBool('Options', 'IncludeT18T53', cbImportT18T53.Checked);
@@ -125,8 +130,10 @@ begin
   IniFluff.WriteString('Options', 'DirFont', ColorToString(clbFont.Selected));
   IniFluff.WriteString('Options', 'DirFontBackground', ColorToString(clbBackground.Selected));
   IniFluff.WriteBool('Options', 'cbDirImport', cbDirImport.Checked);
+
   IniFluff.WriteString('Options', 'FolderTemp', folderTemp.Directory);
   sAppTmpPath := folderTemp.Directory;
+
   IniFluff.WriteString('NibConv', 'Location', fileNibConv.FileName);
   IniFluff.WriteString('DirMaster', 'Location', fileDirMaster.FileName);
   IniFluff.WriteString('CCS64', 'Location', fileCCS64.FileName);
@@ -169,6 +176,12 @@ begin
     end;
 end;
 
+procedure TForm4.cbPRChange(Sender: TObject);
+begin
+  if cbPR.Checked then edPR.Enabled:=true;
+  if cbPR.Checked = false then edPR.Enabled:=false;
+end;
+
 procedure TForm4.btCancelClick(Sender: TObject);
 begin
   close;
@@ -199,11 +212,13 @@ var
   msgSet20, msgSet21, msgSet22, msgSet23, msgSet24, msgSet25, msgSet26, msgSet27 : String;
   msgSet30, msgSet31, msgSet32, msgSet33, msgSet34, msgSet35, msgSet36, msgSet38, msgSet39 : String;
   msgSet40, msgSet41, msgSet42, msgSet43, msgSet44, msgSet45, msgSet46, msgSet47, msgSet48, msgSet49 : String;
-  msgSet50, msgSet51 : String;
+  msgSet50, msgSet51, msgSet52 : String;
 begin
 
   cbStartOpenDB.Checked := IniFluff.ReadBool('Start', 'OpenDatabase', true);
   cbCP.Text := IniFluff.ReadString('Options', 'Codepage', 'System');
+  cbPR.Checked := IniFluff.ReadBool('Options', 'cbPR', false);
+  edPR.Value := IniFluff.ReadInteger('Options', 'edPR', 500);
   cbPETSCIITracks.Checked := IniFluff.ReadBool('Options', 'cbPETSCIITracks', false);
   cbImportT18T19.Checked := IniFluff.ReadBool('Options', 'IncludeT18T19', false);
   cbImportT18T53.Checked := IniFluff.ReadBool('Options', 'IncludeT18T53', false);
@@ -281,6 +296,7 @@ begin
   msgSet49 := IniLng.ReadString('SET', 'msgSet49', 'Copy2Fonts');
   msgSet50 := IniLng.ReadString('SET', 'msgSet50', 'Language:');
   msgSet51 := IniLng.ReadString('SET', 'msgSet51', 'Remember recent used directory for import');
+  msgSet52 := IniLng.ReadString('SET', 'msgSet52', 'PacketRecords (Changes need restart!):');
 
   btCancel.Caption:= msgSet01;
   btOK.Caption:= msgSet02;
@@ -291,6 +307,7 @@ begin
   lblTempFolder.Caption := msgSet14;
   lblNibConv.Caption := msgSet15;
   grbDatabase.Caption := msgSet16;
+  cbPR.Caption := msgSet52;
   cbPETSCIITracks.Caption := msgSet17;
   lbNibConvHint1.Caption := msgSet18;
   lbNibConvHint2.Caption := msgSet19;

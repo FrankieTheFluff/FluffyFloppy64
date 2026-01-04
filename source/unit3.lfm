@@ -1,47 +1,47 @@
 object frmAbout: TfrmAbout
   Left = 1350
-  Height = 600
+  Height = 700
   Top = 635
-  Width = 934
+  Width = 1090
   BorderStyle = bsDialog
   Caption = 'About'
-  ClientHeight = 600
-  ClientWidth = 934
+  ClientHeight = 700
+  ClientWidth = 1090
   Color = 16365429
-  DesignTimePPI = 144
+  DesignTimePPI = 168
   Position = poMainFormCenter
   LCLVersion = '4.4.0.0'
   object btOK: TButton
-    Left = 780
-    Height = 38
-    Top = 552
-    Width = 144
+    Left = 910
+    Height = 44
+    Top = 644
+    Width = 168
     Caption = 'OK'
     TabOrder = 0
     OnClick = btOKClick
   end
   object Panel1: TPanel
-    Left = 12
-    Height = 528
-    Top = 12
-    Width = 912
+    Left = 14
+    Height = 616
+    Top = 14
+    Width = 1064
     BevelOuter = bvLowered
-    ClientHeight = 528
-    ClientWidth = 912
+    ClientHeight = 616
+    ClientWidth = 1064
     Color = 14368542
     ParentBackground = False
     ParentColor = False
     TabOrder = 1
     object lblApp: TLabel
-      Left = 24
-      Height = 60
-      Top = 12
-      Width = 312
+      Left = 28
+      Height = 68
+      Top = 14
+      Width = 361
       Caption = 'FluffyFloppy64'
       Color = 14368542
       Font.CharSet = ANSI_CHARSET
       Font.Color = 16365429
-      Font.Height = -44
+      Font.Height = -51
       Font.Pitch = fpVariable
       Font.Style = [fsBold]
       ParentColor = False
@@ -49,38 +49,38 @@ object frmAbout: TfrmAbout
       Transparent = False
     end
     object lblVersion: TLabel
-      Left = 24
-      Height = 30
-      Top = 72
-      Width = 78
+      Left = 28
+      Height = 36
+      Top = 84
+      Width = 89
       Caption = 'Version'
       Font.CharSet = ANSI_CHARSET
       Font.Color = 16365429
-      Font.Height = -22
+      Font.Height = -26
       Font.Pitch = fpVariable
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
     end
     object lblCopy: TLabel
-      Left = 24
-      Height = 30
-      Top = 108
-      Width = 421
-      Caption = 'Copyright (c) 2021-2025 FrankieTheFluff'
+      Left = 28
+      Height = 36
+      Top = 126
+      Width = 497
+      Caption = 'Copyright (c) 2021-2026 FrankieTheFluff'
       Font.CharSet = ANSI_CHARSET
       Font.Color = 16365429
-      Font.Height = -22
+      Font.Height = -26
       Font.Pitch = fpVariable
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
     end
     object lblFree: TLabel
-      Left = 24
-      Height = 25
-      Top = 240
-      Width = 351
+      Left = 28
+      Height = 30
+      Top = 280
+      Width = 403
       Caption = 'You can use this software completly free!'
       Font.CharSet = ANSI_CHARSET
       Font.Color = 16365429
@@ -90,10 +90,10 @@ object frmAbout: TfrmAbout
       ParentFont = False
     end
     object lblLiability: TLabel
-      Left = 24
-      Height = 25
-      Top = 264
-      Width = 366
+      Left = 28
+      Height = 30
+      Top = 308
+      Width = 424
       Caption = 'There is no liability for misuse or damage...'
       Font.CharSet = ANSI_CHARSET
       Font.Color = 16365429
@@ -103,20 +103,20 @@ object frmAbout: TfrmAbout
       ParentFont = False
     end
     object Label3: TLabel
-      Left = 24
-      Height = 25
-      Top = 156
-      Width = 68
+      Left = 28
+      Height = 30
+      Top = 182
+      Width = 79
       Caption = 'Website:'
       Font.Color = 16365429
       ParentColor = False
       ParentFont = False
     end
     object lblWebsite: TLabel
-      Left = 144
-      Height = 25
-      Top = 156
-      Width = 402
+      Left = 168
+      Height = 30
+      Top = 182
+      Width = 464
       Caption = 'https://github.com/FrankieTheFluff/FluffyFloppy64'
       Font.Color = 16365429
       Font.Style = [fsUnderline]
@@ -125,10 +125,10 @@ object frmAbout: TfrmAbout
       OnClick = lblWebsiteClick
     end
     object lblLicense: TLabel
-      Left = 144
-      Height = 25
-      Top = 192
-      Width = 436
+      Left = 168
+      Height = 30
+      Top = 224
+      Width = 506
       Caption = 'https://www.gnu.org/licenses/old-licenses/gpl-2.0.html'
       Font.Color = 16365429
       Font.Style = [fsUnderline]
@@ -137,60 +137,60 @@ object frmAbout: TfrmAbout
       OnClick = lblLicenseClick
     end
     object lblLic: TLabel
-      Left = 24
-      Height = 25
-      Top = 189
-      Width = 60
+      Left = 28
+      Height = 30
+      Top = 220
+      Width = 73
       Caption = 'License:'
       Font.Color = 16365429
       ParentColor = False
       ParentFont = False
     end
     object lblUses: TLabel
-      Left = 24
-      Height = 25
-      Top = 309
-      Width = 41
+      Left = 28
+      Height = 30
+      Top = 360
+      Width = 48
       Caption = 'Uses:'
       Font.Color = 16365429
       ParentColor = False
       ParentFont = False
     end
     object Label8: TLabel
-      Left = 144
-      Height = 25
-      Top = 336
-      Width = 555
+      Left = 168
+      Height = 30
+      Top = 392
+      Width = 649
       Caption = '"nibconv.exe" Converter (c) 2004-2024 Peter Rittwage, Markus Brenner'
       Font.Color = 16365429
       ParentColor = False
       ParentFont = False
     end
     object Label9: TLabel
-      Left = 144
-      Height = 25
-      Top = 396
-      Width = 548
+      Left = 168
+      Height = 30
+      Top = 462
+      Width = 625
       Caption = '"sqlite3.dll" v3.51.1 (x64, 2025-12-04) (c) 2000-2025 SQLite.org Team'
       Font.Color = 16365429
       ParentColor = False
       ParentFont = False
     end
     object Label10: TLabel
-      Left = 144
-      Height = 25
-      Top = 456
-      Width = 427
+      Left = 168
+      Height = 30
+      Top = 532
+      Width = 494
       Caption = '"C64_Pro_Mono-STYLE.ttf" v1.2.1 (c) 2010-2019 STYLE'
       Font.Color = 16365429
       ParentColor = False
       ParentFont = False
     end
     object lblNibtools: TLabel
-      Left = 144
-      Height = 25
-      Top = 360
-      Width = 293
+      Left = 168
+      Height = 30
+      Top = 420
+      Width = 338
       Caption = 'https://github.com/rittwage/nibtools'
       Font.Color = 16365429
       Font.Style = [fsUnderline]
@@ -199,30 +199,30 @@ object frmAbout: TfrmAbout
       OnClick = lblNibtoolsClick
     end
     object Label12: TLabel
-      Left = 30
-      Height = 25
-      Top = 336
-      Width = 72
+      Left = 35
+      Height = 30
+      Top = 392
+      Width = 83
       Caption = 'Nibtools:'
       Font.Color = 16365429
       ParentColor = False
       ParentFont = False
     end
     object lblDB: TLabel
-      Left = 30
-      Height = 25
-      Top = 396
-      Width = 78
+      Left = 35
+      Height = 30
+      Top = 462
+      Width = 92
       Caption = 'Database:'
       Font.Color = 16365429
       ParentColor = False
       ParentFont = False
     end
     object lblSQLite: TLabel
-      Left = 144
-      Height = 25
-      Top = 420
-      Width = 265
+      Left = 168
+      Height = 30
+      Top = 490
+      Width = 308
       Caption = 'https://www.sqlite.org/index.html'
       Font.Color = 16365429
       Font.Style = [fsUnderline]
@@ -231,20 +231,20 @@ object frmAbout: TfrmAbout
       OnClick = lblSQLiteClick
     end
     object lblFont: TLabel
-      Left = 30
-      Height = 25
-      Top = 456
-      Width = 40
+      Left = 35
+      Height = 30
+      Top = 532
+      Width = 46
       Caption = 'Font:'
       Font.Color = 16365429
       ParentColor = False
       ParentFont = False
     end
     object lblStyle64: TLabel
-      Left = 144
-      Height = 25
-      Top = 480
-      Width = 255
+      Left = 168
+      Height = 30
+      Top = 560
+      Width = 293
       Caption = 'https://style64.org/c64-truetype'
       Font.Color = 16365429
       Font.Style = [fsUnderline]

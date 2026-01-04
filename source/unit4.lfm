@@ -54,18 +54,18 @@ object Form4: TForm4
       end
       object grbDatabase: TGroupBox
         Left = 7
-        Height = 187
+        Height = 231
         Top = 329
         Width = 1160
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Database:'
-        ClientHeight = 152
+        ClientHeight = 196
         ClientWidth = 1156
         TabOrder = 3
         object cbPETSCIITracks: TCheckBox
           Left = 28
           Height = 34
-          Top = 14
+          Top = 75
           Width = 1100
           Anchors = [akTop, akLeft, akRight]
           Caption = 'Load PETSCII directory if tracks (18,19,40 or 53) were fully imported into database, instead from image file'
@@ -74,7 +74,7 @@ object Form4: TForm4
         object lbNibConvHint1: TLabel
           Left = 56
           Height = 30
-          Top = 56
+          Top = 110
           Width = 1089
           Caption = 'HINT: If checked but not stored in database you will not see it - Statusbar will show "Directory not stored in database"'
           ParentColor = False
@@ -82,10 +82,31 @@ object Form4: TForm4
         object lbNibConvHint2: TLabel
           Left = 56
           Height = 30
-          Top = 96
+          Top = 140
           Width = 413
           Caption = 'Not recommended! See Import settings first!'
           ParentColor = False
+        end
+        object edPR: TSpinEdit
+          Left = 609
+          Height = 38
+          Top = 10
+          Width = 136
+          Alignment = taCenter
+          Enabled = False
+          MaxValue = 999999999
+          MinValue = 1
+          TabOrder = 1
+          Value = 500
+        end
+        object cbPR: TCheckBox
+          Left = 28
+          Height = 34
+          Top = 10
+          Width = 398
+          Caption = 'PacketRecords (Changes needs restart!):'
+          TabOrder = 2
+          OnChange = cbPRChange
         end
       end
       object grbLocations: TGroupBox
@@ -100,7 +121,7 @@ object Form4: TForm4
         object lblTempFolder: TLabel
           Left = 28
           Height = 30
-          Top = 14
+          Top = 10
           Width = 162
           Caption = 'Temporary folder:'
           ParentColor = False
@@ -134,7 +155,7 @@ object Form4: TForm4
         object lblNibConv: TLabel
           Left = 28
           Height = 30
-          Top = 88
+          Top = 86
           Width = 85
           Caption = 'NibConv:'
           ParentColor = False

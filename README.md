@@ -1,15 +1,15 @@
 -----------------------------------------------------------------
 
-FluffyFloppy64 v0.94 - 2025-12-28
+FluffyFloppy64 v0.95 - 2026-01-04
 -----------------------------------------------------------------
 A Microsoft(r) Windows(r) tool to catalog 
-Commodore 64 (C64) floppy disk images (D64, G64, NIB, D71, D81, PRG, TAP, TXT)
+Commodore 64 (C64) floppy disk images (D64, G64, NIB, D71, D81, PRG, TAP) & TXT,NFO
 
 FREEWARE / OpenSource
 
 License: GNU General Public License v2.0
 
-(c) 2021-2025 FrankieTheFluff
+(c) 2021-2026 FrankieTheFluff
 
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 

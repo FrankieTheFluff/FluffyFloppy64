@@ -193,7 +193,7 @@ object frmImport: TfrmImport
       Width = 380
       BorderStyle = sbsSunken
       Caption = ' No folder selected!'
-      TabOrder = 11
+      TabOrder = 13
     end
     object lblFileSel: TLabel
       Left = 14
@@ -210,7 +210,7 @@ object frmImport: TfrmImport
       Alignment = taRightJustify
       BorderStyle = sbsSunken
       Caption = '0 '
-      TabOrder = 12
+      TabOrder = 14
     end
     object lblImportFoundArc: TStaticText
       Left = 994
@@ -220,7 +220,7 @@ object frmImport: TfrmImport
       Alignment = taRightJustify
       BorderStyle = sbsSunken
       Caption = '0 '
-      TabOrder = 13
+      TabOrder = 15
     end
     object lblFileImg: TLabel
       Left = 644
@@ -324,7 +324,17 @@ object frmImport: TfrmImport
       Caption = '*.TXT'
       Checked = True
       State = cbChecked
-      TabOrder = 14
+      TabOrder = 11
+    end
+    object cbImgNFO: TCheckBox
+      Left = 896
+      Height = 34
+      Top = 182
+      Width = 84
+      Caption = '*.NFO'
+      Checked = True
+      State = cbChecked
+      TabOrder = 12
     end
   end
   object btImport: TButton

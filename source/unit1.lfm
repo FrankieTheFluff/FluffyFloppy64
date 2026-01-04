@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
-  Left = 1072
+  Left = 1082
   Height = 1125
-  Top = 388
+  Top = 288
   Width = 1818
   Caption = 'frmMain'
   ClientHeight = 1125
@@ -394,11 +394,11 @@ object frmMain: TfrmMain
             ClientWidth = 963
             TabOrder = 0
             object cbDBFilePath: TComboBox
-              Left = 140
+              Left = 144
               Height = 38
               Hint = 'Filter: Path to the images'
               Top = 0
-              Width = 811
+              Width = 807
               Anchors = [akTop, akLeft, akRight]
               DropDownCount = 15
               ItemHeight = 30
@@ -414,12 +414,13 @@ object frmMain: TfrmMain
               OnChange = cbDBFilePathChange
             end
             object cbDBFileNameExt: TComboBox
-              Left = 140
+              Left = 144
               Height = 38
               Hint = 'Filter: File extensions'
               Top = 49
               Width = 123
               Anchors = [akLeft]
+              DropDownCount = 10
               ItemHeight = 30
               ItemIndex = 0
               Items.Strings = (
@@ -440,6 +441,8 @@ object frmMain: TfrmMain
                 'TAP'
                 'txt'
                 'TXT'
+                'nfo'
+                'NFO'
               )
               ParentShowHint = False
               ReadOnly = True
@@ -474,19 +477,14 @@ object frmMain: TfrmMain
               BorderStyle = bsSingle
               Color = clInfoBk
               ItemHeight = 30
-              ItemIndex = 0
               Items.Strings = (
-                'Directory entry'
-                'Diskname'
-                'Image filename'
-                'Tags'
+                ''
               )
               ParentShowHint = False
               ReadOnly = True
               ShowHint = True
               Style = csDropDownList
               TabOrder = 6
-              Text = 'Directory entry'
               OnChange = cbSQLSearchChange
             end
             object BtSQLSearch: TBitBtn
@@ -554,16 +552,15 @@ object frmMain: TfrmMain
               ParentColor = False
             end
             object cbFilterCase: TCheckBox
-              Left = 280
+              Left = 290
               Height = 34
               Hint = 'Filter: Case-sensitive extension'
               Top = 49
               Width = 159
               Caption = 'Case-sensitive'
-              Checked = True
+              Enabled = False
               ParentShowHint = False
               ShowHint = True
-              State = cbChecked
               TabOrder = 2
               OnChange = cbFilterCaseChange
             end
@@ -670,7 +667,7 @@ object frmMain: TfrmMain
               item
                 Alignment = taRightJustify
                 MinSize = 2
-                MaxSize = 9
+                MaxSize = 5
                 ReadOnly = True
                 SizePriority = 0
                 Title.Caption = 'Ext'
@@ -678,6 +675,7 @@ object frmMain: TfrmMain
                 FieldName = 'FileNameExt'
               end            
               item
+                MinSize = 1
                 MaxSize = 18
                 ReadOnly = True
                 SizePriority = 0
@@ -686,8 +684,8 @@ object frmMain: TfrmMain
                 FieldName = 'FileSizeIMG'
               end            
               item
-                MinSize = 140
-                MaxSize = 700
+                MinSize = 16
+                MaxSize = 16
                 ReadOnly = True
                 SizePriority = 0
                 Title.Caption = 'Diskname'
@@ -696,7 +694,7 @@ object frmMain: TfrmMain
               end            
               item
                 MinSize = 35
-                MaxSize = 175
+                MaxSize = 35
                 ReadOnly = True
                 SizePriority = 0
                 Title.Caption = 'Recently opened'
@@ -706,7 +704,7 @@ object frmMain: TfrmMain
               end            
               item
                 MinSize = 35
-                MaxSize = 175
+                MaxSize = 35
                 ReadOnly = True
                 SizePriority = 0
                 Title.Caption = 'Imported'
@@ -715,14 +713,14 @@ object frmMain: TfrmMain
                 DisplayFormat = 'yyyy/mm/dd'
               end            
               item
-                MinSize = 18
+                MinSize = 1
                 SizePriority = 0
                 Title.Caption = 'Favourite'
                 Width = 105
                 FieldName = 'Favourite'
               end            
               item
-                MinSize = 18
+                MinSize = 1
                 SizePriority = 0
                 Title.Caption = 'Corrupt'
                 Width = 105
@@ -730,7 +728,7 @@ object frmMain: TfrmMain
               end            
               item
                 MinSize = 18
-                MaxSize = 112
+                MaxSize = 262
                 ReadOnly = True
                 SizePriority = 0
                 Title.Caption = 'Location'
@@ -765,7 +763,7 @@ object frmMain: TfrmMain
             object lblNotes: TLabel
               Left = 16
               Height = 30
-              Top = 79
+              Top = 74
               Width = 60
               Caption = 'Notes:'
               ParentColor = False
@@ -786,7 +784,7 @@ object frmMain: TfrmMain
             object lblTags: TLabel
               Left = 16
               Height = 30
-              Top = 9
+              Top = 2
               Width = 46
               Caption = 'Tags:'
               ParentColor = False
@@ -795,7 +793,7 @@ object frmMain: TfrmMain
               Left = 30
               Height = 38
               Hint = 'tags divided with comma'
-              Top = 44
+              Top = 38
               Width = 937
               DataField = 'Tags'
               DataSource = DataSourceDir
@@ -1030,8 +1028,7 @@ object frmMain: TfrmMain
     Top = 420
   end
   object SQLQueryDir: TSQLQuery
-    PacketRecords = -1
-    IndexFieldNames = 'idxImg'
+    PacketRecords = 200
     FieldDefs = <>
     Database = AConnection
     Transaction = ATransaction
@@ -1042,7 +1039,7 @@ object frmMain: TfrmMain
     Params = <>
     Macros = <>
     UpdateMode = upWhereAll
-    Left = 1190
+    Left = 1192
     Top = 308
   end
   object SQLQueryDirTxt: TSQLQuery

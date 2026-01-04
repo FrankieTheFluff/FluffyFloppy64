@@ -9,29 +9,29 @@ object frmDB: TfrmDB
   ClientWidth = 868
   DesignTimePPI = 168
   Position = poMainFormCenter
-  LCLVersion = '4.0.0.4'
+  LCLVersion = '4.4.0.0'
   OnActivate = FormActivate
   object grbDBProperties: TGroupBox
     Left = 14
     Height = 392
     Top = 0
     Width = 840
-    ClientHeight = 364
+    ClientHeight = 357
     ClientWidth = 836
     TabOrder = 0
     object lblVersion: TLabel
       Left = 14
-      Height = 23
+      Height = 30
       Top = 0
-      Width = 68
+      Width = 73
       Caption = 'Version:'
       ParentColor = False
     end
     object lblCreated: TLabel
       Left = 504
-      Height = 23
+      Height = 30
       Top = 0
-      Width = 72
+      Width = 77
       Caption = 'Created:'
       ParentColor = False
     end
@@ -55,9 +55,9 @@ object frmDB: TfrmDB
     end
     object lblLocation: TLabel
       Left = 14
-      Height = 23
+      Height = 30
       Top = 56
-      Width = 76
+      Width = 84
       Caption = 'Location:'
       ParentColor = False
     end
@@ -71,9 +71,9 @@ object frmDB: TfrmDB
     end
     object lblComment: TLabel
       Left = 14
-      Height = 23
+      Height = 30
       Top = 182
-      Width = 87
+      Width = 96
       Caption = 'Comment:'
       ParentColor = False
     end
@@ -83,7 +83,6 @@ object frmDB: TfrmDB
       Top = 182
       Width = 688
       DataField = 'DBComment'
-      DataSource = Form1.DataSourceDB
       ScrollBars = ssAutoBoth
       TabOrder = 3
       OnEditingDone = memCommentEditingDone

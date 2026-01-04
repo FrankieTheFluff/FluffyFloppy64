@@ -3,11 +3,11 @@ FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
 A Microsoft(r) Windows(r) tool to catalog 
-Commodore 64 (C64) floppy disk images (D64,G64,NIB,D71,D81,PRG,TAP,TXT)
+Commodore 64 (C64) floppy images (D64,G64,NIB,D71,D81,PRG,TAP) & TXT,NFO
 
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
-(c) 2021-2025 FrankieTheFluff
+(c) 2021-2026 FrankieTheFluff
 Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 
@@ -31,6 +31,19 @@ Release notes
 
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
+
+v0.95 - 2026-01-04
+* Import: Support for nfo files
+* Options: Database PacketRecords (e.g. 200)
+* FFFunctions v1.09: Support nfo files
++ FFFunctions v1.09: Improved support txt files (UTF8)
++ View: Column 'location' now disabled as default
++ Search: Improved
+- Search: Fixes multilanguage "select field" dropdown
+- Search: Fixes crash/frozen during scrolling through searchresult
++ Filter: Fixes slow process (DisableControls/EnableControls)
++ Database: v111 fixes limited field "Info" (text)
+- Language: Fixes Deutsch.ini - 'lblArchiveProgress'
 
 v0.94 - 2025-12-28
 * FFFunctions v1.08: Support for codepage selection
