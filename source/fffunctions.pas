@@ -10,7 +10,7 @@ Web: https://github.com/FrankieTheFluff/FluffyFloppy64
 Mail: fluxmyfluffyfloppy@mail.de
 -----------------------------------------------------------------
 Functions for FluffyFloppy64
-v1.09 - 2026-01-01
+v1.10 - 2026-01-06
 
 Parts of it:
 -
@@ -225,12 +225,12 @@ begin
     Renamefile(Extpath+UnZipper.Entries.Entries[i].ArchiveFileName, Extpath+entry);
    end;
    Result:= true;
-   except
+  except
     on E: Exception do
      begin
       Result := False;
      end;
-   end;
+  end;
   finally
    UnZipper.Free;
   end;
@@ -259,12 +259,12 @@ begin
     Renamefile(Extpath+UnZipper.Entries.Entries[i].ArchiveFileName, Extpath+entry);
    end;
    Result:= true;
-   except
+  except
     on E: Exception do
      begin
       Result := False;
      end;
-   end;
+  end;
   finally
    UnZipper.Free;
  end;
@@ -466,17 +466,19 @@ begin
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
     FileArchType := sp;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');   // FilePath
    end;
  If aArchiveImage = '' then
    begin
    FileFullA := aImageName;
    FilePathA := aImageName;
-   frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+   frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');  // FilePath
    end;
 
   // Images read - check if g64 or nib
@@ -866,17 +868,19 @@ begin
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
     FileArchType := sp;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');   // FilePath
    end;
   If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');  // FilePath
    end;
 
   // Write table FileImage
@@ -1147,17 +1151,19 @@ begin
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
     FileArchType := sp;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');   // FilePath
    end;
   If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');  // FilePath
    end;
 
   // Write table FileImage
@@ -1304,17 +1310,19 @@ begin
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
     FileArchType := sp;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');                           // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');   // FilePath
    end;
   If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');                             // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');  // FilePath
    end;
 
   Try
@@ -1390,17 +1398,19 @@ begin
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
     FileArchType := sp;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');        // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');   // FilePath
    end;
   If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');       // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');  // FilePath
    end;
 
   Try
@@ -1471,17 +1481,19 @@ begin
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
     FileArchType := sp;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');       // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');   // FilePath
    end;
   If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');      // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');  // FilePath
    end;
 
   fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);
@@ -1556,17 +1568,19 @@ begin
     sp := ExtractFileExt(ImageFileArray[0]);
     while (Length(sp) > 0) and (sp[1] = '.') do Delete(sp, 1, 1);
     FileArchType := sp;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');       // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(FilePathA)) +');');   // FilePath
    end;
   If aArchiveImage = '' then
    begin
     FileFullA := aImageName;
     FilePathA := aImageName;
-    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (FilePath)'+
+    frmMain.AConnection.ExecuteDirect('insert or ignore into FilePath (idxFp, FilePath)'+
       ' values('+
-      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');      // FilePath
+      ' ''' + IntToStr(aImg) + ''','+                       // idxFp
+      ' ' + QuotedStr(ExtractFilePath(aImageName)) +');');  // FilePath
    end;
 
   fstream:= TFileStream.Create(aImageName, fmShareCompat or fmOpenRead);

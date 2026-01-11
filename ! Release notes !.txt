@@ -32,6 +32,12 @@ Release notes
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
 
+v0.96 - 2026-01-11
+* StatusBar: Show recordcount of all records
++ Database: v112 removed unused "idx" in table "FileImage"
++ Database: Show entries sorted by filename ascending (instead of import date)
+- Database: Fixes missing delete and exit after failed creation of a new database
+
 v0.95 - 2026-01-04
 * Import: Support for nfo files
 * Options: Database PacketRecords (e.g. 200)

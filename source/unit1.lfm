@@ -25,16 +25,19 @@ object frmMain: TfrmMain
         Width = 175
       end    
       item
-        Width = 385
+        Width = 120
       end    
       item
-        Width = 228
+        Width = 380
       end    
       item
-        Width = 228
+        Width = 230
       end    
       item
-        Width = 88
+        Width = 100
+      end    
+      item
+        Width = 50
       end>
     SimplePanel = False
   end

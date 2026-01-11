@@ -127,10 +127,10 @@ begin
   frmMain.lstBoxPETSCII.Clear;
   frmMain.LstBxDirectoryTXT.Clear;
   frmMain.MemoBAMHint.Clear;
-  frmMain.StatusBar1.Panels[1].Text:= msgImp01;
-  frmMain.Statusbar1.Panels[2].Text := '';
+  frmMain.StatusBar1.Panels[2].Text:= msgImp01;
   frmMain.Statusbar1.Panels[3].Text := '';
   frmMain.Statusbar1.Panels[4].Text := '';
+  frmMain.Statusbar1.Panels[5].Text := '';
   frmMain.Statusbar1.Refresh;
 
   btImport.Enabled := false;
@@ -603,10 +603,7 @@ begin
   frmMain.DBGridDir_ReadEntry(frmMain.SQLQueryDir.FieldByName('FileFull').Text);
   frmMain.Init_FilePath;
   frmMain.PC2.ActivePage.Visible:=true;
-
 end;
-
-
 
 procedure TfrmImport.btImportEnter(Sender: TObject);
 begin
@@ -768,6 +765,7 @@ begin
    end;
 
   lblImportFoundImg.Caption := ' ' + IntToStr(ImageCount + ImageCountA2) + ' ';
+  str_FindAllImagesTmp.Clear;
   Application.ProcessMessages;
 end;
 

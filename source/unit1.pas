@@ -841,8 +841,8 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.95';
- sAppDate    := '2026-01-04';
+ sAppVersion := 'v0.96';
+ sAppDate    := '2026-01-11';
  sAppPath    := ExtractFilePath(Application.ExeName); ExtractFilePath(ParamStr(0));
  frmMain.Caption:= sAppCaption + sAppVersion;
  SQlSearch_Click := false;
@@ -1691,14 +1691,13 @@ begin
     ATransaction.Active := true;
 
     AConnection.ExecuteDirect('CREATE TABLE "DB"('+
-                ' "idDB" Integer PRIMARY KEY,'+
+                ' "idxDB" Integer NOT NULL PRIMARY KEY,'+
                 ' "DBVersion" String,'+
                 ' "DBCreated" String,'+
                 ' "DBComment" Char(1024));');
     // Table FileImage
     AConnection.ExecuteDirect('CREATE TABLE "FileImage"('+
-                ' "idx" Integer PRIMARY KEY,'+
-                ' "idxImg" Integer,'+
+                ' "idxImg" Integer NOT NULL PRIMARY KEY,'+
                 ' "DateImport" String,'+
                 ' "DateLast" String,'+
                 ' "FilePath" Char(512),'+
@@ -1720,11 +1719,11 @@ begin
     AConnection.ExecuteDirect('CREATE UNIQUE INDEX "Data_id_idx" ON "FileImage"( "idxImg" );');
     // Table FilePath
     AConnection.ExecuteDirect('CREATE TABLE "FilePath"('+
-                ' "idFp" Integer PRIMARY KEY,'+
+                ' "idxFP" Integer NOT NULL PRIMARY KEY,'+
                 ' "FilePath" Char(512) UNIQUE);');
     // Table Tracks
     AConnection.ExecuteDirect('CREATE TABLE "Tracks"('+
-                ' "idx" Integer PRIMARY KEY,'+
+                ' "idx" Integer NOT NULL PRIMARY KEY,'+
                 ' "idxTrks" Integer,'+
                 ' "T18" Char(9728),'+   // D64 Dir
                 ' "T19" Char(9728),'+   // D64 Dir extended
@@ -1732,14 +1731,14 @@ begin
                 ' "T53" Char(512));');  // D71 BAM
     // Table DirectoryTxt
     AConnection.ExecuteDirect('CREATE TABLE "DirectoryTXT"('+
-                ' "idx" Integer PRIMARY KEY,'+
+                ' "idx" Integer NOT NULL PRIMARY KEY,'+
                 ' "idxTxt" Integer,'+
                 ' "FileSizeTxt" Char(5),'+
                 ' "FileNameTxt" Char(16),'+
                 ' "FileTypeTxt" Char(3),'+
                 ' FOREIGN KEY (idxTxt) REFERENCES FileImage(idxImg));');
     // Version, Created
-    AConnection.ExecuteDirect('insert into DB (idDB,DBVersion,DBCreated) values (1,''111'', ''' + DateToStr(now) + ''');');
+    AConnection.ExecuteDirect('insert into DB (DBVersion,DBCreated) values (''112'', ''' + DateToStr(now) + ''');');
     ATransaction.Commit;
     If Dev_Mode = true then Showmessage('[Dev_Mode] - Create database - Step 2');
   except
@@ -1747,6 +1746,9 @@ begin
      if answer = mrOk then
       begin
        ATransaction.Active:=false;
+       AConnection.Close;
+       If fileexists(Database_NewDialog.FileName) then DeleteFileUTF8(Database_NewDialog.FileName);
+       exit;
       end;
   end; // End Create Database
 
@@ -1767,9 +1769,9 @@ begin
   mnuRefresh.Enabled:=false;
   mnuDelete.Enabled:=false;
   StatusBar1.Panels[0].Text:= '0/0';
-  StatusBar1.Panels[1].Text:= '';
   StatusBar1.Panels[2].Text:= '';
   StatusBar1.Panels[3].Text:= '';
+  StatusBar1.Panels[4].Text:= '';
   LstBxDirectoryPETSCII.Clear;
   LstBxDirectoryPETSCII.Items.Add(IniLng.ReadString('MSG', 'msgDB05', 'Image not found'));
   MemoBAMHint.Clear;
@@ -1884,7 +1886,6 @@ begin
    DBFilter;
   end;
 
- //
  SQLQueryDir.Active:=true;
  SQLQueryDir.Last;
  ImgCount := SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates - last db entry
@@ -1923,6 +1924,8 @@ begin
     else cbDBFilePath.ItemIndex:=0;
    SQLQueryFP.Active:=false;
    Str_FP.Free;
+
+   DBRecordCount(strSQL);
 end;
 
 procedure TfrmMain.mnuSyncClick(Sender: TObject);
@@ -2076,7 +2079,7 @@ procedure TfrmMain.DBRecordCount(aStrSQL : String);
 var
    PR : Integer;
 begin
-   //DBGridDir.DataSource.DataSet.DisableControls;
+   DBGridDir.DataSource.DataSet.DisableControls;
    SQLQueryDir.Close;
    SQLQueryDir.DataBase := AConnection;
    SQLQueryDir.SQL.Clear;
@@ -2084,13 +2087,29 @@ begin
    frmMain.SQLQueryDir.PacketRecords := -1;
    SQlQueryDir.SQL.Add('Select idxImg from FileImage');
    SQLQueryDir.Active:=true;
-   Showmessage(IntToStr(SQLQueryDir.RecordCount));
+   StatusBar1.Panels[1].Text:= IntToStr(SQLQueryDir.RecordCount);
    SQLQueryDir.Active:=false;
    SQLQueryDir.Close;
    SQLQueryDir.DataBase := AConnection;
    SQLQueryDir.SQL.Clear;
    SQlQueryDir.SQL.Add(aStrSQL);  // Back to current SELECT
-   //DBGridDir.DataSource.DataSet.EnableControls;
+
+   // PacketRecords
+   If IniFluff.ReadBool('Options', 'cbPR', false) = true then
+    begin
+     frmMain.SQLQueryDir.IndexFieldNames := '';
+     PR := IniFluff.ReadInteger('Options', 'edPR', 500);
+     If PR < 1 then PR := 1;
+     frmMain.SQLQueryDir.PacketRecords := PR;
+    end;
+   If IniFluff.ReadBool('Options', 'cbPR', false) = false then
+    begin
+     frmMain.SQLQueryDir.IndexFieldNames := 'idxImg';
+     frmMain.SQLQueryDir.PacketRecords := -1;
+    end;
+
+   SQLQueryDir.Active:=true;
+   DBGridDir.DataSource.DataSet.EnableControls;
 end;
 
 Procedure TfrmMain.OpenDatabase(aFileName : String);
@@ -2100,9 +2119,9 @@ var
 begin
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Start OpenDatabase procedure');
  StatusBar1.Panels[0].Text:= '0/0';
- StatusBar1.Panels[1].Text:= '';
  StatusBar1.Panels[2].Text:= '';
  StatusBar1.Panels[3].Text:= '';
+ StatusBar1.Panels[4].Text:= '';
  MemoBAMHint.Clear;
 
  AConnection.Close;
@@ -2150,8 +2169,7 @@ begin
       AConnection.ExecuteDirect('ALTER TABLE FileImage RENAME TO FileImage_old;');
       // Table FileImage
       AConnection.ExecuteDirect('CREATE TABLE "FileImage"('+
-                  ' "idx" Integer PRIMARY KEY,'+
-                  ' "idxImg" Integer,'+
+                  ' "idxImg" Integer NOT NULL PRIMARY KEY,'+
                   ' "DateImport" String,'+
                   ' "DateLast" String,'+
                   ' "FilePath" Char(512),'+
@@ -2169,8 +2187,8 @@ begin
                   ' "Tags" Char(255),'+
                   ' "Info" Text,'+
                   ' "BlocksFreeTxt" Char(5));');
-      AConnection.ExecuteDirect('INSERT INTO FileImage (idx, idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeImg, FileDateTime, FileFull, FileArchType, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt)' +
-       ' SELECT idx, idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeImg, FileDateTime, FileFull, FileArchType, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt FROM FileImage_old;');
+      AConnection.ExecuteDirect('INSERT INTO FileImage (idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeImg, FileDateTime, FileFull, FileArchType, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt)' +
+       ' SELECT idxImg, DateImport, DateLast, FilePath, FileName, FileNameExt, FileSizeImg, FileDateTime, FileFull, FileArchType, FileArchType, DiskName, DiskIDTxt, DOSTypeTxt, Favourite, Corrupt, Tags, Info, BlocksFreeTxt FROM FileImage_old;');
       AConnection.ExecuteDirect('DROP TABLE FileImage_old;');
 
       SQlQueryDB.Edit;
@@ -2189,6 +2207,7 @@ begin
 
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Database filter');
  DBFilter;
+
  frmMain.Caption:= sAppCaption + sAppVersion + ' - [' + ExtractFileName(aFileName) + ']';
  If Dev_Mode = true then
   begin
@@ -2401,16 +2420,16 @@ begin
         frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
         UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
         GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
-        Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
+        Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
        end;
       If frmMain.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
        begin
         LstBxDirectoryPETSCII.Clear;
         Statusbar1.Panels[0].Text := ' 0/0';
-        Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-        Statusbar1.Panels[2].Text := '';
+        Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
         Statusbar1.Panels[3].Text := '';
         Statusbar1.Panels[4].Text := '';
+        Statusbar1.Panels[5].Text := '';
        end;
       Init_Menu;
       exit;
@@ -2439,16 +2458,16 @@ begin
         frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
         UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
         GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
-        Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
+        Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
        end;
       If frmMain.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
        begin
         LstBxDirectoryPETSCII.Clear;
         Statusbar1.Panels[0].Text := ' 0/0';
-        Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-        Statusbar1.Panels[2].Text := '';
+        Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
         Statusbar1.Panels[3].Text := '';
         Statusbar1.Panels[4].Text := '';
+        Statusbar1.Panels[5].Text := '';
        end;
       Init_Menu;
       exit;
@@ -2477,16 +2496,16 @@ begin
         frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
         UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
         GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
-        Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
+        Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
        end;
       If frmMain.SQLQueryDir.RecordCount < 1 then    // Kein Suchergebnis
        begin
         LstBxDirectoryPETSCII.Clear;
         Statusbar1.Panels[0].Text := ' 0/0';
-        Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-        Statusbar1.Panels[2].Text := '';
+        Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
         Statusbar1.Panels[3].Text := '';
         Statusbar1.Panels[4].Text := '';
+        Statusbar1.Panels[5].Text := '';
        end;
       Init_Menu;
       exit;
@@ -2559,7 +2578,6 @@ begin
  SQLQueryDir.Close;
  SQLQueryDir.DataBase := AConnection;
  SQLQueryDir.SQL.Clear;
-
  If edSQLSearch.Text = '' then
   begin
    If cbDBFilePath.ItemIndex = 0 then  // All
@@ -2584,7 +2602,9 @@ begin
        else
        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL + ' AND Favourite = true AND Corrupt = true';
       end;
-     SQlQueryDir.SQL.Add(StrSQL2);
+     SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY FileName COLLATE NOCASE ASC');
+     dbGridSorted := 'ASC';
+     DBGRidDir.Columns[0].Title.ImageIndex:=0; // ASC
      SQLQueryDir.Active:=true;
      Datasourcedir.DataSet.EnableControls;
      Init_Menu;
@@ -2611,7 +2631,9 @@ begin
        else
        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
       end;
-     SQLQueryDir.SQL.Add(StrSQL2);
+     SQLQueryDir.SQL.Add(StrSQL2 + ' ORDER BY FileName COLLATE NOCASE ASC');
+     dbGridSorted := 'ASC';
+     DBGRidDir.Columns[0].Title.ImageIndex:=0; // ASC
      SQLQueryDir.Active:=true;
      Datasourcedir.DataSet.EnableControls;
      Init_Menu;
@@ -2627,7 +2649,9 @@ begin
    If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL + ' AND Corrupt = true'
    else
    If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL + ' AND Favourite = true AND Corrupt = true';
-   SQLQueryDir.SQL.Add(StrSQL2);
+   SQLQueryDir.SQL.Add(StrSQL2 + ' ORDER BY FileName COLLATE NOCASE ASC');
+   dbGridSorted := 'ASC';
+   DBGRidDir.Columns[0].Title.ImageIndex:=0; // ASC
    SQLQueryDir.Active:=true;
    Datasourcedir.DataSet.EnableControls;
    Init_Menu;
@@ -2877,7 +2901,7 @@ Begin
   msgDir15 := IniLng.ReadString('MSG', 'msgDir15', '80 tracks, no error bytes');
   msgDir16 := IniLng.ReadString('MSG', 'msgDir16', '80 tracks, 3200 error bytes');
   frmMain.LstBxDirectoryPETSCII.Clear;
-  frmMain.Statusbar1.Panels[1].text := '';
+  frmMain.Statusbar1.Panels[2].text := '';
   aImageNameD64 := '';
   // Check if g64 or nib
   If (Lowercase(ExtractFileExt(aFileFull)) = '.g64') or (Lowercase(ExtractFileExt(aFileFull)) = '.nib') then
@@ -2896,8 +2920,8 @@ Begin
       frmMain.SQLQueryDirTxt.Active := True;
       frmMain.SQLQueryDirTxt.First;
       frmMain.LstBxDirectoryPETSCII.Items.Add(Format('%-5s%-16s%', [frmMain.SQLQueryDirTXT.FieldByName('FileSizeTxt').Text, frmMain.SQLQueryDirTXT.FieldByName('FileNameTxt').Text]));
-      frmMain.Statusbar1.Panels[1].text := '';
-      frmMain.Statusbar1.Panels[2].Text := msgDir03;
+      frmMain.Statusbar1.Panels[2].text := '';
+      frmMain.Statusbar1.Panels[3].Text := msgDir03;
      end;
    '.prg':
      begin
@@ -2908,8 +2932,8 @@ Begin
       frmMain.SQLQueryDirTxt.Active := True;
       frmMain.SQLQueryDirTxt.First;
       frmMain.LstBxDirectoryPETSCII.Items.Add(Format('%-5s%-16s%', [frmMain.SQLQueryDirTXT.FieldByName('FileSizeTxt').Text, frmMain.SQLQueryDirTXT.FieldByName('FileNameTxt').Text]));
-      frmMain.Statusbar1.Panels[1].text := '';
-      frmMain.Statusbar1.Panels[2].Text := msgDir04;
+      frmMain.Statusbar1.Panels[2].text := '';
+      frmMain.Statusbar1.Panels[3].Text := msgDir04;
      end;
 
    '.d64':
@@ -2923,7 +2947,7 @@ Begin
         frmMain.SQLQueryTrks.SQL.Add('SELECT * FROM Tracks WHERE idxTrks = ' + frmMain.SQLQueryDir.FieldByName('idxImg').Text + '');
         frmMain.SQLQueryTrks.Active := True;
         frmMain.SQLQueryTrks.First;
-        frmMain.Statusbar1.Panels[3].Text := msgDir05;
+        frmMain.Statusbar1.Panels[4].Text := msgDir05;
         if (frmMain.SQlQueryTrks.RecordCount = 1) then  // Saved in db?
          begin
           arrD64[18,0] := frmMain.SQLQueryTrks.FieldByName('T18').AsString;
@@ -2934,7 +2958,7 @@ Begin
         end
       else      // From file
        begin
-        frmMain.Statusbar1.Panels[3].Text := msgDir06;
+        frmMain.Statusbar1.Panels[4].Text := msgDir06;
         fstream:= TFileStream.Create(aFileFull, fmShareCompat or fmOpenRead);
         filesizeImg := FloatToStr(fstream.Size);
         fstream.Free;
@@ -2942,15 +2966,15 @@ Begin
         frmMain.ReadDirEntries_D64;
        end;
       case (filesizeImg) of
-       ''       : frmMain.Statusbar1.Panels[1].text := msgDir01;
-       '174848' : frmMain.Statusbar1.Panels[1].text := msgDir07;
-       '175531' : frmMain.Statusbar1.Panels[1].text := msgDir08;
-       '196608' : frmMain.Statusbar1.Panels[1].text := msgDir09;
-       '197376' : frmMain.Statusbar1.Panels[1].text := msgDir10;
-       '205312' : frmMain.Statusbar1.Panels[1].text := msgDir11;
-       '206114' : frmMain.Statusbar1.Panels[1].text := msgDir12;
+       ''       : frmMain.Statusbar1.Panels[2].text := msgDir01;
+       '174848' : frmMain.Statusbar1.Panels[2].text := msgDir07;
+       '175531' : frmMain.Statusbar1.Panels[2].text := msgDir08;
+       '196608' : frmMain.Statusbar1.Panels[2].text := msgDir09;
+       '197376' : frmMain.Statusbar1.Panels[2].text := msgDir10;
+       '205312' : frmMain.Statusbar1.Panels[2].text := msgDir11;
+       '206114' : frmMain.Statusbar1.Panels[2].text := msgDir12;
       otherwise
-       frmMain.Statusbar1.Panels[1].text := msgDir02;
+       frmMain.Statusbar1.Panels[2].text := msgDir02;
       end;
 
       // tmp d64 delete (source was g64/nib file)
@@ -2973,7 +2997,7 @@ Begin
          frmMain.SQLQueryTrks.SQL.Add('SELECT * FROM Tracks WHERE idxTrks = ' + frmMain.SQLQueryDir.FieldByName('idxImg').Text + '');
          frmMain.SQLQueryTrks.Active := True;
          frmMain.SQLQueryTrks.First;
-         frmMain.Statusbar1.Panels[3].Text := msgDir05;
+         frmMain.Statusbar1.Panels[4].Text := msgDir05;
          if (frmMain.SQlQueryTrks.RecordCount = 1) then  // Saved in db?
           begin
            arrD71[18,0] := frmMain.SQLQueryTrks.FieldByName('T18').AsString;
@@ -2984,7 +3008,7 @@ Begin
          end
        else      // From file
         begin
-         frmMain.Statusbar1.Panels[3].Text := msgDir06;
+         frmMain.Statusbar1.Panels[4].Text := msgDir06;
          fstream:= TFileStream.Create(aFileFull, fmShareCompat or fmOpenRead);
          filesizeImg := FloatToStr(fstream.Size);
          fstream.Free;
@@ -2992,11 +3016,11 @@ Begin
          frmMain.ReadDirEntries_D71;
         end;
        case (filesizeImg) of
-        ''       : frmMain.Statusbar1.Panels[1].text := msgDir01;
-        '349696' : frmMain.Statusbar1.Panels[1].text := msgDir13;
-        '351062' : frmMain.Statusbar1.Panels[1].text := msgDir14;
+        ''       : frmMain.Statusbar1.Panels[2].text := msgDir01;
+        '349696' : frmMain.Statusbar1.Panels[2].text := msgDir13;
+        '351062' : frmMain.Statusbar1.Panels[2].text := msgDir14;
        otherwise
-        frmMain.Statusbar1.Panels[1].text := msgDir02;
+        frmMain.Statusbar1.Panels[2].text := msgDir02;
        end;
       end;
 
@@ -3011,7 +3035,7 @@ Begin
          frmMain.SQLQueryTrks.SQL.Add('SELECT * FROM Tracks WHERE idxTrks = ' + frmMain.SQLQueryDir.FieldByName('idxImg').Text + '');
          frmMain.SQLQueryTrks.Active := True;
          frmMain.SQLQueryTrks.First;
-         frmMain.Statusbar1.Panels[3].Text := msgDir05;
+         frmMain.Statusbar1.Panels[4].Text := msgDir05;
          if (frmMain.SQlQueryTrks.RecordCount = 1) then  // Saved in db?
           begin
            arrD81[40,0] := frmMain.SQLQueryTrks.FieldByName('T40').AsString;
@@ -3021,7 +3045,7 @@ Begin
          end
        else      // From file
         begin
-         frmMain.Statusbar1.Panels[3].Text := msgDir06;
+         frmMain.Statusbar1.Panels[4].Text := msgDir06;
          fstream:= TFileStream.Create(aFileFull, fmShareCompat or fmOpenRead);
          filesizeImg := FloatToStr(fstream.Size);
          fstream.Free;
@@ -3029,11 +3053,11 @@ Begin
          frmMain.ReadDirEntries_D81;
         end;
        case (filesizeImg) of
-        ''       : frmMain.Statusbar1.Panels[1].text := msgDir01;
-        '819200' : frmMain.Statusbar1.Panels[1].text := msgDir15;
-        '822400' : frmMain.Statusbar1.Panels[1].text := msgDir16;
+        ''       : frmMain.Statusbar1.Panels[2].text := msgDir01;
+        '819200' : frmMain.Statusbar1.Panels[2].text := msgDir15;
+        '822400' : frmMain.Statusbar1.Panels[2].text := msgDir16;
        otherwise
-        frmMain.Statusbar1.Panels[1].text := msgDir02;
+        frmMain.Statusbar1.Panels[2].text := msgDir02;
        end;
       end;
 
@@ -3057,9 +3081,9 @@ begin
    ImgDOSVersion := GetArrayDir_PETSCII(arrD64[18,0], 5, 2, true, frmMain.TgCShift.Checked);
    If (Copy(arrD64[18,0], 5, 2) = '41') or (Copy(arrD64[18,0], 5, 2) = '00') then
     begin
-     frmMain.Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir19', 'DOS version type:') + ' ' + Copy(arrD64[18,0], 5, 2);
+     frmMain.Statusbar1.Panels[3].Text := IniLng.ReadString('MSG', 'msgDir19', 'DOS version type:') + ' ' + Copy(arrD64[18,0], 5, 2);
     end
-   else frmMain.Statusbar1.Panels[2].Text := 'Soft write protection';
+   else frmMain.Statusbar1.Panels[3].Text := 'Soft write protection';
    // Directory imgDOSType //   A5-A6: DOS type, usually "2A"
    ImgDOSType := GetArrayDir_PETSCII(arrD64[18,0], 331, 4, true, frmMain.TgCShift.Checked);
 
@@ -3093,7 +3117,7 @@ begin
      else
      begin
       t := 1;
-      Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir18', 'Not valid');
+      Statusbar1.Panels[3].Text := IniLng.ReadString('MSG', 'msgDir18', 'Not valid');
      end;
 
     Repeat  // #################################################################
@@ -3212,7 +3236,7 @@ begin
      SectorCount := SectorCount + 1;  // check if extended
     Until t = 1;  // ###########################################################
 
-    If SectorCount > 18 then Statusbar1.Panels[2].Text := 'Extended directory';
+    If SectorCount > 18 then Statusbar1.Panels[3].Text := 'Extended directory';
 
     // Clear arrSec
     for z := 0 to 19 do
@@ -3258,7 +3282,7 @@ begin
    ImgDiskID := GetArrayDir_PETSCII(arrD71[18,0], 325, 6, true, frmMain.TgCShift.Checked);
    //Disk DOS version type $41 ("A")
    ImgDOSVersion := GetArrayDir_PETSCII(arrD71[18,0], 5, 2, true, frmMain.TgCShift.Checked);
-   frmMain.Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir19', 'DOS version type:') + ' ' + ImgDOSVersion;
+   frmMain.Statusbar1.Panels[3].Text := IniLng.ReadString('MSG', 'msgDir19', 'DOS version type:') + ' ' + ImgDOSVersion;
    // Directory imgDOSType //   A5-A6: DOS type, usually "2A"
    ImgDOSType := GetArrayDir_PETSCII(arrD71[18,0], 331, 4, true, frmMain.TgCShift.Checked);
 
@@ -3466,7 +3490,7 @@ begin
       imgDOSType := imgDOSType + GetUTF8('$'+Copy(sb, a, 2), true, frmMain.TgCShift.Checked);
       a := a +2;
      end;
-   frmMain.Statusbar1.Panels[2].Text := 'Dos type: ' + imgDOSType;
+   frmMain.Statusbar1.Panels[3].Text := 'Dos type: ' + imgDOSType;
    // Directory DOSType // 2A
 
    frmMain.LstBxDirectoryPETSCII.Items.Add('0 ' + GetUTF8('$22', true, frmMain.TgCShift.Checked) + imgTitle + GetUTF8('$22', true, frmMain.TgCShift.Checked) + GetUTF8('$20', true, frmMain.TgCShift.Checked) + ImgDiskID + imgDOSType);
@@ -3564,7 +3588,7 @@ begin
       SectorCount := SectorCount + 1; // check if extended
      Until t = 1;
 
-     If SectorCount > 39 then Statusbar1.Panels[2].Text := 'Extended directory';
+     If SectorCount > 39 then Statusbar1.Panels[3].Text := 'Extended directory';
 
    // ##########################################################################
    // Blocks free
@@ -3714,30 +3738,38 @@ begin
 end;
 
 procedure TfrmMain.DBGridDirTitleClick(Column: TColumn);
+var
+  PR : Integer;
 begin
-  // remove image on already selected column
+   SQLQueryDir.Active:=false;
+   DBGridDir.DataSource.DataSet.DisableControls;
+
   if dbGridSorted = 'ASC' then
    begin
     dbGridSorted := 'DESC';
     frmMain.SQLQueryDir.IndexFieldNames := Column.FieldName + ' DESC';
     Column.Title.ImageIndex:=1; // Down
-    // Remove the sort arrow from the previous column we sorted
     if (FLastColumn <> nil) and (FlastColumn <> Column) then
       FLastColumn.Title.ImageIndex:=-1;
     FLastColumn:=column;
+    SQLQueryDir.Active:=true;
+    DBGridDir.DataSource.DataSet.EnableControls;
     exit;
    end;
+
   if dbGridSorted = 'DESC' then
    begin
     dbGridSorted := 'ASC';
     frmMain.SQLQueryDir.IndexFieldNames := Column.FieldName;
     Column.Title.ImageIndex:=0; // Up
-    // Remove the sort arrow from the previous column we sorted
     if (FLastColumn <> nil) and (FlastColumn <> Column) then
       FLastColumn.Title.ImageIndex:=-1;
     FLastColumn:=column;
+    SQLQueryDir.Active:=true;
+    DBGridDir.DataSource.DataSet.EnableControls;
     Exit;
    end;
+
 end;
 
 procedure TfrmMain.DBGridDirSearch(Column: TColumn);
@@ -3942,7 +3974,7 @@ begin
       BtSQLSearch.Default:=true;
      end;
     Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
-    Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
+    Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
    end;
 end;
 
@@ -4021,10 +4053,10 @@ begin
     LstBxDirectoryTXT.Items.Add(IniLng.ReadString('MSG', 'msgDB05', 'Image not found'));
     memInfo.Enabled:=false;
     Statusbar1.Panels[0].Text := ' 0/0';
-    Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-    Statusbar1.Panels[2].Text := '';
+    Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
     Statusbar1.Panels[3].Text := '';
     Statusbar1.Panels[4].Text := '';
+    Statusbar1.Panels[5].Text := '';
     exit;
    end;
 
@@ -4087,10 +4119,10 @@ begin
       LstBxDirectoryPETSCII.Items.Add('File or archive not found!');
       memInfo.Enabled:=false;
       Statusbar1.Panels[0].Text := ' 0/0';
-      Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-      Statusbar1.Panels[2].Text := '';
+      Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
       Statusbar1.Panels[3].Text := '';
       Statusbar1.Panels[4].Text := '';
+      Statusbar1.Panels[5].Text := '';
       exit;
      end;
     if SQLQueryDir.RecordCount > 0 then
@@ -4107,7 +4139,7 @@ begin
             end;
          end;
         GetDirectoryImage(aImageName, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
-        Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
+        Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
        end
       else
       begin
@@ -4143,10 +4175,10 @@ begin
     //LstBxDirectoryPETSCII.Items.Add(IniLng.ReadString('MSG', 'msgDB05', 'Image not found');
     memInfo.Enabled:=false;
     Statusbar1.Panels[0].Text := ' 0/0';
-    Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-    Statusbar1.Panels[2].Text := '';
+    Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
     Statusbar1.Panels[3].Text := '';
     Statusbar1.Panels[4].Text := '';
+    Statusbar1.Panels[5].Text := '';
     exit;
    end;
 
@@ -4301,10 +4333,10 @@ begin
     //LstBxDirectoryPETSCII.Items.Add(IniLng.ReadString('MSG', 'msgDB05', 'Image not found');
     memInfo.Enabled:=false;
     Statusbar1.Panels[0].Text := ' 0/0';
-    Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-    Statusbar1.Panels[2].Text := '';
+    Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
     Statusbar1.Panels[3].Text := '';
     Statusbar1.Panels[4].Text := '';
+    Statusbar1.Panels[5].Text := '';
     exit;
    end;
 
@@ -4524,10 +4556,10 @@ begin
     //LstBxDirectoryPETSCII.Items.Add(IniLng.ReadString('MSG', 'msgDB05', 'Image not found');
     memInfo.Enabled:=false;
     Statusbar1.Panels[0].Text := ' 0/0';
-    Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-    Statusbar1.Panels[2].Text := '';
+    Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
     Statusbar1.Panels[3].Text := '';
     Statusbar1.Panels[4].Text := '';
+    Statusbar1.Panels[5].Text := '';
     exit;
    end;
 
@@ -4711,16 +4743,16 @@ begin
    LstBxDirectoryPETSCII.Clear;
    memInfo.Enabled:=false;
    Statusbar1.Panels[0].Text := ' 0/0';
-   Statusbar1.Panels[1].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
-   Statusbar1.Panels[2].Text := '';
+   Statusbar1.Panels[2].Text := IniLng.ReadString('MSG', 'msgDir17', 'No entries found');
    Statusbar1.Panels[3].Text := '';
    Statusbar1.Panels[4].Text := '';
+   Statusbar1.Panels[5].Text := '';
    exit;
   end;
  if SQLQueryDir.RecordCount > 0 then
   begin
    Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
-   Statusbar1.Panels[4].Text := SQLQueryDir.FieldByName('FileFull').AsString;
+   Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
    try
     UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text); // FileFull
    finally
