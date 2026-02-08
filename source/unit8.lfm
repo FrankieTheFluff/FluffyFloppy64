@@ -1,7 +1,7 @@
 object frmManual: TfrmManual
-  Left = 1395
+  Left = 1310
   Height = 744
-  Top = 810
+  Top = 483
   Width = 1317
   BorderStyle = bsDialog
   Caption = 'Manual'
@@ -9,7 +9,7 @@ object frmManual: TfrmManual
   ClientWidth = 1317
   DesignTimePPI = 168
   Position = poMainFormCenter
-  LCLVersion = '4.0.0.4'
+  LCLVersion = '4.4.0.0'
   object btOK: TButton
     Left = 1176
     Height = 44
@@ -68,6 +68,18 @@ object frmManual: TfrmManual
       'D81:'
       '     ''819200'' = ''80 tracks, no error bytes'''
       '     ''822400'' = ''80 tracks, 3200 error bytes'''
+      ''
+      '======================================'
+      ''
+      'Options:'
+      ''
+      'PacketRecords (PR):'
+      ''
+      'Useful if there are issues with less ram available.'
+      'An option ("cbPR" in the inifile with 1 = activated) to show a predefined amount (packet) of record entries. '
+      'With scrolling in the grid the next packet will be added and shown...'
+      ''
+      '======================================'
     )
     ReadOnly = True
     ScrollBars = ssAutoVertical

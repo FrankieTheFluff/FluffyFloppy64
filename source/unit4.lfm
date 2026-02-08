@@ -103,8 +103,8 @@ object Form4: TForm4
           Left = 28
           Height = 34
           Top = 10
-          Width = 398
-          Caption = 'PacketRecords (Changes needs restart!):'
+          Width = 434
+          Caption = 'PacketRecords (PR, Changes needs restart!):'
           TabOrder = 2
           OnChange = cbPRChange
         end

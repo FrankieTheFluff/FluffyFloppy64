@@ -3,7 +3,7 @@ FluffyFloppy64
 v0.xx
 -----------------------------------------------------------------
 A Microsoft(r) Windows(r) tool to catalog 
-Commodore 64 (C64) floppy images (D64,G64,NIB,D71,D81,PRG,TAP) & TXT,NFO
+Commodore 64 (C64) floppy images (D64,G64,NIB,D71,D81) & PRG,TAP,TXT,NFO
 
 FREEWARE / OpenSource
 License: GNU General Public License v2.0
@@ -31,6 +31,12 @@ Release notes
 
 # Unfinished feature: Sync "Refresh"/"Delete" database entries
 # Unfinished feature: ZIP-files within ZIP archives cannot be unpacked yet
+
+v0.97 - 2026-02-08
++ Database: Sorting rewritten (DESC, SQL-Selects, PacketRecords)
++ Database: "sqlite.dll" v3.51.2 2026-01-12
+- Import: Fixes a crash on closing dialogbox
+- Import: Fixes import tasks if started a 2nd++ time
 
 v0.96 - 2026-01-11
 * StatusBar: Show recordcount of all records

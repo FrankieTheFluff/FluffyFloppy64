@@ -296,7 +296,7 @@ begin
   msgSet49 := IniLng.ReadString('SET', 'msgSet49', 'Copy2Fonts');
   msgSet50 := IniLng.ReadString('SET', 'msgSet50', 'Language:');
   msgSet51 := IniLng.ReadString('SET', 'msgSet51', 'Remember recent used directory for import');
-  msgSet52 := IniLng.ReadString('SET', 'msgSet52', 'PacketRecords (Changes need restart!):');
+  msgSet52 := IniLng.ReadString('SET', 'msgSet52', 'PacketRecords (PR, Changes needs restart!):');
 
   btCancel.Caption:= msgSet01;
   btOK.Caption:= msgSet02;

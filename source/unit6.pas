@@ -552,7 +552,15 @@ begin
  btClose.Enabled:=false;
  btSaveHints.Enabled:=true;
  memoProgressBar.Position := 1;
- frmMain.DBGridDir.DataSource := nil;
+
+ frmMain.SQLQueryDir.Active:=false;
+ frmMain.SQLQueryDir.SQL.Clear;
+ frmMain.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
+ frmMain.SQLQueryDir.Active:=true;
+ frmMain.SQLQueryDir.Last;
+ ImgCount := frmMain.SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates - last db entry
+ frmMain.SQLQueryDir.Active:=false;
+ frmMain.DBGridDir.DataSource.DataSet.DisableControls;
  frmMain.PC2.ActivePage.Visible:=false;
 
  // Import images (D64, D71...)
@@ -590,19 +598,20 @@ begin
   str_FindAllImagesTmp.Clear;
   str_FindAllImagesArchive.Clear;
   memoImport.Lines.Add(msgImp13);
+
+  frmMain.SQLQueryDir.Active:=false;
   frmMain.SQLQueryDir.SQL.Clear;
   frmMain.SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
   frmMain.SQLQueryDir.Active:=true;
+  frmMain.DBGridDir.DataSource.DataSet.EnableControls;
+  frmMain.Init_FilePath;
   frmMain.DBFilter;
+  frmMain.PC2.ActivePage.Visible:=true;
   If Terminate = false then memoImport.Lines.Add('Import finished! (duplicates ignored)');
   If Terminate = true then memoImport.Lines.Add('Import cancelled! (duplicates ignored)');
   btImport.Enabled := true;
   btCancel.Enabled := false;
   btClose.Enabled := true;
-  frmMain.DBGridDir.DataSource := frmMain.DataSourceDir;
-  frmMain.DBGridDir_ReadEntry(frmMain.SQLQueryDir.FieldByName('FileFull').Text);
-  frmMain.Init_FilePath;
-  frmMain.PC2.ActivePage.Visible:=true;
 end;
 
 procedure TfrmImport.btImportEnter(Sender: TObject);
@@ -789,10 +798,7 @@ begin
    ImageCountA := str_AllImagesInArchive.Count;
   end;
  lblImportFoundArc.Caption := ' ' + IntToStr(ImageCountA) + ' ';
- if str_AllImagesInArchive.Count = 0 then  // pre then "Init_str_FindAllImages" checks also
-   begin
-    memoImport.Lines.Add('No archive(s) to import!');
-   end else
+ if str_AllImagesInArchive.Count > 0 then  // pre then "Init_str_FindAllImages" checks also
    begin
     msgImp18 := IniLng.ReadString('MSG', 'msgImp18', 'archive(s) found.');
     memoImport.Lines.Add(IntToStr(str_AllImagesInArchive.Count) + ' ' + msgImp18);
@@ -825,6 +831,8 @@ begin
  CleanTmp(tmpDir);
  IniFluff.WriteString('Options', 'FolderImport', DirImport.Directory);
  frmMain.DBFilter;
+ frmMain.SQLQueryDir.Active:=true;
+ frmMain.PC2.ActivePage.Visible:=true;
 end;
 
 procedure TfrmImport.FormShow(Sender: TObject);

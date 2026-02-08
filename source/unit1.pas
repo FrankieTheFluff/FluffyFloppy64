@@ -211,12 +211,14 @@ type
     procedure mnuOptionsClick(Sender: TObject);
     procedure mnuAboutClick(Sender: TObject);
     procedure mnuImportClick(Sender: TObject);
+    procedure PacketRecords;
     procedure GetLng(aLngFile : String);
     procedure DBRecordCount(aStrSQL : String);
     procedure DBFilter;
     procedure DBGridDir_ReadEntry(aImageName : String);
     procedure DBGridDirTxt_ReadEntry;
     procedure DBSearch;
+    procedure Init_StatusBarPanel0;
     procedure Init_FilePath;
     procedure Init_Menu;
     procedure mnuSyncClick(Sender: TObject);
@@ -256,9 +258,9 @@ procedure OpenEmu(aEmu: string; aParam: string);
 
 var
   frmMain: TfrmMain;
-  Dev_mode : boolean;
+  Dev_mode, PacketRecs : boolean;
   DB_RecCount, ImgCount : Integer;
-  sAppPath, sAppVersion, sAppCaption, sAppDate,  sAppTmpPath : String;
+  sAppPath, sAppVersion, sAppCaption, sAppDate, sAppTmpPath, StrSQL2, ColFieldName : String;
   FileFull : String; // Global, check if field contains pipe "|"
   IniFluff, IniLng : TInifile;
   arrStr: array of array of String;
@@ -266,7 +268,7 @@ var
   arrD71 : array [01..70, 0..20] of String;
   arrD81 : array [01..80, 0..39] of String;
   Str_Dir, Str_DirAll : TStringList;
-  dbGridSorted : String; // ASC or DESC
+  dbGridSorted, dbGridTxtSorted : String; // ASC or DESC
   SQlSearch_Click : boolean;
   FLastColumn: TColumn; //store mnuViewDateLast grid column we sorted on
 
@@ -564,7 +566,7 @@ begin
     IniLng.WriteString('SET', 'msgSet49', 'Copy2Fonts');
     IniLng.WriteString('SET', 'msgSet50', 'Language:');
     IniLng.WriteString('SET', 'msgSet51', 'Remember recent used directory for import');
-    IniLng.WriteString('SET', 'msgSet52', 'PacketRecords (Changes need restart!):');
+    IniLng.WriteString('SET', 'msgSet52', 'PacketRecords (PR, Changes needs restart!):');
    finally
    end;
 
@@ -834,6 +836,34 @@ begin
  else FileFull := aFileFull;
 end;
 
+procedure TfrmMain.PacketRecords;
+var
+ PR : Integer;
+begin
+ // Check if PacketRecords is enabled
+ If IniFluff.ReadBool('Options', 'cbPR', false) = true then
+  begin
+   frmMain.SQLQueryDir.IndexFieldNames := '';
+   PR := IniFluff.ReadInteger('Options', 'edPR', 500);
+   If PR < 1 then PR := 1;
+   frmMain.SQLQueryDir.PacketRecords := PR;
+  end;
+ If IniFluff.ReadBool('Options', 'cbPR', false) = false then
+  begin
+   frmMain.SQLQueryDir.IndexFieldNames := 'idxImg';
+   frmMain.SQLQueryDir.PacketRecords := -1;
+  end;
+end;
+
+procedure TfrmMain.Init_StatusBarPanel0;
+begin
+ If IniFluff.ReadBool('Options', 'cbPR', false) = true then
+  begin
+   Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount) + ' (PR)';
+  end
+ else  Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
+end;
+
 procedure TfrmMain.FormShow(Sender: TObject);
 var
  GetDB : String;
@@ -841,12 +871,14 @@ var
 begin
  Dev_mode := false;
  sAppCaption := 'FluffyFloppy64 ';
- sAppVersion := 'v0.96';
- sAppDate    := '2026-01-11';
+ sAppVersion := 'v0.97';
+ sAppDate    := '2026-02-08';
  sAppPath    := ExtractFilePath(Application.ExeName); ExtractFilePath(ParamStr(0));
  frmMain.Caption:= sAppCaption + sAppVersion;
  SQlSearch_Click := false;
  dbGridSorted := 'ASC';
+ dbGridTxtSorted := 'ASC';
+ ColFieldName := 'FileName'; // Initial column fieldname
 
  // INI
  If Dev_Mode = true then Showmessage('[Dev_Mode] - Create INI');
@@ -962,19 +994,7 @@ begin
   begin
    If IniFluff.ReadBool('Start', 'OpenDatabase', true) = true then
     begin
-     // PacketRecords
-     If IniFluff.ReadBool('Options', 'cbPR', false) = true then
-      begin
-       frmMain.SQLQueryDir.IndexFieldNames := '';
-       PR := IniFluff.ReadInteger('Options', 'edPR', 500);
-       If PR < 1 then PR := 1;
-       frmMain.SQLQueryDir.PacketRecords := PR;
-      end;
-     If IniFluff.ReadBool('Options', 'cbPR', false) = false then
-      begin
-       frmMain.SQLQueryDir.IndexFieldNames := 'idxImg';
-       frmMain.SQLQueryDir.PacketRecords := -1;
-      end;
+     PacketRecords;
      OpenDatabase(GetDB);
      Database_OpenDialog.FileName := GetDB;  // Remember DB
      if SQLQueryDir.RecordCount = 0 then exit;
@@ -1004,7 +1024,7 @@ begin
       cbSQLSearch.Enabled:=true;
       TgScratch.Enabled:=true;
       TgCShift.Enabled:=true;
-      Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
+      Init_StatusBarPanel0;
     end;
     end;
   end;
@@ -1861,35 +1881,14 @@ begin
   begin
    EdSQLSearch.Text:='';  // Field reacts OnChange
    AConnection.ExecuteDirect('DROP Table IF EXISTS Search');
-   If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text = 'All') then
-    begin
-     StrSQL := StrSQL + ' Where idxImg in (SELECT idxTXT FROM DirectoryTXT)';
-    end;
-   If (cbDBFilePath.Text = 'All') AND (cbDBFileNameExt.Text <> 'All') then
-    begin
-     StrSQL := StrSQL + ' Where FileNameExt = "' + cbDBFileNameExt.Text + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT)';
-    end;
-   if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text = 'All') then
-    begin
-     StrSQL := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT)';
-    end;
-   if (cbDBFilePath.Text <> 'All') AND (cbDBFileNameExt.Text <> 'All') then
-    begin
-     StrSQL := StrSQL + ' Where FilePath Like "' + StringReplace(cbDBFilePath.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '" AND idxImg in (SELECT idxTXT FROM DirectoryTXT WHERE FileNameTxt like "' + StringReplace(EdSQLSearch.Text, '*', '%', [rfReplaceAll, rfIgnoreCase]) + '")';
-    end;
-
-   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked = false) then StrSQL := StrSQL + ' AND Favourite = true'
-    else
-   If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL := StrSQL + ' AND Corrupt = true'
-    else
-   If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL := StrSQL + ' AND Favourite = true AND Corrupt = true';
-   DBFilter;
   end;
-
+ SQLQueryDir.Active:=false;
+ SQLQueryDir.SQL.Clear;
+ SQLQueryDir.SQL.Add('Select idxImg, FileName, FileFull, FileNameExt, FileSizeImg, DateLast, DateImport, DiskName, DiskIDTxt, DOSTypeTxt, FilePath, Favourite, Corrupt, Tags, Info from FileImage');
  SQLQueryDir.Active:=true;
  SQLQueryDir.Last;
  ImgCount := SQLQueryDir.FieldByName('idxImg').AsInteger;  // Check idxImg no duplicates - last db entry
- SQLQueryDir.Active:=false;
+ DBFilter;
  frmImport.Showmodal;
 end;
 
@@ -2093,21 +2092,7 @@ begin
    SQLQueryDir.DataBase := AConnection;
    SQLQueryDir.SQL.Clear;
    SQlQueryDir.SQL.Add(aStrSQL);  // Back to current SELECT
-
-   // PacketRecords
-   If IniFluff.ReadBool('Options', 'cbPR', false) = true then
-    begin
-     frmMain.SQLQueryDir.IndexFieldNames := '';
-     PR := IniFluff.ReadInteger('Options', 'edPR', 500);
-     If PR < 1 then PR := 1;
-     frmMain.SQLQueryDir.PacketRecords := PR;
-    end;
-   If IniFluff.ReadBool('Options', 'cbPR', false) = false then
-    begin
-     frmMain.SQLQueryDir.IndexFieldNames := 'idxImg';
-     frmMain.SQLQueryDir.PacketRecords := -1;
-    end;
-
+   PacketRecords;
    SQLQueryDir.Active:=true;
    DBGridDir.DataSource.DataSet.EnableControls;
 end;
@@ -2218,7 +2203,7 @@ begin
 
  If SQLQueryDir.RecordCount > 0 then
   begin
-   Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
+   Init_StatusBarPanel0;
    mnuRecOpen.Enabled:=true;
    mnuRecOpenLocation.Enabled:=true;
    mnuRecFavourite.Enabled:=true;
@@ -2303,7 +2288,6 @@ end;
 
 procedure TfrmMain.DBSearch;
 var
- StrSQL2 : String;
  answer : Integer;
 begin
   StrSQl2 := '';
@@ -2317,7 +2301,7 @@ begin
      end;
   end;
 
-    SQLQueryDirTXT.DataBase := AConnection;
+  SQLQueryDirTXT.DataBase := AConnection;
     if cbSQLSearch.ItemIndex = 0 then     // Directory entry
      begin
       AConnection.ExecuteDirect('CREATE TEMP TABLE "Search"('+
@@ -2361,7 +2345,7 @@ begin
       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
        else
       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
-      SQLQueryDir.SQL.Add(StrSQL2);
+      SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY ' + ColFieldName + ' COLLATE NOCASE ' + dbGridSorted);
       SQLQueryDir.Active := True;
       If SQLQueryDir.RecordCount > 0 then SQLQueryDir.First;
 
@@ -2408,7 +2392,7 @@ begin
       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
        else
       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
-      SQLQueryDir.SQL.Add(StrSQL2);
+      SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY ' + ColFieldName + ' COLLATE NOCASE ' + dbGridSorted);
       frmMain.SQLQueryDir.Active := True;
       BtSQLSearch.Caption:='Reset';
       BtSQLSearch.ImageIndex:=3;
@@ -2417,7 +2401,7 @@ begin
       DBGridSplitter.Visible:=false;
       If frmMain.SQLQueryDir.RecordCount > 0 then
        begin
-        frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
+        Init_StatusBarPanel0;
         UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
         GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
         Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
@@ -2446,7 +2430,7 @@ begin
       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
        else
       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
-      SQLQueryDir.SQL.Add(StrSQL2);
+      SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY ' + ColFieldName + ' COLLATE NOCASE ' + dbGridSorted);
       frmMain.SQLQueryDir.Active := True;
       BtSQLSearch.Caption:='Reset';
       BtSQLSearch.ImageIndex:=3;
@@ -2455,7 +2439,7 @@ begin
       DBGridSplitter.Visible:=false;
       If frmMain.SQLQueryDir.RecordCount > 0 then
        begin
-        frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
+        Init_StatusBarPanel0;
         UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
         GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
         Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
@@ -2484,7 +2468,7 @@ begin
       If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL2 + ' AND Corrupt = true'
        else
       If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
-      SQLQueryDir.SQL.Add(StrSQL2);
+      SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY ' + ColFieldName + ' COLLATE NOCASE ' + dbGridSorted);
       frmMain.SQLQueryDir.Active := True;
       BtSQLSearch.Caption:='Reset';
       BtSQLSearch.ImageIndex:=3;
@@ -2493,7 +2477,7 @@ begin
       DBGridSplitter.Visible:=false;
       If frmMain.SQLQueryDir.RecordCount > 0 then
        begin
-        frmMain.Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
+        Init_StatusBarPanel0;
         UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text);
         GetDirectoryImage(FileFull, sAppTmpPath, TgScratch.Checked, TgCShift.Checked);
         Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
@@ -2563,13 +2547,23 @@ begin
 end;
 
 procedure TfrmMain.DBFilter;
-var
- StrSQL2 : String;
 begin
-
- If edSQLSearch.Text <> '' then
+ If ColFieldName = '' then ColFieldName := 'FileName';
+ If edSQLSearch.Text <> '' then  // Just sort if search is active
   begin
-   DBSearch;
+   SQLQueryDir.Close;
+   SQLQueryDir.SQL.Clear;
+   SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY ' + ColFieldName + ' COLLATE NOCASE ' + dbGridSorted);
+   SQLQueryDir.Active:=true;
+   if DBGridDirTxt.Visible = true then
+    begin
+     if SQlQuerySearch.RecordCount > 0 then SQlQuerySearch.Locate('idxSearch', SQLQueryDir.FieldByName('idxImg').Text, []);
+    end;
+   if SQLQueryDir.RecordCount > 0 then
+    begin
+     CleanTmp(sAppTmpPath);
+     LoadDir;
+    end;
    exit;
   end;
 
@@ -2578,6 +2572,7 @@ begin
  SQLQueryDir.Close;
  SQLQueryDir.DataBase := AConnection;
  SQLQueryDir.SQL.Clear;
+
  If edSQLSearch.Text = '' then
   begin
    If cbDBFilePath.ItemIndex = 0 then  // All
@@ -2602,9 +2597,7 @@ begin
        else
        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL + ' AND Favourite = true AND Corrupt = true';
       end;
-     SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY FileName COLLATE NOCASE ASC');
-     dbGridSorted := 'ASC';
-     DBGRidDir.Columns[0].Title.ImageIndex:=0; // ASC
+     SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY ' + ColFieldName + ' COLLATE NOCASE ' + dbGridSorted);
      SQLQueryDir.Active:=true;
      Datasourcedir.DataSet.EnableControls;
      Init_Menu;
@@ -2631,9 +2624,7 @@ begin
        else
        If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL2 + ' AND Favourite = true AND Corrupt = true';
       end;
-     SQLQueryDir.SQL.Add(StrSQL2 + ' ORDER BY FileName COLLATE NOCASE ASC');
-     dbGridSorted := 'ASC';
-     DBGRidDir.Columns[0].Title.ImageIndex:=0; // ASC
+     SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY ' + ColFieldName + ' COLLATE NOCASE ' + dbGridSorted);
      SQLQueryDir.Active:=true;
      Datasourcedir.DataSet.EnableControls;
      Init_Menu;
@@ -2649,9 +2640,7 @@ begin
    If (cbFilterCorrupt.Checked) AND (cbFilterFav.Checked = false) then StrSQL2 := StrSQL + ' AND Corrupt = true'
    else
    If (cbFilterFav.Checked) AND (cbFilterCorrupt.Checked) then StrSQL2 := StrSQL + ' AND Favourite = true AND Corrupt = true';
-   SQLQueryDir.SQL.Add(StrSQL2 + ' ORDER BY FileName COLLATE NOCASE ASC');
-   dbGridSorted := 'ASC';
-   DBGRidDir.Columns[0].Title.ImageIndex:=0; // ASC
+   SQlQueryDir.SQL.Add(StrSQL2 + ' ORDER BY ' + ColFieldName + ' COLLATE NOCASE ' + dbGridSorted);
    SQLQueryDir.Active:=true;
    Datasourcedir.DataSet.EnableControls;
    Init_Menu;
@@ -3738,38 +3727,27 @@ begin
 end;
 
 procedure TfrmMain.DBGridDirTitleClick(Column: TColumn);
-var
-  PR : Integer;
 begin
-   SQLQueryDir.Active:=false;
-   DBGridDir.DataSource.DataSet.DisableControls;
+ ColFieldName := Column.FieldName;
+ if dbGridSorted = 'ASC' then
+  begin
+   dbGridSorted := 'DESC';
+   Column.Title.ImageIndex:=1; // Down
+   if (FLastColumn <> nil) and (FlastColumn <> Column) then FLastColumn.Title.ImageIndex:=-1;
+   FLastColumn:=column;
+   DBFilter;
+   exit;
+  end;
 
-  if dbGridSorted = 'ASC' then
-   begin
-    dbGridSorted := 'DESC';
-    frmMain.SQLQueryDir.IndexFieldNames := Column.FieldName + ' DESC';
-    Column.Title.ImageIndex:=1; // Down
-    if (FLastColumn <> nil) and (FlastColumn <> Column) then
-      FLastColumn.Title.ImageIndex:=-1;
-    FLastColumn:=column;
-    SQLQueryDir.Active:=true;
-    DBGridDir.DataSource.DataSet.EnableControls;
-    exit;
-   end;
-
-  if dbGridSorted = 'DESC' then
-   begin
-    dbGridSorted := 'ASC';
-    frmMain.SQLQueryDir.IndexFieldNames := Column.FieldName;
-    Column.Title.ImageIndex:=0; // Up
-    if (FLastColumn <> nil) and (FlastColumn <> Column) then
-      FLastColumn.Title.ImageIndex:=-1;
-    FLastColumn:=column;
-    SQLQueryDir.Active:=true;
-    DBGridDir.DataSource.DataSet.EnableControls;
-    Exit;
-   end;
-
+ if dbGridSorted = 'DESC' then
+  begin
+   dbGridSorted := 'ASC';
+   Column.Title.ImageIndex:=0; // Up
+   if (FLastColumn <> nil) and (FlastColumn <> Column) then FLastColumn.Title.ImageIndex:=-1;
+   FLastColumn:=column;
+   DBFilter;
+   exit;
+  end;
 end;
 
 procedure TfrmMain.DBGridDirSearch(Column: TColumn);
@@ -3871,24 +3849,22 @@ end;
 
 procedure TfrmMain.DBGridDirTxtTitleClick(Column: TColumn);
 begin
-  // remove image on already selected column
-  if dbGridSorted = 'ASC' then
+  if dbGridTxtSorted = 'ASC' then
    begin
-    dbGridSorted := 'DESC';
+    dbGridTxtSorted := 'DESC';
     frmMain.SQLQuerySearch.IndexFieldNames := Column.FieldName + ' DESC';
     Column.Title.ImageIndex:=1; // Down
-    // Remove the sort arrow from the previous column we sorted
     if (FLastColumn <> nil) and (FlastColumn <> Column) then
       FLastColumn.Title.ImageIndex:=-1;
     FLastColumn:=column;
     exit;
    end;
-  if dbGridSorted = 'DESC' then
+
+  if dbGridTxtSorted = 'DESC' then
    begin
-    dbGridSorted := 'ASC';
+    dbGridTxtSorted := 'ASC';
     frmMain.SQLQuerySearch.IndexFieldNames := Column.FieldName;
     Column.Title.ImageIndex:=0; // Up
-    // Remove the sort arrow from the previous column we sorted
     if (FLastColumn <> nil) and (FlastColumn <> Column) then
       FLastColumn.Title.ImageIndex:=-1;
     FLastColumn:=column;
@@ -3897,12 +3873,10 @@ begin
 end;
 
 procedure TfrmMain.EdSQLSearchChange(Sender: TObject);
-var
-  StrSQL2 : String;
 begin
-  StrSQL2 := '';
   If EdSQLSearch.Text = '' then
    begin
+    StrSQL2 := '';
     BtSQLSearch.ImageIndex:=2;
     BtSQLSearch.Caption := IniLng.ReadString('PC1', 'BtSQLSearch', 'Search');
     BtSQLSearch.Hint := IniLng.ReadString('PC1', 'BtSQLSearchHint', 'Search');
@@ -3973,7 +3947,7 @@ begin
       BtSQLSearch.Enabled:=true;
       BtSQLSearch.Default:=true;
      end;
-    Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
+    Init_StatusBarPanel0;
     Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
    end;
 end;
@@ -4150,7 +4124,7 @@ begin
      cbSQLSearch.Enabled:=true;
      TgScratch.Enabled:=true;
      TgCShift.Enabled:=true;
-     Statusbar1.Panels[0].Text := ' ' + IntToStr(SQLQueryDir.RecNo) + '/' + IntToStr(SQLQueryDir.RecordCount);
+     Init_StatusBarPanel0;
    end;
   end;
    If Dev_Mode = true then Showmessage('[Dev_Mode] - End DBGridDir_ReadEntry procedure');
@@ -4751,7 +4725,7 @@ begin
   end;
  if SQLQueryDir.RecordCount > 0 then
   begin
-   Statusbar1.Panels[0].Text := ' ' + IntToStr(frmMain.SQLQueryDir.RecNo) + '/' + IntToStr(frmMain.SQLQueryDir.RecordCount);
+   Init_StatusBarPanel0;
    Statusbar1.Panels[5].Text := SQLQueryDir.FieldByName('FileFull').AsString;
    try
     UnpackFileFullContainsPipe(SQLQueryDir.FieldByName('FileFull').Text); // FileFull
