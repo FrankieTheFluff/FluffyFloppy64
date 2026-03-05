@@ -26,6 +26,8 @@ GNU General Public License v2.0
 
 Web: https://github.com/FrankieTheFluff
 
+Mail: fluxmyfluffyfloppy@mail.de
+
 
 
 
