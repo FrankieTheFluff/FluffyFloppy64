@@ -1,4 +1,8 @@
-2026-03-05 Project is private now
+
+
+!! 2026-03-05 The project is closed/private - No further development !!
+
+
 
 -----------------------------------------------------------------
 
@@ -40,4 +44,5 @@ Converter: NibTools (nibconv.exe)
 https://github.com/rittwage/nibtools
 
 -----------------------------------------------------------------
+
 
