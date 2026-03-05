@@ -4,16 +4,27 @@
 
 
 
+
+
 ----------------------------------------
+
 FluffyFloppy64 v0.97 - 2026-02-08
+
 ----------------------------------------
 A Microsoft(r) Windows(r) tool to
+
 catalog Commodore 64 (C64) floppy images
+
 (D64,G64,NIB,D71,D81) & PRG,TAP,TXT,NFO
+
 FREEWARE / OpenSource
+
 GNU General Public License v2.0
+
 (c) 2021-2026 FrankieTheFluff
+
 Web: https://github.com/FrankieTheFluff
+
 
 
 
