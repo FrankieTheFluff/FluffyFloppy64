@@ -30,6 +30,7 @@ Web: https://github.com/FrankieTheFluff
 Mail: fluxmyfluffyfloppy@mail.de
 
 
+![20250209_224443_ff64_v077](https://github.com/user-attachments/assets/612225f1-9e83-4d17-bc65-ffc1cdeb97e3)
 
 
 
